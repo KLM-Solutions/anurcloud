@@ -590,11 +590,140 @@
     return `<div class="si" style="background:${color}">${label}</div>`;
   }
 
+  /* ════ BANNER SVG PATTERN ════ */
+  function bannerSVG(t, vertical) {
+    const vb = vertical ? '0 0 60 200' : '0 0 300 80';
+    const style = `position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.22;z-index:0`;
+    if (t.audience === 'student') {
+      return `<svg xmlns="http://www.w3.org/2000/svg" style="${style}" viewBox="${vb}" preserveAspectRatio="xMidYMid slice">
+        <g fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round">
+          <!-- grad cap 1 -->
+          <g transform="translate(14,8) rotate(-14)">
+            <polygon points="9,2 17,6 9,10 1,6" fill="white" stroke="none" opacity=".55"/>
+            <line x1="9" y1="6" x2="9" y2="13" stroke-width="1.4"/>
+            <path d="M5,9.5 Q5,14 9,14 Q13,14 13,9.5" stroke-width="1.3"/>
+          </g>
+          <!-- open book 1 -->
+          <g transform="translate(48,5) rotate(6) scale(.9)" stroke-width="1.2">
+            <path d="M1,2 Q7,0 9,3 Q11,0 17,2 L17,14 Q11,12 9,15 Q7,12 1,14 Z"/>
+            <line x1="9" y1="3" x2="9" y2="15"/>
+          </g>
+          <!-- pencil 1 -->
+          <g transform="translate(88,13) rotate(28)" stroke-width="1.2">
+            <rect x="3.5" y="1" width="5" height="12" rx="1"/>
+            <polygon points="3.5,13 8.5,13 6,17.5" fill="white" stroke="none"/>
+            <line x1="3.5" y1="4.5" x2="8.5" y2="4.5"/>
+          </g>
+          <!-- 4-point star 1 -->
+          <g transform="translate(124,4) rotate(8)" stroke-width="1.1">
+            <path d="M9,0 L10.5,7 L18,9 L10.5,11 L9,18 L7.5,11 L0,9 L7.5,7 Z" fill="white" opacity=".35" stroke="none"/>
+            <path d="M9,0 L10.5,7 L18,9 L10.5,11 L9,18 L7.5,11 L0,9 L7.5,7 Z"/>
+          </g>
+          <!-- grad cap 2 small -->
+          <g transform="translate(162,11) rotate(10) scale(.72)">
+            <polygon points="9,2 17,6 9,10 1,6" fill="white" stroke="none" opacity=".45"/>
+            <line x1="9" y1="6" x2="9" y2="13" stroke-width="1.6"/>
+            <path d="M5,9.5 Q5,14 9,14 Q13,14 13,9.5" stroke-width="1.5"/>
+          </g>
+          <!-- open book 2 -->
+          <g transform="translate(196,6) rotate(-5) scale(.78)" stroke-width="1.3">
+            <path d="M1,2 Q7,0 9,3 Q11,0 17,2 L17,14 Q11,12 9,15 Q7,12 1,14 Z"/>
+            <line x1="9" y1="3" x2="9" y2="15"/>
+          </g>
+          <!-- pencil 2 -->
+          <g transform="translate(235,4) rotate(-22)" stroke-width="1.2">
+            <rect x="3.5" y="1" width="5" height="12" rx="1"/>
+            <polygon points="3.5,13 8.5,13 6,17.5" fill="white" stroke="none"/>
+          </g>
+          <!-- 4-point star 2 tiny -->
+          <g transform="translate(265,10) rotate(-6) scale(.68)" stroke-width="1.3">
+            <path d="M9,0 L10.5,7 L18,9 L10.5,11 L9,18 L7.5,11 L0,9 L7.5,7 Z"/>
+          </g>
+          <!-- grad cap 3 tiny -->
+          <g transform="translate(108,18) rotate(16) scale(.58)">
+            <polygon points="9,2 17,6 9,10 1,6" fill="white" stroke="none" opacity=".4"/>
+            <line x1="9" y1="6" x2="9" y2="13" stroke-width="1.8"/>
+          </g>
+          <!-- book tiny -->
+          <g transform="translate(290,3) rotate(10) scale(.6)" stroke-width="1.5">
+            <path d="M1,2 Q7,0 9,3 Q11,0 17,2 L17,14 Q11,12 9,15 Q7,12 1,14 Z"/>
+            <line x1="9" y1="3" x2="9" y2="15"/>
+          </g>
+        </g>
+      </svg>`;
+    } else {
+      return `<svg xmlns="http://www.w3.org/2000/svg" style="${style}" viewBox="${vb}" preserveAspectRatio="xMidYMid slice">
+        <g fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round">
+          <!-- briefcase 1 -->
+          <g transform="translate(12,7) rotate(-9)" stroke-width="1.3">
+            <rect x="1" y="6" width="16" height="11" rx="2"/>
+            <path d="M6,6 L6,3.5 Q6,1.5 9,1.5 Q12,1.5 12,3.5 L12,6"/>
+            <line x1="1" y1="11" x2="17" y2="11"/>
+          </g>
+          <!-- bar chart 1 -->
+          <g transform="translate(52,5) rotate(4)">
+            <rect x="0" y="10" width="3.5" height="8" fill="white" opacity=".55"/>
+            <rect x="5.5" y="7" width="3.5" height="11" fill="white" opacity=".65"/>
+            <rect x="11" y="3" width="3.5" height="15" fill="white" opacity=".75"/>
+            <line x1="-.5" y1="18" x2="16" y2="18" stroke-width="1.2"/>
+          </g>
+          <!-- office building 1 -->
+          <g transform="translate(90,3) rotate(3)" stroke-width="1.2">
+            <rect x="2" y="1" width="13" height="17" rx="1"/>
+            <rect x="4" y="4" width="2" height="2" fill="white" stroke="none" opacity=".65"/>
+            <rect x="8.5" y="4" width="2" height="2" fill="white" stroke="none" opacity=".65"/>
+            <rect x="4" y="8" width="2" height="2" fill="white" stroke="none" opacity=".65"/>
+            <rect x="8.5" y="8" width="2" height="2" fill="white" stroke="none" opacity=".65"/>
+            <rect x="5.5" y="12.5" width="4" height="5.5" fill="white" stroke="none" opacity=".5"/>
+          </g>
+          <!-- diamond -->
+          <g transform="translate(128,5) rotate(5)" stroke-width="1.2">
+            <polygon points="9,1 18,8 9,18 0,8"/>
+            <line x1="0" y1="8" x2="18" y2="8"/>
+            <line x1="4" y1="3" x2="9" y2="8"/>
+            <line x1="14" y1="3" x2="9" y2="8"/>
+          </g>
+          <!-- briefcase 2 small -->
+          <g transform="translate(167,9) rotate(12) scale(.74)" stroke-width="1.5">
+            <rect x="1" y="6" width="16" height="11" rx="2"/>
+            <path d="M6,6 L6,3.5 Q6,1.5 9,1.5 Q12,1.5 12,3.5 L12,6"/>
+            <line x1="1" y1="11" x2="17" y2="11"/>
+          </g>
+          <!-- bar chart 2 small -->
+          <g transform="translate(205,7) rotate(-5) scale(.8)">
+            <rect x="0" y="10" width="3.5" height="8" fill="white" opacity=".5"/>
+            <rect x="5.5" y="7" width="3.5" height="11" fill="white" opacity=".58"/>
+            <rect x="11" y="3" width="3.5" height="15" fill="white" opacity=".65"/>
+          </g>
+          <!-- network node -->
+          <g transform="translate(242,6) rotate(0)" stroke-width="1.2">
+            <circle cx="9" cy="9" r="4.5"/>
+            <line x1="9" y1="0" x2="9" y2="4.5"/>
+            <line x1="9" y1="13.5" x2="9" y2="18"/>
+            <line x1="0" y1="9" x2="4.5" y2="9"/>
+            <line x1="13.5" y1="9" x2="18" y2="9"/>
+            <circle cx="9" cy="0" r="2" fill="white" opacity=".45" stroke="none"/>
+            <circle cx="9" cy="18" r="2" fill="white" opacity=".45" stroke="none"/>
+            <circle cx="0" cy="9" r="2" fill="white" opacity=".45" stroke="none"/>
+            <circle cx="18" cy="9" r="2" fill="white" opacity=".45" stroke="none"/>
+          </g>
+          <!-- building 2 tiny -->
+          <g transform="translate(276,10) rotate(-5) scale(.62)" stroke-width="1.6">
+            <rect x="2" y="1" width="13" height="17" rx="1"/>
+            <rect x="4" y="4" width="2" height="2" fill="white" stroke="none" opacity=".6"/>
+            <rect x="8.5" y="4" width="2" height="2" fill="white" stroke="none" opacity=".6"/>
+          </g>
+        </g>
+      </svg>`;
+    }
+  }
+
   /* ════ 8 DISTINCT CARD BUILDERS ════ */
 
   function buildWave(t) {
     return `<div class="cm cm-wave">
       <div class="cmh" style="background:${t.grad}">
+        ${bannerSVG(t)}
         <div class="cmh-top"><div class="cmh-logo">Logo Here</div><div class="cmh-share">Share →</div></div>
         <div class="cmh-main">
           <div><div class="cmh-name">Your Name</div><div class="cmh-desig">Your Designation</div></div>
@@ -637,7 +766,8 @@
   function buildSplit(t) {
     return `<div class="cm cm-split">
       <div class="cmh">
-        <div class="cmh-left" style="background:${t.grad}">
+        <div class="cmh-left" style="background:${t.grad};position:relative;overflow:hidden">
+          ${bannerSVG(t, true)}
           <div class="cmh-av">
             <div class="cmh-av-i">👤</div>
             <div class="cmh-av-l">Upload<br>DP</div>
@@ -685,6 +815,7 @@
     return `<div class="cm cm-academic">
       <div class="cmh" style="background:${t.grad}">
         <div class="cmh-dots"></div>
+        ${bannerSVG(t)}
         <div class="cmh-top"><div class="cmh-logo">Logo Here</div><div class="cmh-badge">🔬 Research</div></div>
         <div class="cmh-main">
           <div class="cmh-av">👤</div>
@@ -726,6 +857,7 @@
     return `<div class="cm cm-travel">
       <div class="cmh">
         <div class="cmh-bg" style="background:${t.grad}"></div>
+        ${bannerSVG(t)}
         <div class="cmh-orb1" style="background:${t.a}"></div>
         <div class="cmh-orb2" style="background:#FF6B6B"></div>
         <div class="cmh-top">
@@ -809,7 +941,8 @@
   function buildCircle(t) {
     return `<div class="cm cm-circle">
       <div class="cmh">
-        <div class="cmh-band" style="background:${t.grad}">
+        <div class="cmh-band" style="background:${t.grad};position:relative;overflow:hidden">
+          ${bannerSVG(t)}
           <div class="cmh-top">
             <div class="cmh-logo">Logo Here</div>
             <div class="cmh-share">Share →</div>
@@ -849,6 +982,7 @@
     return `<div class="cm cm-diagonal">
       <div class="cmh">
         <div class="cmh-bg" style="background:${t.grad}"></div>
+        ${bannerSVG(t)}
         <div class="cmh-cut"></div>
         <div class="cmh-top">
           <div class="cmh-logo">Logo Here</div>
