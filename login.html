@@ -284,7 +284,7 @@
       if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
         sessionStorage.setItem('iv_auth', '1');
         sessionStorage.setItem('iv_user', username);
-        window.location.href = 'templates.html';
+        window.location.href = 'flow.html';
       } else {
         btn.classList.remove('loading');
         btn.disabled = false;
@@ -310,7 +310,7 @@
 
   // If already logged in, skip to templates
   if (sessionStorage.getItem('iv_auth') === '1') {
-    window.location.href = 'templates.html';
+    window.location.href = 'flow.html';
   }
 </script>
 
