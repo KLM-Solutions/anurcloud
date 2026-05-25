@@ -206,31 +206,16 @@
       <span class="brand-dot brand-dot-pb"></span>
     </div>
     <div class="brand-title">Welcome back</div>
-    <div class="brand-sub">Sign in to access your smart card dashboard</div>
+    <div class="brand-sub">Sign in to access project documentation and management</div>
   </div>
 
   <div class="card">
-    <div class="card-title">Sign in to your account</div>
-    <div class="card-sub">Enter your credentials to continue</div>
-
     <div class="err-msg" id="errMsg">
       <div class="err-icon">!</div>
-      <span id="errText">Invalid username or password.</span>
+      <span id="errText">Incorrect password.</span>
     </div>
 
     <form id="loginForm" onsubmit="handleLogin(event)">
-      <div class="field">
-        <label for="username">Username</label>
-        <input
-          type="text"
-          id="username"
-          name="username"
-          placeholder="Enter your username"
-          autocomplete="username"
-          required
-        />
-      </div>
-
       <div class="field">
         <label for="password">Password</label>
         <input
@@ -240,6 +225,7 @@
           placeholder="Enter your password"
           autocomplete="current-password"
           required
+          autofocus
         />
       </div>
 
@@ -257,12 +243,11 @@
 </div>
 
 <script>
-  const CREDENTIALS = { username: 'admin', password: 'instaviz123' };
+  const CREDENTIALS = { password: 'instaviz123' };
 
   function handleLogin(e) {
     e.preventDefault();
 
-    const usernameEl = document.getElementById('username');
     const passwordEl = document.getElementById('password');
     const btn        = document.getElementById('loginBtn');
     const errMsg     = document.getElementById('errMsg');
@@ -270,10 +255,8 @@
 
     // Clear previous error
     errMsg.classList.remove('show');
-    usernameEl.classList.remove('error');
     passwordEl.classList.remove('error');
 
-    const username = usernameEl.value.trim();
     const password = passwordEl.value;
 
     // Show loading
@@ -281,23 +264,16 @@
     btn.disabled = true;
 
     setTimeout(() => {
-      if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
+      if (password === CREDENTIALS.password) {
         sessionStorage.setItem('iv_auth', '1');
-        sessionStorage.setItem('iv_user', username);
         window.location.href = 'flow.html';
       } else {
         btn.classList.remove('loading');
         btn.disabled = false;
 
         errMsg.classList.add('show');
-
-        if (username !== CREDENTIALS.username) {
-          usernameEl.classList.add('error');
-          errText.textContent = 'Username not recognised.';
-        } else {
-          passwordEl.classList.add('error');
-          errText.textContent = 'Incorrect password. Please try again.';
-        }
+        passwordEl.classList.add('error');
+        errText.textContent = 'Incorrect password. Please try again.';
 
         // Shake the card
         const card = document.querySelector('.card');
