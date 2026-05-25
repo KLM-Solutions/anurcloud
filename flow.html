@@ -433,9 +433,80 @@
       .handoff-trigger::after, .response-return::before { display: none; }
       .wait-track { display: none; }
     }
+
+    /* ── TOP NAV BAR ── */
+    .top-nav {
+      position: sticky; top: 0; z-index: 50;
+      background: var(--white);
+      border-bottom: 1px solid var(--s200);
+      padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 48px;
+      box-shadow: 0 1px 6px rgba(0,0,0,.06);
+    }
+    .tn-brand {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 800; color: var(--dark); letter-spacing: -.1px;
+      text-decoration: none;
+    }
+    .tn-dot-ac { width: 7px; height: 7px; border-radius: 50%; background: var(--ac); }
+    .tn-dot-pb { width: 7px; height: 7px; border-radius: 50%; background: var(--pb1); }
+    .tn-nav-links { display: flex; align-items: center; gap: 4px; }
+    .tn-link {
+      font-size: 12px; font-weight: 600; color: var(--s600);
+      padding: 6px 14px; border-radius: 7px;
+      text-decoration: none;
+      transition: background .15s, color .15s;
+    }
+    .tn-link:hover { background: var(--s100); color: var(--dark); }
+    .tn-link.active { background: var(--dark); color: white; }
+    .tn-right { display: flex; align-items: center; gap: 8px; }
+    .tn-user {
+      font-size: 11px; font-weight: 600; color: var(--s600);
+      background: var(--s50); border: 1px solid var(--s200);
+      border-radius: 20px; padding: 4px 12px;
+    }
+    .tn-logout {
+      font-size: 11px; font-weight: 600; color: var(--s600);
+      background: none; border: 1px solid var(--s200); border-radius: 7px;
+      padding: 5px 12px; cursor: pointer; font-family: inherit;
+      transition: border-color .15s, color .15s;
+    }
+    .tn-logout:hover { border-color: var(--s300); color: var(--dark); }
   </style>
 </head>
 <body>
+
+<nav class="top-nav">
+  <span class="tn-brand">
+    <span class="tn-dot-ac"></span> Insta VIZ <span style="color:var(--s300);font-weight:300;margin:0 2px">×</span> PxlBrain <span class="tn-dot-pb"></span>
+  </span>
+  <div class="tn-nav-links">
+    <a href="flow.html" class="tn-link active">Integration Flow</a>
+    <a href="templates.html" class="tn-link">Smart Card Templates</a>
+  </div>
+  <div class="tn-right">
+    <span class="tn-user" id="tnUser">admin</span>
+    <button class="tn-logout" onclick="tnLogout()">Sign out</button>
+  </div>
+</nav>
+
+<script>
+  (function() {
+    if (sessionStorage.getItem('iv_auth') !== '1') {
+      window.location.href = 'login.html';
+    }
+    var u = sessionStorage.getItem('iv_user') || 'admin';
+    document.addEventListener('DOMContentLoaded', function() {
+      var el = document.getElementById('tnUser');
+      if (el) el.textContent = u;
+    });
+  })();
+  function tnLogout() {
+    sessionStorage.clear();
+    window.location.href = 'login.html';
+  }
+</script>
 
 <!-- ═══ PAGE HEADER ═══ -->
 <div class="page-header">

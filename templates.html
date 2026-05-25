@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Insta VIZ — Smart Card Templates</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#F0F2F7; --white:#FFFFFF; --dark:#0F172A;
+      --s700:#334155; --s600:#475569; --s500:#64748B;
+      --s400:#94A3B8; --s300:#CBD5E1; --s200:#E2E8F0;
+      --s100:#F1F5F9; --s50:#F8FAFC;
+      --ac:#2563EB; --ac-d:#1D4ED8; --ac-l:#EFF6FF; --ac-m:#BFDBFE;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--dark);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+
+    /* NAV */
+    .top-nav{background:var(--white);border-bottom:1px solid var(--s200);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:50;box-shadow:0 1px 6px rgba(0,0,0,.05)}
+    .tn-brand{display:flex;align-items:center;gap:8px}
+    .tn-logo{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#2563EB,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:13px}
+    .tn-name{font-size:13px;font-weight:700;color:var(--dark);letter-spacing:-.1px}
+    .tn-name span{color:var(--s400);font-weight:400}
+    .tn-links{display:flex;align-items:center;gap:3px}
+    .tn-link{font-size:12px;font-weight:600;padding:6px 12px;border-radius:7px;text-decoration:none;color:var(--s500);transition:background .15s,color .15s}
+    .tn-link:hover{background:var(--s100);color:var(--dark)}
+    .tn-link.active{background:var(--dark);color:white}
+    .tn-right{display:flex;align-items:center;gap:7px}
+    .tn-user{font-size:11px;font-weight:600;color:var(--s600);background:var(--s50);border:1px solid var(--s200);border-radius:20px;padding:4px 12px}
+    .tn-logout{font-size:11px;font-weight:600;padding:5px 12px;border-radius:7px;border:1px solid var(--s200);background:none;color:var(--s600);cursor:pointer;font-family:inherit;transition:all .15s}
+    .tn-logout:hover{border-color:var(--s300);color:var(--dark)}
+
+    /* PAGE HEAD */
+    .page-head{background:var(--white);border-bottom:1px solid var(--s200);padding:36px 24px 30px;text-align:center}
+    .ph-eyebrow{display:inline-flex;align-items:center;gap:7px;background:var(--ac-l);border:1px solid var(--ac-m);border-radius:20px;padding:4px 14px;font-size:10.5px;font-weight:700;color:var(--ac-d);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+    .live-dot{width:6px;height:6px;border-radius:50%;background:#22C55E;box-shadow:0 0 5px #22C55E;animation:blink 2s ease infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+    .ph-title{font-family:'DM Serif Display',serif;font-size:clamp(26px,4vw,38px);font-weight:400;letter-spacing:-.02em;color:var(--dark);line-height:1.1;margin-bottom:8px}
+    .ph-title em{font-style:italic;color:var(--ac)}
+    .ph-sub{font-size:14px;color:var(--s500);max-width:480px;margin:0 auto;line-height:1.65}
+
+    /* AI PANEL */
+    .ai-panel-wrap{max-width:720px;margin:28px auto 0;padding:0 24px}
+    .ai-panel{background:var(--white);border:1.5px solid var(--s200);border-radius:16px;padding:22px 26px;box-shadow:0 2px 16px rgba(0,0,0,.05)}
+    .ai-panel-head{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+    .ai-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#2563EB,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .ai-panel-title{font-size:14px;font-weight:800;color:var(--dark);letter-spacing:-.1px}
+    .ai-panel-sub{font-size:11.5px;color:var(--s500);margin-top:1px}
+    .ai-form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:560px){.ai-form{grid-template-columns:1fr}}
+    .ai-full{grid-column:1/-1}
+    .ai-field label{display:block;font-size:10.5px;font-weight:700;color:var(--s700);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+    .ai-field input,.ai-field select{width:100%;padding:9px 12px;border:1.5px solid var(--s200);border-radius:8px;font-family:inherit;font-size:13px;color:var(--dark);background:var(--s50);outline:none;transition:border-color .15s,box-shadow .15s,background .15s;-webkit-appearance:none}
+    .ai-field input:focus,.ai-field select:focus{border-color:var(--ac);background:var(--white);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+    .ai-field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394A3B8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px}
+    .btn-suggest{grid-column:1/-1;width:100%;padding:11px;background:linear-gradient(135deg,var(--ac-d),var(--ac));color:white;border:none;border-radius:9px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:opacity .15s,box-shadow .15s;box-shadow:0 2px 10px rgba(37,99,235,.28);margin-top:2px}
+    .btn-suggest:hover{opacity:.92;box-shadow:0 4px 18px rgba(37,99,235,.35)}
+    .btn-suggest:disabled{opacity:.55;cursor:not-allowed}
+    .ai-thinking{display:none;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--ac);padding:12px 0 2px}
+    .ai-thinking.show{display:flex}
+    .think-dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ac);animation:thdot .8s ease infinite;margin:0 1px}
+    .think-dots span:nth-child(2){animation-delay:.15s}
+    .think-dots span:nth-child(3){animation-delay:.3s}
+    @keyframes thdot{0%,80%,100%{opacity:.2;transform:scale(.7)}40%{opacity:1;transform:scale(1)}}
+
+    /* AI RECOMMENDED SECTION */
+    .ai-rec-section{max-width:1100px;margin:28px auto 0;padding:0 24px;display:none}
+    .ai-rec-section.show{display:block}
+    .ai-rec-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+    .ai-rec-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#2563EB,#7C3AED);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .ai-rec-title{font-size:16px;font-weight:800;color:var(--dark);letter-spacing:-.1px}
+    .ai-rec-sub{font-size:12px;color:var(--s500);margin-top:1px}
+    .ai-rec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-bottom:8px}
+    @media(max-width:900px){.ai-rec-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:580px){.ai-rec-grid{grid-template-columns:1fr}}
+    .ai-rec-card-wrap{}
+    .ai-why{font-size:11px;font-weight:500;color:var(--s600);background:var(--ac-l);border:1px solid var(--ac-m);border-radius:7px;padding:7px 10px;margin-top:8px;line-height:1.55}
+    .ai-why strong{color:var(--ac-d);font-weight:700}
+
+    /* RIBBON STYLES */
+    .ribbon-1{background:linear-gradient(90deg,#1D4ED8,#2563EB)}
+    .ribbon-2{background:linear-gradient(90deg,#0E7490,#0891B2)}
+    .ribbon-3{background:linear-gradient(90deg,#475569,#64748B)}
+
+    /* EXPLORE ALL SECTION */
+    .explore-section{max-width:1100px;margin:32px auto 80px;padding:0 24px}
+
+    /* GRID SECTION (pre-suggest) */
+    .grid-section{max-width:1100px;margin:28px auto 80px;padding:0 24px}
+    .section-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+    .section-title{font-size:15px;font-weight:800;color:var(--dark);letter-spacing:-.1px}
+    .tabs{display:flex;gap:3px;background:var(--s100);border:1px solid var(--s200);border-radius:10px;padding:4px}
+    .tab{padding:7px 15px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;font-family:inherit;color:var(--s500);transition:background .15s,color .15s;display:flex;align-items:center;gap:5px}
+    .tab:hover{color:var(--dark);background:var(--s200)}
+    .tab.active{background:var(--dark);color:white}
+    .tab-count{font-size:9.5px;font-weight:700;border-radius:9px;padding:1px 6px}
+    .tab.active .tab-count{background:rgba(255,255,255,.2);color:rgba(255,255,255,.8)}
+    .tab:not(.active) .tab-count{background:var(--s200);color:var(--s500)}
+    .search-box{display:flex;align-items:center;gap:7px;background:var(--white);border:1.5px solid var(--s200);border-radius:9px;padding:8px 13px}
+    .search-box input{background:none;border:none;outline:none;font-family:inherit;font-size:12.5px;color:var(--dark);width:150px}
+    .search-box input::placeholder{color:var(--s400)}
+    .cat-div{display:flex;align-items:center;gap:12px;margin-bottom:16px;margin-top:30px}
+    .cat-div:first-child{margin-top:0}
+    .cat-div-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--s400);white-space:nowrap}
+    .cat-div-line{flex:1;height:1px;background:var(--s200)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px}
+    .grid-5{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+
+    /* CARD WRAPPER */
+    .tcard{border-radius:18px;overflow:hidden;cursor:pointer;background:var(--white);border:1.5px solid var(--s200);transition:transform .22s cubic-bezier(.34,1.46,.64,1),box-shadow .22s,border-color .2s;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+    .tcard:hover{transform:translateY(-5px) scale(1.01);box-shadow:0 16px 40px rgba(0,0,0,.12);border-color:var(--s300)}
+    .tcard.ai-rec{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1),0 4px 16px rgba(37,99,235,.08)}
+    .ai-ribbon{display:flex;align-items:center;gap:6px;padding:7px 14px;font-size:10.5px;font-weight:700;color:white;letter-spacing:.03em}
+    .tcard-footer{padding:12px 15px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--s100)}
+    .tci-name{font-size:12.5px;font-weight:700;color:var(--dark);margin-bottom:1px}
+    .tci-price{font-size:11px;color:var(--s400)}
+    .tci-price strong{color:var(--s700);font-weight:700}
+    .tci-badges{display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap}
+    .badge-popular{font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;background:#FFFBEB;color:#92400E;border:1px solid #FDE68A}
+    .badge-premium{font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;background:#F5F3FF;color:#6D28D9;border:1px solid #DDD6FE}
+    .badge-ai{font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;background:var(--ac-l);color:var(--ac-d);border:1px solid var(--ac-m)}
+    .btn-use{font-size:11px;font-weight:700;padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-family:inherit;color:white;transition:opacity .15s,transform .1s;white-space:nowrap}
+    .btn-use:hover{opacity:.85}
+
+    /* explore section divider */
+    .explore-div{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+    .explore-div-label{font-size:13px;font-weight:800;color:var(--dark);white-space:nowrap}
+    .explore-div-line{flex:1;height:1.5px;background:var(--s200)}
+    .explore-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--s100);color:var(--s500);border:1px solid var(--s200);white-space:nowrap}
+
+    /* ── CARD MOCK SHARED RESET ── */
+    .cm{font-family:'DM Sans',sans-serif;overflow:hidden;background:#fff;line-height:1.3}
+
+    /* ════════════════════════════════════════════
+       LAYOUT 1: WAVE
+    ════════════════════════════════════════════ */
+    .cm-wave .cmh{position:relative;padding:13px 13px 0;display:flex;flex-direction:column}
+    .cm-wave .cmh-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;position:relative;z-index:2}
+    .cm-wave .cmh-logo{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:3px 8px;font-size:8.5px;font-weight:700;color:rgba(255,255,255,.85)}
+    .cm-wave .cmh-share{background:rgba(255,255,255,.9);border-radius:14px;padding:3px 9px;font-size:8.5px;font-weight:700;color:#1e293b}
+    .cm-wave .cmh-main{display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:14px;position:relative;z-index:2}
+    .cm-wave .cmh-name{font-size:16px;font-weight:800;color:white;letter-spacing:-.2px;margin-bottom:2px}
+    .cm-wave .cmh-desig{font-size:9.5px;font-weight:500;color:rgba(255,255,255,.72)}
+    .cm-wave .cmh-av{width:54px;height:54px;border-radius:10px;background:rgba(0,0,0,.22);border:2px solid rgba(255,255,255,.28);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex-shrink:0}
+    .cm-wave .cmh-av-i{font-size:18px;opacity:.5}
+    .cm-wave .cmh-av-l{font-size:6px;font-weight:700;color:rgba(255,255,255,.55);text-align:center;line-height:1.2}
+    .cm-wave svg.wv{display:block;width:100%;height:18px;margin-top:-1px}
+    .cm-wave .cmb{background:#f4f6fa;padding:0 11px 9px}
+    .cm-wave .cmb-icons{display:flex;gap:7px;justify-content:center;padding:7px 0 5px}
+    .cm-wave .cmb-ib{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px}
+    .cm-wave .cmc{background:white;border-radius:9px;padding:8px 9px;margin-bottom:5px;display:grid;grid-template-columns:1fr auto;gap:4px}
+    .cm-wave .cmc-title{font-size:8.5px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;grid-column:1;margin-bottom:4px}
+    .cm-wave .cmc-items{grid-column:1;display:flex;flex-direction:column;gap:3px}
+    .cm-wave .cmc-i{display:flex;flex-direction:column}
+    .cm-wave .cmc-l{font-size:7px;font-weight:500;color:#94a3b8}
+    .cm-wave .cmc-v{font-size:9px;font-weight:600;color:#1e293b}
+    .cm-wave .cmc-qr{grid-column:2;grid-row:1/3;display:flex;align-items:center}
+    .cm-wave .cms{display:flex;align-items:center;justify-content:space-between;background:white;border-radius:7px;padding:6px 9px;margin-bottom:5px}
+    .cm-wave .cms-n{font-size:13px;font-weight:900;color:#0f172a;line-height:1}
+    .cm-wave .cms-l{font-size:7px;font-weight:500;color:#94a3b8}
+    .cm-wave .cms-icons{display:flex;gap:4px}
+    .cm-wave .si{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:white}
+    .cm-wave .cma{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px}
+    .cm-wave .cma-b{border-radius:7px;padding:6px 5px;font-size:8.5px;font-weight:700;color:white;display:flex;align-items:center;justify-content:center;gap:3px}
+    .cm-wave .cmt{display:flex;gap:4px}
+    .cm-wave .cmt-t{flex:1;background:white;border-radius:7px;padding:5px 3px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}
+    .cm-wave .cmt-i{font-size:12px}
+    .cm-wave .cmt-l{font-size:6.5px;font-weight:600;color:#64748b;line-height:1.2}
+
+    /* ════════════════════════════════════════════
+       LAYOUT 2: SPLIT
+    ════════════════════════════════════════════ */
+    .cm-split .cmh{position:relative;display:flex;min-height:140px}
+    .cm-split .cmh-left{width:90px;flex-shrink:0;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 10px;gap:8px}
+    .cm-split .cmh-left::after{content:'';position:absolute;top:0;right:-20px;bottom:0;width:40px;clip-path:polygon(0 0,100% 15%,100% 85%,0 100%)}
+    .cm-split .cmh-av{width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.25);border:3px solid rgba(255,255,255,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+    .cm-split .cmh-av-i{font-size:20px;opacity:.55}
+    .cm-split .cmh-av-l{font-size:6px;font-weight:700;color:rgba(255,255,255,.65);text-align:center}
+    .cm-split .cmh-share{background:rgba(255,255,255,.9);border-radius:12px;padding:3px 8px;font-size:7.5px;font-weight:700;color:#1e293b;text-align:center}
+    .cm-split .cmh-right{flex:1;padding:14px 13px 14px 24px;display:flex;flex-direction:column;justify-content:center;background:#fff}
+    .cm-split .cmh-logo{font-size:8px;font-weight:700;color:#94a3b8;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+    .cm-split .cmh-name{font-size:15px;font-weight:800;color:#0f172a;letter-spacing:-.2px;margin-bottom:3px}
+    .cm-split .cmh-desig{font-size:9.5px;color:#64748b;margin-bottom:8px}
+    .cm-split .cmh-tags{display:flex;gap:4px;flex-wrap:wrap}
+    .cm-split .cmh-tag{font-size:7.5px;font-weight:700;padding:2px 7px;border-radius:5px;color:white}
+    .cm-split .cmb{background:#f4f6fa;padding:0 11px 9px}
+    .cm-split .cmb-social{display:flex;align-items:center;justify-content:space-between;background:white;border-radius:9px;padding:7px 10px;margin-bottom:6px}
+    .cm-split .cmb-sc-label{font-size:8px;font-weight:500;color:#94a3b8}
+    .cm-split .cmb-sc-num{font-size:14px;font-weight:900;color:#0f172a;line-height:1}
+    .cm-split .cmb-si{display:flex;gap:4px}
+    .cm-split .si{width:21px;height:21px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:white}
+    .cm-split .cmc{background:white;border-radius:9px;padding:8px 9px;margin-bottom:6px;display:grid;grid-template-columns:1fr auto}
+    .cm-split .cmc-title{font-size:8.5px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;grid-column:1;margin-bottom:4px}
+    .cm-split .cmc-items{grid-column:1;display:flex;flex-direction:column;gap:3px}
+    .cm-split .cmc-i{display:flex;flex-direction:column}
+    .cm-split .cmc-l{font-size:7px;color:#94a3b8;font-weight:500}
+    .cm-split .cmc-v{font-size:9px;font-weight:600;color:#1e293b}
+    .cm-split .cmc-qr{grid-column:2;grid-row:1/3;display:flex;align-items:center}
+    .cm-split .cmb-cta{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px}
+    .cm-split .cta-b{border-radius:7px;padding:6px 5px;font-size:8.5px;font-weight:700;color:white;display:flex;align-items:center;justify-content:center;gap:3px}
+    .cm-split .cmt{display:flex;gap:4px}
+    .cm-split .cmt-t{flex:1;background:white;border-radius:7px;padding:5px 3px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}
+    .cm-split .cmt-i{font-size:12px}
+    .cm-split .cmt-l{font-size:6.5px;font-weight:600;color:#64748b;line-height:1.2}
+
+    /* ════════════════════════════════════════════
+       LAYOUT 3: ACADEMIC
+    ════════════════════════════════════════════ */
+    .cm-academic .cmh{position:relative;padding:14px 14px 18px;background:#1e0050;overflow:hidden}
+    .cm-academic .cmh-dots{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.12) 1px,transparent 1px);background-size:14px 14px}
+    .cm-academic .cmh-top{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+    .cm-academic .cmh-logo{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:3px 8px;font-size:8.5px;font-weight:700;color:rgba(255,255,255,.8)}
+    .cm-academic .cmh-badge{background:linear-gradient(135deg,#7C3AED,#A78BFA);border-radius:6px;padding:3px 8px;font-size:8px;font-weight:700;color:white}
+    .cm-academic .cmh-main{position:relative;z-index:1;display:flex;align-items:center;gap:12px}
+    .cm-academic .cmh-av{width:50px;height:50px;border-radius:50%;background:rgba(167,139,250,.3);border:2.5px solid rgba(167,139,250,.6);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .cm-academic .cmh-info{}
+    .cm-academic .cmh-name{font-size:15px;font-weight:800;color:white;letter-spacing:-.2px;margin-bottom:2px}
+    .cm-academic .cmh-desig{font-size:9px;color:rgba(167,139,250,.9);margin-bottom:4px}
+    .cm-academic .cmh-dept{font-size:8px;color:rgba(255,255,255,.5)}
+    .cm-academic .cmb{background:#f9f7ff;padding:10px 12px 10px}
+    .cm-academic .cmb-chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+    .cm-academic .chip{font-size:8px;font-weight:700;padding:3px 8px;border-radius:5px;border:1px solid}
+    .cm-academic .cmc{background:white;border-radius:9px;padding:8px 9px;margin-bottom:6px;display:grid;grid-template-columns:1fr auto}
+    .cm-academic .cmc-title{font-size:8.5px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;grid-column:1;margin-bottom:4px}
+    .cm-academic .cmc-items{grid-column:1;display:flex;flex-direction:column;gap:3px}
+    .cm-academic .cmc-i{display:flex;flex-direction:column}
+    .cm-academic .cmc-l{font-size:7px;color:#94a3b8;font-weight:500}
+    .cm-academic .cmc-v{font-size:9px;font-weight:600;color:#1e293b}
+    .cm-academic .cmc-qr{grid-column:2;grid-row:1/3;display:flex;align-items:center}
+    .cm-academic .si{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:white}
+    .cm-academic .cms{display:flex;align-items:center;justify-content:space-between;background:white;border-radius:7px;padding:6px 9px;margin-bottom:6px}
+    .cm-academic .cms-icons{display:flex;gap:4px}
+    .cm-academic .cms-n{font-size:12px;font-weight:900;color:#0f172a;line-height:1}
+    .cm-academic .cms-l{font-size:7px;font-weight:500;color:#94a3b8}
+    .cm-academic .cma{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+    .cm-academic .cma-b{border-radius:7px;padding:7px 5px;font-size:8.5px;font-weight:700;color:white;display:flex;align-items:center;justify-content:center;gap:3px}
+
+    /* ════════════════════════════════════════════
+       LAYOUT 4: TRAVEL
+    ════════════════════════════════════════════ */
+    .cm-travel .cmh{position:relative;min-height:150px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:14px}
+    .cm-travel .cmh-bg{position:absolute;inset:0}
+    .cm-travel .cmh-orb1{position:absolute;width:100px;height:100px;border-radius:50%;top:-20px;right:-20px;opacity:.4;filter:blur(20px)}
+    .cm-travel .cmh-orb2{position:absolute;width:80px;height:80px;border-radius:50%;bottom:10px;left:-10px;opacity:.3;filter:blur(16px)}
+    .cm-travel .cmh-top{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+    .cm-travel .cmh-icon{font-size:26px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
+    .cm-travel .cmh-share{background:rgba(255,255,255,.9);border-radius:14px;padding:3px 9px;font-size:8.5px;font-weight:700;color:#1e293b}
+    .cm-travel .cmh-bottom{position:relative;z-index:2;display:flex;align-items:flex-end;justify-content:space-between}
+    .cm-travel .cmh-name{font-size:17px;font-weight:800;color:white;letter-spacing:-.3px;margin-bottom:2px;text-shadow:0 1px 4px rgba(0,0,0,.3)}
+    .cm-travel .cmh-desig{font-size:9.5px;color:rgba(255,255,255,.75)}
+    .cm-travel .cmh-av{width:52px;height:52px;border-radius:50%;background:rgba(0,0,0,.2);border:2.5px solid rgba(255,255,255,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex-shrink:0}
+    .cm-travel .cmh-av-i{font-size:17px;opacity:.5}
+    .cm-travel .cmh-av-l{font-size:6px;font-weight:700;color:rgba(255,255,255,.55);text-align:center;line-height:1.2}
+    .cm-travel .cmb{background:#fff8f8;padding:0 11px 9px}
+    .cm-travel .cmb-flags{display:flex;align-items:center;gap:6px;padding:8px 0 5px;font-size:11px}
+    .cm-travel .cmb-flag-sep{font-size:10px;color:#94a3b8;flex:1;text-align:center;position:relative}
+    .cm-travel .cmc{background:white;border-radius:9px;padding:8px 9px;margin-bottom:6px;display:grid;grid-template-columns:1fr auto}
+    .cm-travel .cmc-title{font-size:8.5px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;grid-column:1;margin-bottom:4px}
+    .cm-travel .cmc-items{grid-column:1;display:flex;flex-direction:column;gap:3px}
+    .cm-travel .cmc-i{display:flex;flex-direction:column}
+    .cm-travel .cmc-l{font-size:7px;color:#94a3b8;font-weight:500}
+    .cm-travel .cmc-v{font-size:9px;font-weight:600;color:#1e293b}
+    .cm-travel .cmc-qr{grid-column:2;grid-row:1/3;display:flex;align-items:center}
+    .cm-travel .cma{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px}
+    .cm-travel .cma-b{border-radius:7px;padding:6px 5px;font-size:8.5px;font-weight:700;color:white;display:flex;align-items:center;justify-content:center;gap:3px}
+    .cm-travel .si{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:white}
+    .cm-travel .cms{display:flex;align-items:center;justify-content:space-between;background:white;border-radius:7px;padding:6px 9px}
+    .cm-travel .cms-icons{display:flex;gap:4px}
+    .cm-travel .cms-n{font-size:12px;font-weight:900;color:#0f172a;line-height:1}
+    .cm-travel .cms-l{font-size:7px;font-weight:500;color:#94a3b8}
+
+    /* ════════════════════════════════════════════
+       LAYOUT 5: MINIMAL
+    ════════════════════════════════════════════ */
+    .cm-minimal .cmh{padding:0}
+    .cm-minimal .cmh-stripe{height:7px}
+    .cm-minimal .cmh-inner{padding:16px 14px 12px;background:white}
+    .cm-minimal .cmh-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+    .cm-minimal .cmh-logo{font-size:8px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;background:#f1f5f9;border-radius:5px;padding:3px 7px}
+    .cm-minimal .cmh-av{width:42px;height:42px;border-radius:8px;background:#f1f5f9;border:1.5px solid #e2e8f0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+    .cm-minimal .cmh-av-i{font-size:16px;opacity:.35}
+    .cm-minimal .cmh-av-l{font-size:6px;font-weight:700;color:#94a3b8;text-align:center;line-height:1.2}
+    .cm-minimal .cmh-name{font-size:17px;font-weight:900;color:#0f172a;letter-spacing:-.3px;margin-bottom:3px}
+    .cm-minimal .cmh-desig{font-size:10px;font-weight:500;margin-bottom:12px}
+    .cm-minimal .cmh-div{height:1px;background:#e2e8f0;margin-bottom:10px}
+    .cm-minimal .cmh-contacts{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+    .cm-minimal .cmh-ci{display:flex;align-items:center;gap:6px}
+    .cm-minimal .cmh-ci-icon{font-size:11px}
+    .cm-minimal .cmh-ci-val{font-size:9.5px;font-weight:600;color:#334155}
+    .cm-minimal .cmh-qr-row{display:flex;justify-content:flex-end;margin-bottom:8px}
+    .cm-minimal .cmb{background:#f8fafc;padding:10px 14px}
+    .cm-minimal .si{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:white}
+    .cm-minimal .cms{display:flex;align-items:center;justify-content:space-between;background:white;border-radius:7px;padding:6px 9px;margin-bottom:6px}
+    .cm-minimal .cms-icons{display:flex;gap:4px}
+    .cm-minimal .cms-n{font-size:12px;font-weight:900;color:#0f172a;line-height:1}
+    .cm-minimal .cms-l{font-size:7px;font-weight:500;color:#94a3b8}
+    .cm-minimal .cma{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+    .cm-minimal .cma-b{border-radius:7px;padding:7px 5px;font-size:8.5px;font-weight:700;color:white;display:flex;align-items:center;justify-content:center;gap:3px}
+
+    /* ════════════════════════════════════════════
+       LAYOUT 6: CIRCLE HERO
+    ════════════════════════════════════════════ */
+    .cm-circle .cmh{position:relative;padding-bottom:40px;overflow:visible}
+    .cm-circle .cmh-band{height:100px;position:relative;overflow:hidden}
+    .cm-circle .cmh-top{position:absolute;top:12px;left:13px;right:13px;display:flex;justify-content:space-between;z-index:2}
+    .cm-circle .cmh-logo{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:3px 8px;font-size:8.5px;font-weight:700;color:rgba(255,255,255,.85)}
+    .cm-circle .cmh-share{background:rgba(255,255,255,.9);border-radius:14px;padding:3px 9px;font-size:8.5px;font-weight:700;color:#1e293b}
+    .cm-circle .cmh-av-wrap{position:absolute;bottom:-36px;left:50%;transform:translateX(-50%);z-index:3}
+    .cm-circle .cmh-av{width:72px;height:72px;border-radius:50%;border:4px solid white;background:#e2e8f0;box-shadow:0 4px 14px rgba(0,0,0,.15);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+    .cm-circle .cmh-av-i{font-size:24px;opacity:.45}
+    .cm-circle .cmh-av-l{font-size:6.5px;font-weight:700;color:#94a3b8;text-align:center;line-height:1.2}
+    .cm-circle .cmb{background:#f4f6fa;padding:44px 12px 9px;text-align:center}
+    .cm-circle .cmb-name{font-size:15px;font-weight:800;color:#0f172a;letter-spacing:-.2px;margin-bottom:2px}
+    .cm-circle .cmb-desig{font-size:9.5px;color:#64748b;margin-bottom:10px}
+    .cm-circle .cmb-social{display:flex;gap:5px;justify-content:center;margin-bottom:8px}
+    .cm-circle .si{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:white}
+    .cm-circle .cmc{background:white;border-radius:9px;padding:8px 9px;margin-bottom:6px;display:grid;grid-template-columns:1fr auto;text-align:left}
+    .cm-circle .cmc-title{font-size:8.5px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;grid-column:1;margin-bottom:4px}
+    .cm-circle .cmc-items{grid-column:1;display:flex;flex-direction:column;gap:3px}
+    .cm-circle .cmc-i{display:flex;flex-direction:column}
+    .cm-circle .cmc-l{font-size:7px;color:#94a3b8;font-weight:500}
+    .cm-circle .cmc-v{font-size:9px;font-weight:600;color:#1e293b}
+    .cm-circle .cmc-qr{grid-column:2;grid-row:1/3;display:flex;align-items:center}
+    .cm-circle .cma{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+    .cm-circle .cma-b{border-radius:7px;padding:7px 5px;font-size:8.5px;font-weight:700;color:white;display:flex;align-items:center;justify-content:center;gap:3px}
+
+    /* ════════════════════════════════════════════
+       LAYOUT 7: DIAGONAL
+    ════════════════════════════════════════════ */
+    .cm-diagonal .cmh{position:relative;height:155px;overflow:hidden}
+    .cm-diagonal .cmh-bg{position:absolute;inset:0}
+    .cm-diagonal .cmh-cut{position:absolute;bottom:-1px;right:0;width:55%;height:100%;background:white;clip-path:polygon(20% 0%,100% 0%,100% 100%,0% 100%)}
+    .cm-diagonal .cmh-top{position:relative;z-index:2;padding:12px 14px;display:flex;justify-content:space-between}
+    .cm-diagonal .cmh-logo{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:3px 8px;font-size:8.5px;font-weight:700;color:rgba(255,255,255,.85)}
+    .cm-diagonal .cmh-verified{background:rgba(255,255,255,.9);border-radius:6px;padding:3px 8px;font-size:8px;font-weight:700;color:#047857;display:flex;align-items:center;gap:3px}
+    .cm-diagonal .cmh-bottom{position:absolute;bottom:14px;left:14px;z-index:2}
+    .cm-diagonal .cmh-name{font-size:16px;font-weight:800;color:white;letter-spacing:-.2px;margin-bottom:2px;text-shadow:0 1px 4px rgba(0,0,0,.2)}
+    .cm-diagonal .cmh-desig{font-size:9.5px;color:rgba(255,255,255,.8)}
+    .cm-diagonal .cmh-av{position:absolute;bottom:14px;right:14px;z-index:2;width:52px;height:52px;border-radius:9px;background:#fff3e0;border:2px solid rgba(217,119,6,.3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+    .cm-diagonal .cmh-av-i{font-size:18px;opacity:.45}
+    .cm-diagonal .cmh-av-l{font-size:6px;font-weight:700;color:#d97706;text-align:center;line-height:1.2}
+    .cm-diagonal .cmb{background:#fffbf0;padding:10px 12px}
+    .cm-diagonal .cmb-chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+    .cm-diagonal .chip{font-size:8px;font-weight:700;padding:3px 8px;border-radius:5px;border:1px solid}
+    .cm-diagonal .cmc{background:white;border-radius:9px;padding:8px 9px;margin-bottom:6px;display:grid;grid-template-columns:1fr auto}
+    .cm-diagonal .cmc-title{font-size:8.5px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;grid-column:1;margin-bottom:4px}
+    .cm-diagonal .cmc-items{grid-column:1;display:flex;flex-direction:column;gap:3px}
+    .cm-diagonal .cmc-i{display:flex;flex-direction:column}
+    .cm-diagonal .cmc-l{font-size:7px;color:#94a3b8;font-weight:500}
+    .cm-diagonal .cmc-v{font-size:9px;font-weight:600;color:#1e293b}
+    .cm-diagonal .cmc-qr{grid-column:2;grid-row:1/3;display:flex;align-items:center}
+    .cm-diagonal .si{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:white}
+    .cm-diagonal .cms{display:flex;align-items:center;justify-content:space-between;background:white;border-radius:7px;padding:6px 9px;margin-bottom:6px}
+    .cm-diagonal .cms-icons{display:flex;gap:4px}
+    .cm-diagonal .cms-n{font-size:12px;font-weight:900;color:#0f172a;line-height:1}
+    .cm-diagonal .cms-l{font-size:7px;font-weight:500;color:#94a3b8}
+    .cm-diagonal .cma{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+    .cm-diagonal .cma-b{border-radius:7px;padding:7px 5px;font-size:8.5px;font-weight:700;color:white;display:flex;align-items:center;justify-content:center;gap:3px}
+
+    /* ════════════════════════════════════════════
+       LAYOUT 8: METALLIC (PREMIUM)
+    ════════════════════════════════════════════ */
+    .cm-metallic{background:repeating-linear-gradient(88deg,transparent 0px,rgba(255,255,255,.022) 1px,transparent 2px,transparent 6px),repeating-linear-gradient(2deg,transparent 0px,rgba(255,255,255,.012) 1px,transparent 2px,transparent 8px),linear-gradient(160deg,#08111F 0%,#0F1E35 35%,#152440 65%,#0A1628 100%) !important}
+    .cm-metallic .cmh{padding:14px 14px 10px}
+    .cm-metallic .cmh-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .cm-metallic .cmh-brand{display:flex;align-items:center;gap:5px}
+    .cm-metallic .cmh-diamond{font-size:9px;background:linear-gradient(135deg,#B8922A,#F0CF7A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .cm-metallic .cmh-wordmark{font-size:8px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;background:linear-gradient(90deg,#9CA8B5,#D0DCE8,#9CA8B5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .cm-metallic .cmh-premium{font-size:7px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#D4AF5A;background:rgba(180,140,30,.18);border:1px solid rgba(180,140,30,.35);padding:2px 7px;border-radius:10px}
+    .cm-metallic .cmh-main{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px}
+    .cm-metallic .cmh-name{font-size:16px;font-weight:800;letter-spacing:-.3px;background:linear-gradient(135deg,#FFFFFF 0%,#BCC8D4 45%,#E6EDF3 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:3px}
+    .cm-metallic .cmh-desig{font-size:9px;letter-spacing:.04em;color:rgba(255,255,255,.38)}
+    .cm-metallic .cmh-av-wrap{position:relative;width:52px;height:52px;flex-shrink:0}
+    .cm-metallic .cmh-av-ring{position:absolute;inset:-3px;border-radius:12px;background:conic-gradient(#B8922A 0%,#F0CF7A 25%,#B8922A 50%,#F0CF7A 75%,#B8922A 100%)}
+    .cm-metallic .cmh-av{position:relative;width:100%;height:100%;border-radius:10px;background:#0F1E35;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden}
+    .cm-metallic .cmh-av-i{font-size:18px;opacity:.35}
+    .cm-metallic .cmh-av-l{font-size:5.5px;font-weight:700;color:rgba(255,255,255,.3);text-align:center;line-height:1.2}
+    .cm-metallic .cmh-gold{height:1px;background:linear-gradient(90deg,transparent,#B8922A 20%,#F0CF7A 50%,#B8922A 80%,transparent);margin:0 14px 10px}
+    .cm-metallic .cmb{padding:0 14px 10px}
+    .cm-metallic .cmc{background:rgba(255,255,255,.04);border-radius:8px;padding:8px 9px;margin-bottom:7px;border:1px solid rgba(180,140,30,.15);display:grid;grid-template-columns:1fr auto}
+    .cm-metallic .cmc-title{font-size:7.5px;font-weight:700;color:rgba(212,175,90,.65);text-transform:uppercase;letter-spacing:.1em;grid-column:1;margin-bottom:5px}
+    .cm-metallic .cmc-items{grid-column:1;display:flex;flex-direction:column;gap:4px}
+    .cm-metallic .cmc-i{display:flex;align-items:center;gap:6px}
+    .cm-metallic .cmc-icon{font-size:9px;opacity:.7}
+    .cm-metallic .cmc-v{font-size:9px;font-weight:500;color:rgba(255,255,255,.55)}
+    .cm-metallic .cmc-qr{grid-column:2;grid-row:1/3;display:flex;align-items:center;opacity:.3;filter:sepia(1) saturate(.3) hue-rotate(180deg)}
+    .cm-metallic .si{width:21px;height:21px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:rgba(255,255,255,.7);background:rgba(212,175,90,.12) !important;border:1px solid rgba(212,175,90,.28)}
+    .cm-metallic .cms{display:flex;align-items:center;justify-content:space-between;padding:5px 0;margin-bottom:7px;border-bottom:1px solid rgba(180,140,30,.12)}
+    .cm-metallic .cms-icons{display:flex;gap:4px}
+    .cm-metallic .cms-n{font-size:12px;font-weight:900;color:rgba(255,255,255,.5);line-height:1}
+    .cm-metallic .cms-l{font-size:6.5px;font-weight:500;color:rgba(255,255,255,.22)}
+    .cm-metallic .cma{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+    .cm-metallic .cma-b{border-radius:7px;padding:7px 5px;font-size:8px;font-weight:700;color:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;gap:3px;background:rgba(212,175,90,.1) !important;border:1px solid rgba(212,175,90,.22)}
+
+    /* COLOR SWATCHES */
+    .tcard-colors{display:flex;align-items:center;gap:5px;padding:7px 12px 9px;background:#F8FAFC;border-top:1px solid #E2E8F0}
+    .color-lbl{font-size:9px;font-weight:600;color:#94A3B8;letter-spacing:.05em;text-transform:uppercase;margin-right:2px;flex-shrink:0}
+    .csw{width:14px;height:14px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;flex-shrink:0;outline:none}
+    .csw:hover{transform:scale(1.3);box-shadow:0 0 0 2px rgba(0,0,0,.12)}
+    .csw.csw-on{border-color:#0F172A;transform:scale(1.18);box-shadow:0 0 0 1px #0F172A}
+
+    /* ═══ MODAL ═══ */
+    .modal-bg{display:none;position:fixed;inset:0;z-index:100;background:rgba(15,23,42,.55);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px}
+    .modal-bg.show{display:flex;animation:fin .18s ease}
+    @keyframes fin{from{opacity:0}to{opacity:1}}
+    .modal{width:100%;max-width:780px;border-radius:20px;background:var(--white);border:1px solid var(--s200);box-shadow:0 28px 80px rgba(0,0,0,.18);animation:sup .22s cubic-bezier(.34,1.46,.64,1);display:grid;grid-template-columns:1fr 1fr;overflow:hidden;max-height:92vh}
+    @keyframes sup{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+    @media(max-width:680px){.modal{grid-template-columns:1fr;max-height:95vh;overflow-y:auto}}
+    .modal-card-col{background:var(--s100);padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;border-right:1px solid var(--s200);overflow-y:auto}
+    .modal-card-col .cm{border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);width:100%;max-width:260px}
+    .modal-card-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--s400);text-align:center}
+    .modal-info-col{padding:22px 24px;overflow-y:auto;display:flex;flex-direction:column}
+    .modal-top-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+    .modal-name{font-size:18px;font-weight:800;color:var(--dark);letter-spacing:-.2px}
+    .modal-plan{font-size:11px;color:var(--s400);margin-top:3px}
+    .modal-close-btn{width:28px;height:28px;border-radius:7px;border:1px solid var(--s200);background:none;color:var(--s500);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all .15s}
+    .modal-close-btn:hover{background:var(--s100);color:var(--dark)}
+    .modal-desc{font-size:12.5px;color:var(--s600);line-height:1.65;margin-bottom:16px}
+    .modal-features-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--s400);margin-bottom:10px}
+    .modal-features{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:18px;flex:1}
+    .modal-features li{font-size:12.5px;color:var(--s700);display:flex;align-items:center;gap:8px}
+    .mcheck{width:17px;height:17px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:white}
+    .modal-footer{display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid var(--s100);margin-top:auto}
+    .modal-price{font-size:20px;font-weight:900;color:var(--dark);letter-spacing:-.3px}
+    .modal-price span{font-size:11px;font-weight:500;color:var(--s400)}
+    .btn-modal-use{font-size:12.5px;font-weight:700;padding:10px 22px;border-radius:9px;border:none;cursor:pointer;font-family:inherit;color:white;transition:opacity .15s,transform .1s;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+    .btn-modal-use:hover{opacity:.85;transform:translateY(-1px)}
+
+    /* EMPTY / TOAST */
+    .empty{grid-column:1/-1;text-align:center;padding:70px 20px}
+    .empty-icon{font-size:40px;margin-bottom:10px}
+    .empty-title{font-size:14px;font-weight:700;color:var(--s500);margin-bottom:4px}
+    .empty-sub{font-size:12px;color:var(--s400)}
+    .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--dark);color:white;font-size:12.5px;font-weight:600;padding:11px 18px;border-radius:9px;box-shadow:0 6px 24px rgba(0,0,0,.2);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:200;display:flex;align-items:center;gap:7px;white-space:nowrap}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    @media(max-width:600px){.tn-links{display:none}.grid{grid-template-columns:1fr}.grid-5{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="tn-brand">
+    <div class="tn-logo">💳</div>
+    <div class="tn-name">Insta VIZ <span>× PxlBrain</span></div>
+  </div>
+  <div class="tn-links">
+    <a href="flow.html" class="tn-link">Integration Flow</a>
+    <a href="templates.html" class="tn-link active">Smart Card Templates</a>
+  </div>
+  <div class="tn-right">
+    <span class="tn-user" id="userBadge">admin</span>
+    <button class="tn-logout" onclick="logout()">Sign out</button>
+  </div>
+</nav>
+
+<div class="page-head">
+  <div class="ph-eyebrow"><span class="live-dot"></span> AI-Powered Template Engine</div>
+  <h1 class="ph-title">Smart Card Templates,<br><em>suggested by AI</em></h1>
+  <p class="ph-sub">Enter your details — our AI matches you to the best 3 templates.</p>
+</div>
+
+<div class="ai-panel-wrap">
+  <div class="ai-panel">
+    <div class="ai-panel-head">
+      <div class="ai-icon">🤖</div>
+      <div>
+        <div class="ai-panel-title">Tell us about yourself</div>
+        <div class="ai-panel-sub">Get AI-matched top 3 template recommendations in seconds</div>
+      </div>
+    </div>
+    <div class="ai-form">
+      <div class="ai-field"><label>Your Name</label><input id="aiName" placeholder="e.g. Anamica Reji"/></div>
+      <div class="ai-field"><label>Designation / Role</label><input id="aiRole" placeholder="e.g. MBA HR, Software Engineer"/></div>
+      <div class="ai-field"><label>Organisation / Institution</label><input id="aiOrg" placeholder="e.g. IIT Madras, Tata Consultancy"/></div>
+      <div class="ai-field"><label>I am a</label>
+        <select id="aiAudience">
+          <option value="">— Select your profile —</option>
+          <option value="student">Student</option>
+          <option value="professional">Working Professional</option>
+        </select>
+      </div>
+      <div class="ai-field ai-full"><label>What do you need the card for?</label><input id="aiUsecase" placeholder="e.g. campus networking, client meetings, research credentials, international exchange…"/></div>
+      <button class="btn-suggest" onclick="runAISuggest()" id="suggestBtn">
+        <span id="suggestBtnTxt">✨ Get AI Suggestion</span>
+      </button>
+      <div class="ai-thinking" id="aiThinking">
+        <span>🤖 AI is analysing your profile</span>
+        <span class="think-dots"><span></span><span></span><span></span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI RECOMMENDED SECTION (shown after submit) -->
+<div class="ai-rec-section" id="aiRecSection">
+  <div class="ai-rec-header">
+    <div class="ai-rec-icon">🤖</div>
+    <div>
+      <div class="ai-rec-title" id="aiRecTitle">AI Recommended for You</div>
+      <div class="ai-rec-sub" id="aiRecSub">Based on your profile, here are your top 3 best-matching templates</div>
+    </div>
+  </div>
+  <div class="ai-rec-grid" id="aiRecGrid"></div>
+</div>
+
+<!-- EXPLORE ALL (shown after submit) -->
+<div class="explore-section" id="exploreSection" style="display:none">
+  <div class="explore-div">
+    <div class="explore-div-label" id="exploreDivLabel">Explore All Templates</div>
+    <div class="explore-div-line"></div>
+    <div class="explore-badge" id="exploreBadge">17 more</div>
+  </div>
+  <div class="grid-5" id="exploreGrid"></div>
+</div>
+
+<!-- PRE-SUBMIT: tabbed grid -->
+<div class="grid-section" id="gridSection">
+  <div class="section-bar">
+    <div class="section-title">All Templates</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div class="tabs">
+        <button class="tab active" id="tab-all" onclick="setTab('all')">All <span class="tab-count" id="cnt-all">20</span></button>
+        <button class="tab" id="tab-student" onclick="setTab('student')">🎓 Students <span class="tab-count" id="cnt-student">10</span></button>
+        <button class="tab" id="tab-professional" onclick="setTab('professional')">💼 Professionals <span class="tab-count" id="cnt-professional">10</span></button>
+      </div>
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="Search…" oninput="renderGrid()"/>
+      </div>
+    </div>
+  </div>
+  <div id="gridRoot"></div>
+</div>
+
+<div class="modal-bg" id="modalBg" onclick="onBgClick(event)">
+  <div class="modal">
+    <div class="modal-card-col">
+      <div class="modal-card-label">Template Preview</div>
+      <div id="modalCardPreview" style="width:100%"></div>
+    </div>
+    <div class="modal-info-col">
+      <div class="modal-top-row">
+        <div>
+          <div class="modal-name" id="modalName"></div>
+          <div class="modal-plan" id="modalPlan"></div>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal()">✕</button>
+      </div>
+      <p class="modal-desc" id="modalDesc"></p>
+      <div class="modal-features-title">What's included</div>
+      <ul class="modal-features" id="modalFeatures"></ul>
+      <div class="modal-footer">
+        <div class="modal-price" id="modalPrice"></div>
+        <button class="btn-modal-use" id="modalUseBtn" onclick="useModal()">Use this template →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span>✅</span><span id="toastMsg">Template applied!</span></div>
+
+<script>
+  if (sessionStorage.getItem('iv_auth') !== '1') window.location.href = 'login.html';
+  document.getElementById('userBadge').textContent = sessionStorage.getItem('iv_user') || 'admin';
+  function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
+
+  const QR = `<svg width="46" height="46" viewBox="0 0 52 52" fill="none">
+    <rect x="2" y="2" width="16" height="16" rx="2" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="5.5" y="5.5" width="9" height="9" rx="1" fill="#1e293b"/>
+    <rect x="34" y="2" width="16" height="16" rx="2" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="37.5" y="5.5" width="9" height="9" rx="1" fill="#1e293b"/>
+    <rect x="2" y="34" width="16" height="16" rx="2" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+    <rect x="5.5" y="37.5" width="9" height="9" rx="1" fill="#1e293b"/>
+    <rect x="22" y="2" width="4" height="4" fill="#1e293b"/><rect x="28" y="2" width="4" height="4" fill="#1e293b"/>
+    <rect x="22" y="8" width="4" height="4" fill="#1e293b"/><rect x="28" y="8" width="4" height="4" fill="#1e293b"/>
+    <rect x="22" y="22" width="4" height="4" fill="#1e293b"/><rect x="28" y="22" width="4" height="4" fill="#1e293b"/>
+    <rect x="34" y="22" width="4" height="4" fill="#1e293b"/><rect x="40" y="22" width="4" height="4" fill="#1e293b"/>
+    <rect x="46" y="22" width="4" height="4" fill="#1e293b"/><rect x="22" y="28" width="4" height="4" fill="#1e293b"/>
+    <rect x="40" y="28" width="4" height="4" fill="#1e293b"/><rect x="28" y="34" width="4" height="4" fill="#1e293b"/>
+    <rect x="40" y="34" width="4" height="4" fill="#1e293b"/><rect x="22" y="40" width="4" height="4" fill="#1e293b"/>
+    <rect x="34" y="40" width="4" height="4" fill="#1e293b"/><rect x="46" y="40" width="4" height="4" fill="#1e293b"/>
+    <rect x="28" y="46" width="4" height="4" fill="#1e293b"/><rect x="46" y="46" width="4" height="4" fill="#1e293b"/>
+  </svg>`;
+
+  function si(color, label) {
+    return `<div class="si" style="background:${color}">${label}</div>`;
+  }
+
+  /* ════ 8 DISTINCT CARD BUILDERS ════ */
+
+  function buildWave(t) {
+    return `<div class="cm cm-wave">
+      <div class="cmh" style="background:${t.grad}">
+        <div class="cmh-top"><div class="cmh-logo">Logo Here</div><div class="cmh-share">Share →</div></div>
+        <div class="cmh-main">
+          <div><div class="cmh-name">Your Name</div><div class="cmh-desig">Your Designation</div></div>
+          <div class="cmh-av"><div class="cmh-av-i">👤</div><div class="cmh-av-l">Upload<br>Your DP</div></div>
+        </div>
+        <svg class="wv" viewBox="0 0 300 18" preserveAspectRatio="none"><path d="M0,18 C60,0 120,14 180,6 C240,-1 270,12 300,7 L300,18 Z" fill="#f4f6fa"/></svg>
+      </div>
+      <div class="cmb">
+        <div class="cmb-icons">
+          <div class="cmb-ib" style="background:${t.a}">📞</div>
+          <div class="cmb-ib" style="background:${t.a}">✉️</div>
+          <div class="cmb-ib" style="background:${t.a}">📍</div>
+        </div>
+        <div class="cmc">
+          <div class="cmc-title">Contact Details</div>
+          <div class="cmc-items">
+            <div class="cmc-i"><span class="cmc-l">Mobile</span><span class="cmc-v">Your Number</span></div>
+            <div class="cmc-i"><span class="cmc-l">E-mail</span><span class="cmc-v">Your Mail ID</span></div>
+            <div class="cmc-i"><span class="cmc-l">Address</span><span class="cmc-v">Your Address</span></div>
+          </div>
+          <div class="cmc-qr">${QR}</div>
+        </div>
+        <div class="cms">
+          <div><div class="cms-n">04</div><div class="cms-l">Active social link</div></div>
+          <div class="cms-icons">${si('#0A66C2','in')}${si('#E1306C','ig')}${si('#1877F2','f')}${si('#111','𝕏')}</div>
+        </div>
+        <div class="cma">
+          <div class="cma-b" style="background:#22C55E">💬 WhatsApp</div>
+          <div class="cma-b" style="background:${t.a}">👤 About me</div>
+        </div>
+        <div class="cmt">
+          <div class="cmt-t"><div class="cmt-i">🌐</div><div class="cmt-l">my website</div></div>
+          <div class="cmt-t"><div class="cmt-i">🏠</div><div class="cmt-l">Home Screen</div></div>
+          <div class="cmt-t"><div class="cmt-i">💾</div><div class="cmt-l">Save Contact</div></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function buildSplit(t) {
+    return `<div class="cm cm-split">
+      <div class="cmh">
+        <div class="cmh-left" style="background:${t.grad}">
+          <div class="cmh-av">
+            <div class="cmh-av-i">👤</div>
+            <div class="cmh-av-l">Upload<br>DP</div>
+          </div>
+          <div class="cmh-share">Share →</div>
+        </div>
+        <div class="cmh-right">
+          <div class="cmh-logo">Logo Here</div>
+          <div class="cmh-name">Your Name</div>
+          <div class="cmh-desig">Your Designation</div>
+          <div class="cmh-tags">
+            <div class="cmh-tag" style="background:${t.a}">🎓 Student</div>
+            <div class="cmh-tag" style="background:#475569">NFC</div>
+          </div>
+        </div>
+      </div>
+      <div class="cmb">
+        <div class="cmb-social">
+          <div><div class="cmb-sc-num">04</div><div class="cmb-sc-label">Active social link</div></div>
+          <div class="cmb-si">${si('#0A66C2','in')}${si('#E1306C','ig')}${si('#1877F2','f')}${si('#111','𝕏')}</div>
+        </div>
+        <div class="cmc">
+          <div class="cmc-title">Contact Details</div>
+          <div class="cmc-items">
+            <div class="cmc-i"><span class="cmc-l">Mobile</span><span class="cmc-v">Your Number</span></div>
+            <div class="cmc-i"><span class="cmc-l">E-mail</span><span class="cmc-v">Your Mail ID</span></div>
+            <div class="cmc-i"><span class="cmc-l">Address</span><span class="cmc-v">Your Address</span></div>
+          </div>
+          <div class="cmc-qr">${QR}</div>
+        </div>
+        <div class="cmb-cta">
+          <div class="cta-b" style="background:#22C55E">💬 WhatsApp</div>
+          <div class="cta-b" style="background:${t.a}">👤 About me</div>
+        </div>
+        <div class="cmt">
+          <div class="cmt-t"><div class="cmt-i">🌐</div><div class="cmt-l">my website</div></div>
+          <div class="cmt-t"><div class="cmt-i">🏠</div><div class="cmt-l">Home Screen</div></div>
+          <div class="cmt-t"><div class="cmt-i">💾</div><div class="cmt-l">Save Contact</div></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function buildAcademic(t) {
+    return `<div class="cm cm-academic">
+      <div class="cmh" style="background:${t.grad}">
+        <div class="cmh-dots"></div>
+        <div class="cmh-top"><div class="cmh-logo">Logo Here</div><div class="cmh-badge">🔬 Research</div></div>
+        <div class="cmh-main">
+          <div class="cmh-av">👤</div>
+          <div class="cmh-info">
+            <div class="cmh-name">Your Name</div>
+            <div class="cmh-desig" style="color:rgba(167,139,250,.9)">PhD Candidate</div>
+            <div class="cmh-dept">Department of Science</div>
+          </div>
+        </div>
+      </div>
+      <div class="cmb">
+        <div class="cmb-chips">
+          <span class="chip" style="background:#f3f0ff;color:#6d28d9;border-color:#ddd6fe">📄 Publications</span>
+          <span class="chip" style="background:#ecfdf5;color:#047857;border-color:#a7f3d0">✓ ORCID</span>
+          <span class="chip" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe">🏛 Scholar</span>
+        </div>
+        <div class="cmc">
+          <div class="cmc-title">Contact Details</div>
+          <div class="cmc-items">
+            <div class="cmc-i"><span class="cmc-l">Mobile</span><span class="cmc-v">Your Number</span></div>
+            <div class="cmc-i"><span class="cmc-l">E-mail</span><span class="cmc-v">Your Mail ID</span></div>
+            <div class="cmc-i"><span class="cmc-l">Institution</span><span class="cmc-v">Your University</span></div>
+          </div>
+          <div class="cmc-qr">${QR}</div>
+        </div>
+        <div class="cms">
+          <div><div class="cms-n">04</div><div class="cms-l">Active social link</div></div>
+          <div class="cms-icons">${si('#0A66C2','in')}${si('#E1306C','ig')}${si('#1877F2','f')}${si('#111','𝕏')}</div>
+        </div>
+        <div class="cma">
+          <div class="cma-b" style="background:#22C55E">💬 WhatsApp</div>
+          <div class="cma-b" style="background:${t.a}">👤 About me</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function buildTravel(t) {
+    return `<div class="cm cm-travel">
+      <div class="cmh">
+        <div class="cmh-bg" style="background:${t.grad}"></div>
+        <div class="cmh-orb1" style="background:${t.a}"></div>
+        <div class="cmh-orb2" style="background:#FF6B6B"></div>
+        <div class="cmh-top">
+          <div class="cmh-icon">✈️</div>
+          <div class="cmh-share">Share →</div>
+        </div>
+        <div class="cmh-bottom">
+          <div>
+            <div class="cmh-name">Your Name</div>
+            <div class="cmh-desig">Your Designation</div>
+          </div>
+          <div class="cmh-av">
+            <div class="cmh-av-i">👤</div>
+            <div class="cmh-av-l">Upload<br>Your DP</div>
+          </div>
+        </div>
+      </div>
+      <div class="cmb">
+        <div class="cmb-flags">
+          <span>🇮🇳</span>
+          <span class="cmb-flag-sep">──── exchange ────</span>
+          <span>🌍</span>
+        </div>
+        <div class="cmc">
+          <div class="cmc-title">Contact Details</div>
+          <div class="cmc-items">
+            <div class="cmc-i"><span class="cmc-l">Mobile</span><span class="cmc-v">Your Number</span></div>
+            <div class="cmc-i"><span class="cmc-l">E-mail</span><span class="cmc-v">Your Mail ID</span></div>
+            <div class="cmc-i"><span class="cmc-l">Address</span><span class="cmc-v">Your Address</span></div>
+          </div>
+          <div class="cmc-qr">${QR}</div>
+        </div>
+        <div class="cma" style="margin-bottom:6px">
+          <div class="cma-b" style="background:#22C55E">💬 WhatsApp</div>
+          <div class="cma-b" style="background:${t.a}">👤 About me</div>
+        </div>
+        <div class="cms">
+          <div><div class="cms-n">04</div><div class="cms-l">Active social link</div></div>
+          <div class="cms-icons">${si('#0A66C2','in')}${si('#E1306C','ig')}${si('#1877F2','f')}${si('#111','𝕏')}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function buildMinimal(t) {
+    return `<div class="cm cm-minimal">
+      <div class="cmh">
+        <div class="cmh-stripe" style="background:${t.grad}"></div>
+        <div class="cmh-inner">
+          <div class="cmh-top">
+            <div class="cmh-logo">Logo Here</div>
+            <div class="cmh-av">
+              <div class="cmh-av-i">👤</div>
+              <div class="cmh-av-l">Upload<br>DP</div>
+            </div>
+          </div>
+          <div class="cmh-name">Your Name</div>
+          <div class="cmh-desig" style="color:${t.a}">Your Designation</div>
+          <div class="cmh-div"></div>
+          <div class="cmh-contacts">
+            <div class="cmh-ci"><span class="cmh-ci-icon">📞</span><span class="cmh-ci-val">Your Number</span></div>
+            <div class="cmh-ci"><span class="cmh-ci-icon">✉️</span><span class="cmh-ci-val">Your Mail ID</span></div>
+            <div class="cmh-ci"><span class="cmh-ci-icon">📍</span><span class="cmh-ci-val">Your Address</span></div>
+          </div>
+          <div class="cmh-qr-row">${QR}</div>
+        </div>
+      </div>
+      <div class="cmb">
+        <div class="cms">
+          <div><div class="cms-n">04</div><div class="cms-l">Active social link</div></div>
+          <div class="cms-icons">${si('#0A66C2','in')}${si('#E1306C','ig')}${si('#1877F2','f')}${si('#111','𝕏')}</div>
+        </div>
+        <div class="cma">
+          <div class="cma-b" style="background:#22C55E">💬 WhatsApp</div>
+          <div class="cma-b" style="background:${t.a}">👤 About me</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function buildCircle(t) {
+    return `<div class="cm cm-circle">
+      <div class="cmh">
+        <div class="cmh-band" style="background:${t.grad}">
+          <div class="cmh-top">
+            <div class="cmh-logo">Logo Here</div>
+            <div class="cmh-share">Share →</div>
+          </div>
+        </div>
+        <div class="cmh-av-wrap">
+          <div class="cmh-av">
+            <div class="cmh-av-i">👤</div>
+            <div class="cmh-av-l">Upload<br>Your DP</div>
+          </div>
+        </div>
+      </div>
+      <div class="cmb">
+        <div class="cmb-name">Your Name</div>
+        <div class="cmb-desig">Your Designation</div>
+        <div class="cmb-social">
+          ${si('#0A66C2','in')}${si('#E1306C','ig')}${si('#1877F2','f')}${si('#111','𝕏')}
+        </div>
+        <div class="cmc">
+          <div class="cmc-title">Contact Details</div>
+          <div class="cmc-items">
+            <div class="cmc-i"><span class="cmc-l">Mobile</span><span class="cmc-v">Your Number</span></div>
+            <div class="cmc-i"><span class="cmc-l">E-mail</span><span class="cmc-v">Your Mail ID</span></div>
+            <div class="cmc-i"><span class="cmc-l">Address</span><span class="cmc-v">Your Address</span></div>
+          </div>
+          <div class="cmc-qr">${QR}</div>
+        </div>
+        <div class="cma">
+          <div class="cma-b" style="background:#22C55E">💬 WhatsApp</div>
+          <div class="cma-b" style="background:${t.a}">👤 About me</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function buildDiagonal(t) {
+    return `<div class="cm cm-diagonal">
+      <div class="cmh">
+        <div class="cmh-bg" style="background:${t.grad}"></div>
+        <div class="cmh-cut"></div>
+        <div class="cmh-top">
+          <div class="cmh-logo">Logo Here</div>
+          <div class="cmh-verified">✓ VERIFIED</div>
+        </div>
+        <div class="cmh-bottom">
+          <div>
+            <div class="cmh-name">Your Name</div>
+            <div class="cmh-desig">Your Designation</div>
+          </div>
+        </div>
+        <div class="cmh-av">
+          <div class="cmh-av-i">👤</div>
+          <div class="cmh-av-l">Upload<br>DP</div>
+        </div>
+      </div>
+      <div class="cmb">
+        <div class="cmb-chips">
+          <span class="chip" style="background:#fffbeb;color:#92400e;border-color:#fde68a">🏆 Certified</span>
+          <span class="chip" style="background:#ecfdf5;color:#047857;border-color:#a7f3d0">✓ KYC</span>
+          <span class="chip" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe">🔗 Portfolio</span>
+        </div>
+        <div class="cmc">
+          <div class="cmc-title">Contact Details</div>
+          <div class="cmc-items">
+            <div class="cmc-i"><span class="cmc-l">Mobile</span><span class="cmc-v">Your Number</span></div>
+            <div class="cmc-i"><span class="cmc-l">E-mail</span><span class="cmc-v">Your Mail ID</span></div>
+            <div class="cmc-i"><span class="cmc-l">Address</span><span class="cmc-v">Your Address</span></div>
+          </div>
+          <div class="cmc-qr">${QR}</div>
+        </div>
+        <div class="cms">
+          <div><div class="cms-n">04</div><div class="cms-l">Active social link</div></div>
+          <div class="cms-icons">${si('#0A66C2','in')}${si('#E1306C','ig')}${si('#1877F2','f')}${si('#111','𝕏')}</div>
+        </div>
+        <div class="cma">
+          <div class="cma-b" style="background:#22C55E">💬 WhatsApp</div>
+          <div class="cma-b" style="background:${t.a}">👤 About me</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function buildMetallic(t) {
+    return `<div class="cm cm-metallic">
+      <div class="cmh">
+        <div class="cmh-top">
+          <div class="cmh-brand"><span class="cmh-diamond">◆</span><span class="cmh-wordmark">MetalLink</span></div>
+          <div class="cmh-premium">PREMIUM</div>
+        </div>
+        <div class="cmh-main">
+          <div>
+            <div class="cmh-name">Your Name</div>
+            <div class="cmh-desig">Your Designation</div>
+          </div>
+          <div class="cmh-av-wrap">
+            <div class="cmh-av-ring"></div>
+            <div class="cmh-av">
+              <div class="cmh-av-i">👤</div>
+              <div class="cmh-av-l">Upload<br>DP</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cmh-gold"></div>
+      <div class="cmb">
+        <div class="cmc">
+          <div class="cmc-title">Contact Details</div>
+          <div class="cmc-items">
+            <div class="cmc-i"><span class="cmc-icon">📞</span><span class="cmc-v">Your Number</span></div>
+            <div class="cmc-i"><span class="cmc-icon">✉️</span><span class="cmc-v">Your Mail ID</span></div>
+            <div class="cmc-i"><span class="cmc-icon">📍</span><span class="cmc-v">Your Address</span></div>
+          </div>
+          <div class="cmc-qr">${QR}</div>
+        </div>
+        <div class="cms">
+          <div><div class="cms-n">04</div><div class="cms-l">Active social link</div></div>
+          <div class="cms-icons">${si('','in')}${si('','ig')}${si('','f')}${si('','𝕏')}</div>
+        </div>
+        <div class="cma">
+          <div class="cma-b">💬 WhatsApp</div>
+          <div class="cma-b">👤 About me</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /* ════ TEMPLATE DATA — 20 TEMPLATES ════ */
+  const TEMPLATES = [
+    /* ── STUDENT (10) ── */
+    {
+      id:'stu-proBlue', name:'ProBlue ID', audience:'student', layout:'wave',
+      grad:'linear-gradient(135deg,#1D4ED8,#3B82F6)', a:'#2563EB',
+      popular:false, premium:false,
+      reason:'Great for basic campus ID & daily verification',
+      keywords:['student','id','campus','college','basic','class','university','identity'],
+      desc:'A clean verifiable student identity card for campus entry, library access, and merchant discounts.',
+      features:['Full name, roll number & institution','Course, branch & year of study','QR-based instant verification','Physical + Digital delivery','Valid for one full academic year'],
+      price:'₹499', duration:'1 year', plan:'Starter Plan'
+    },
+    {
+      id:'stu-connect', name:'Campus Connect', audience:'student', layout:'split',
+      grad:'linear-gradient(135deg,#0E7490,#22D3EE)', a:'#0891B2',
+      popular:true, premium:false,
+      reason:'Perfect for networking, clubs & campus events',
+      keywords:['network','club','hackathon','event','connect','social','activity','nfc','campus'],
+      desc:'Built for campus networking — clubs, hackathons, and events. NFC-enabled with a public profile link.',
+      features:['NFC tap-to-share smart card','Public profile with social links','Club & activity achievement badges','Event check-in QR code','Shareable link & vCard export'],
+      price:'₹999', duration:'6 months', plan:'Pro · ₹1,000 / 30 days'
+    },
+    {
+      id:'stu-research', name:'Research Scholar', audience:'student', layout:'academic',
+      grad:'linear-gradient(135deg,#5B21B6,#A78BFA)', a:'#7C3AED',
+      popular:false, premium:false,
+      reason:'Ideal for PhD candidates with publications & lab work',
+      keywords:['phd','research','scholar','publication','lab','thesis','orcid','academic','professor'],
+      desc:'Designed for PhD candidates. Showcases publications, lab affiliations, and conference credentials.',
+      features:['ORCID & Google Scholar integration','Lab & department affiliation badge','Publication highlights (up to 5)','Conference & poster credentials','Institution endorsement signature'],
+      price:'₹1,499', duration:'1 year', plan:'Pro Identity · ₹2,500 / 90 days'
+    },
+    {
+      id:'stu-abroad', name:'Study Abroad', audience:'student', layout:'travel',
+      grad:'linear-gradient(135deg,#9F1239,#FB7185)', a:'#E11D48',
+      popular:false, premium:false,
+      reason:'Built for international exchange & visa-ready identity',
+      keywords:['abroad','international','exchange','visa','foreign','overseas','travel'],
+      desc:'For students in international exchange programmes. Dual-language, multi-currency, visa-ready format.',
+      features:['Dual-language display (English + 1)','Home & host institution details','Visa / programme validity dates','Emergency contact embedded','ISIC-compatible format'],
+      price:'₹1,299', duration:'1 year', plan:'Pro Identity · ₹2,500 / 90 days'
+    },
+    {
+      id:'stu-tech', name:'Tech Student', audience:'student', layout:'minimal',
+      grad:'linear-gradient(135deg,#1E40AF,#6366F1)', a:'#4F46E5',
+      popular:false, premium:false,
+      reason:'Designed for CS/tech students & hackathon participants',
+      keywords:['tech','coding','developer','programmer','cs','engineering','software','hack','computer'],
+      desc:'Clean minimal card for CS and engineering students. Built for hackathon IDs and developer profiles.',
+      features:['GitHub & portfolio links','Hackathon credentials section','Tech skills chips','NFC-enabled','QR code to dev profile'],
+      price:'₹799', duration:'6 months', plan:'Pro · ₹1,000 / 30 days'
+    },
+    {
+      id:'stu-mba', name:'MBA Scholar', audience:'student', layout:'wave',
+      grad:'linear-gradient(135deg,#78350F,#FCD34D)', a:'#D97706',
+      popular:false, premium:false,
+      reason:'Tailored for management students & B-school networking',
+      keywords:['mba','management','business','bschool','finance','marketing','strategy'],
+      desc:'Tailored for B-school students. Ideal for campus placements, networking, and case competition IDs.',
+      features:['B-school affiliation badge','Specialisation & batch year','LinkedIn & portfolio link','NFC tap-to-connect','QR-linked CV profile'],
+      price:'₹999', duration:'6 months', plan:'Pro · ₹1,000 / 30 days'
+    },
+    {
+      id:'stu-sports', name:'Sports & Arts', audience:'student', layout:'diagonal',
+      grad:'linear-gradient(135deg,#C2410C,#FB923C)', a:'#EA580C',
+      popular:false, premium:false,
+      reason:'For students active in sports, arts & cultural events',
+      keywords:['sports','arts','culture','dance','music','drama','athlete','extracurricular','fest'],
+      desc:'For students active in sports, arts and cultural events. Showcase achievements and event credentials.',
+      features:['Achievement & medal highlights','Event & fest credential badges','Sports team affiliation','Cultural activity portfolio link','NFC-enabled for event check-in'],
+      price:'₹699', duration:'6 months', plan:'Starter Plan'
+    },
+    {
+      id:'stu-science', name:'Science Scholar', audience:'student', layout:'academic',
+      grad:'linear-gradient(135deg,#064E3B,#34D399)', a:'#059669',
+      popular:false, premium:false,
+      reason:'For science & engineering lab students with credentials',
+      keywords:['science','biology','chemistry','physics','lab','engineering','stem','experiment'],
+      desc:'For science and engineering students with lab credentials. Showcases research projects and STEM identity.',
+      features:['Lab safety clearance badge','Research project highlights','Supervisor endorsement','STEM skills & certifications','Institutional email verified'],
+      price:'₹1,199', duration:'1 year', plan:'Pro Identity · ₹2,500 / 90 days'
+    },
+    {
+      id:'stu-alumni', name:'Alumni Network', audience:'student', layout:'circle',
+      grad:'linear-gradient(135deg,#3730A3,#818CF8)', a:'#6366F1',
+      popular:false, premium:false,
+      reason:'Perfect for recent graduates entering professional world',
+      keywords:['alumni','graduate','fresher','placement','internship','job','campus placement'],
+      desc:'Perfect for recent graduates. Bridge the gap between student life and your first professional role.',
+      features:['Graduation year & batch badge','Alumni network QR linking','LinkedIn & job profile link','Internship & project highlights','Referral-ready profile'],
+      price:'₹899', duration:'1 year', plan:'Pro · ₹1,000 / 30 days'
+    },
+    {
+      id:'stu-medical', name:'Medical Student', audience:'student', layout:'split',
+      grad:'linear-gradient(135deg,#991B1B,#F87171)', a:'#DC2626',
+      popular:false, premium:false,
+      reason:'Designed for MBBS/medical students with clinical credentials',
+      keywords:['medical','mbbs','doctor','clinical','hospital','health','pharmacy','nursing'],
+      desc:'Designed for MBBS and medical students. Includes clinical rotation credentials and hospital access ID.',
+      features:['MBBS batch & college badge','Clinical rotation clearance','Hospital access QR','Emergency contact section','Medical council registration field'],
+      price:'₹1,099', duration:'1 year', plan:'Pro Identity · ₹2,500 / 90 days'
+    },
+
+    /* ── PROFESSIONAL (10) ── */
+    {
+      id:'pro-basic', name:'Pro Card', audience:'professional', layout:'minimal',
+      grad:'linear-gradient(90deg,#3730A3,#4F46E5)', a:'#4F46E5',
+      popular:false, premium:false,
+      reason:'Essential digital card for all working professionals',
+      keywords:['professional','employee','staff','associate','analyst','engineer','designer','worker'],
+      desc:'The essential smart card for working professionals. Crisp identity, contact info, and a public profile.',
+      features:['Name, title & organisation','Contact details, email & website','Personalised public profile URL','NFC tap-to-share','Analytics: profile views & taps'],
+      price:'₹1,000', duration:'30 days', plan:'Pro · ₹1,000 / 30 days'
+    },
+    {
+      id:'pro-econnect', name:'eConnect', audience:'professional', layout:'circle',
+      grad:'linear-gradient(135deg,#065F46,#34D399)', a:'#059669',
+      popular:true, premium:false,
+      reason:'Built for BD, sales & heavy networkers with CRM sync',
+      keywords:['sales','bd','business development','network','crm','lead','client','marketing'],
+      desc:'For networkers and BD professionals. Lead capture, CRM integration, and engagement analytics.',
+      features:['All Pro Card features included','Lead capture form on profile','CRM sync (HubSpot, Salesforce)','Calendar booking link embed','Engagement analytics dashboard'],
+      price:'₹3,000', duration:'30 days', plan:'eConnect · ₹3,000 / 30 days'
+    },
+    {
+      id:'pro-identity', name:'Pro Identity', audience:'professional', layout:'diagonal',
+      grad:'linear-gradient(135deg,#78350F,#FCD34D)', a:'#D97706',
+      popular:false, premium:false,
+      reason:'Full verified identity for consultants & freelancers',
+      keywords:['consultant','freelance','portfolio','verified','kyc','certification','coach','advisor'],
+      desc:'A full professional identity suite for consultants and freelancers requiring verified credentials.',
+      features:['KYC-verified identity badge','Certification & skills showcase','Portfolio link with live preview','Custom domain for profile','Client-facing case study section'],
+      price:'₹2,500', duration:'90 days', plan:'Pro Identity · ₹2,500 / 90 days'
+    },
+    {
+      id:'pro-metallink', name:'MetalLink', audience:'professional', layout:'metallic',
+      grad:'linear-gradient(135deg,#0F172A,#475569)', a:'#94A3B8',
+      popular:false, premium:true,
+      reason:'Executive metal card for C-suite & senior leaders',
+      keywords:['ceo','cto','founder','director','vp','executive','head','lead','c-suite','metal'],
+      desc:'The executive tier. Brushed metal card with NFC, white-label branding, and a dedicated account manager.',
+      features:['Brushed metal card with NFC chip','Full white-label custom branding','Dedicated account manager','Team sub-card management console','Priority SLA & concierge setup'],
+      price:'₹5,000', duration:'120 days', plan:'MetalLink · ₹5,000 / 120 days'
+    },
+    {
+      id:'pro-execplus', name:'Executive Plus', audience:'professional', layout:'wave',
+      grad:'linear-gradient(135deg,#1E3A8A,#60A5FA)', a:'#2563EB',
+      popular:false, premium:true,
+      reason:'Premium card for senior managers & corporate leaders',
+      keywords:['manager','senior','director','corporate','head of','principal','gm','vp','leadership'],
+      desc:'Premium smart card for senior managers and corporate leaders. Polished, authoritative, and feature-rich.',
+      features:['Premium wave design with foil effect','Org hierarchy display','Meeting scheduler integration','Executive analytics suite','White-label subdomain'],
+      price:'₹4,000', duration:'90 days', plan:'Executive Plus · ₹4,000 / 90 days'
+    },
+    {
+      id:'pro-startup', name:'Startup Founder', audience:'professional', layout:'split',
+      grad:'linear-gradient(135deg,#4C1D95,#A78BFA)', a:'#7C3AED',
+      popular:false, premium:false,
+      reason:'For entrepreneurs, startup founders & investors',
+      keywords:['startup','founder','entrepreneur','venture','investor','cto','product','pitch','co-founder'],
+      desc:'For startup founders and investors. Show your vision, team, and key company metrics at a tap.',
+      features:['Company name & stage badge','Pitch deck QR link','Co-founder team cards','Investor-ready profile layout','Product hunt / AngelList link'],
+      price:'₹2,000', duration:'60 days', plan:'Pro Identity · ₹2,500 / 90 days'
+    },
+    {
+      id:'pro-creative', name:'Creative Pro', audience:'professional', layout:'travel',
+      grad:'linear-gradient(135deg,#9D174D,#F472B6)', a:'#DB2777',
+      popular:false, premium:false,
+      reason:'Vibrant card for designers, artists & content creators',
+      keywords:['creative','designer','artist','content','ux','ui','brand','photographer','filmmaker'],
+      desc:'Vibrant and expressive smart card for designers, artists and content creators.',
+      features:['Portfolio gallery link','Behance & Dribbble integration','Brand colour customisation','Instagram & YouTube link','Collab inquiry form'],
+      price:'₹1,500', duration:'60 days', plan:'Pro Identity · ₹2,500 / 90 days'
+    },
+    {
+      id:'pro-health', name:'Healthcare Pro', audience:'professional', layout:'minimal',
+      grad:'linear-gradient(135deg,#0F4C81,#0891B2)', a:'#0891B2',
+      popular:false, premium:false,
+      reason:'Clean verified card for doctors & healthcare workers',
+      keywords:['doctor','physician','nurse','healthcare','hospital','clinic','medical','surgeon','therapist'],
+      desc:'Clean, verified smart card for doctors and healthcare professionals. Trusted identity, fast access.',
+      features:['Medical registration number','Hospital affiliation badge','Department & specialty','Emergency contact verified','Secure patient-facing profile'],
+      price:'₹1,800', duration:'1 year', plan:'Pro Identity · ₹2,500 / 90 days'
+    },
+    {
+      id:'pro-techlead', name:'Tech Lead', audience:'professional', layout:'circle',
+      grad:'linear-gradient(135deg,#1D4ED8,#38BDF8)', a:'#0EA5E9',
+      popular:false, premium:false,
+      reason:'For engineers, tech leads & software architects',
+      keywords:['engineer','developer','architect','tech lead','cto','software','backend','frontend','devops'],
+      desc:'For tech leads, engineers and software architects. Link your GitHub, portfolio and tech stack at a tap.',
+      features:['GitHub & Stack Overflow link','Tech stack display chips','Open source contribution badge','Architecture portfolio link','Speaking & conference credentials'],
+      price:'₹1,500', duration:'60 days', plan:'Pro · ₹1,000 / 30 days'
+    },
+    {
+      id:'pro-legal', name:'Legal Pro', audience:'professional', layout:'academic',
+      grad:'linear-gradient(135deg,#1E3A8A,#3B82F6)', a:'#2563EB',
+      popular:false, premium:false,
+      reason:'Professional credentials for lawyers & legal advisors',
+      keywords:['lawyer','legal','advocate','solicitor','barrister','law','judiciary','compliance','attorney'],
+      desc:'Professional credentials card for lawyers and legal advisors. Bar registration, firm, and specialisation.',
+      features:['Bar council registration number','Firm name & specialisation','Court appearance credentials','Verified identity badge','Secure client-facing profile'],
+      price:'₹2,200', duration:'1 year', plan:'Pro Identity · ₹2,500 / 90 days'
+    },
+  ];
+
+  const BUILDERS = { wave:buildWave, split:buildSplit, academic:buildAcademic, travel:buildTravel, minimal:buildMinimal, circle:buildCircle, diagonal:buildDiagonal, metallic:buildMetallic };
+  function buildMock(t) { return BUILDERS[t.layout](t); }
+
+  /* ════ COLOR PALETTES ════ */
+  const PALETTES = [
+    {grad:'linear-gradient(135deg,#1D4ED8,#3B82F6)', a:'#2563EB', c:'#3B82F6'},
+    {grad:'linear-gradient(135deg,#0E7490,#22D3EE)', a:'#0891B2', c:'#22D3EE'},
+    {grad:'linear-gradient(135deg,#5B21B6,#A78BFA)', a:'#7C3AED', c:'#A78BFA'},
+    {grad:'linear-gradient(135deg,#065F46,#34D399)', a:'#059669', c:'#34D399'},
+    {grad:'linear-gradient(135deg,#B45309,#FBBF24)', a:'#D97706', c:'#FBBF24'},
+    {grad:'linear-gradient(135deg,#9F1239,#FB7185)', a:'#E11D48', c:'#FB7185'},
+  ];
+  const cardColors = {};
+
+  function setCardColor(tid, grad, a, swatchEl) {
+    event.stopPropagation();
+    cardColors[tid] = {grad, a};
+    const tcard = document.querySelector(`.tcard[data-tid="${tid}"]`);
+    if (!tcard) return;
+    const t = TEMPLATES.find(x => x.id === tid);
+    if (!t) return;
+    const modified = Object.assign({}, t, {grad, a});
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = buildMock(modified);
+    const newCm = tempDiv.firstElementChild;
+    const oldCm = tcard.querySelector('.cm');
+    if (oldCm && newCm) oldCm.replaceWith(newCm);
+    tcard.querySelectorAll('.csw').forEach(s => s.classList.toggle('csw-on', s === swatchEl));
+  }
+
+  /* ════ AI SUGGEST — picks TOP 3 ════ */
+  let aiTopIds = [];
+
+  function scoreTemplate(t, combined) {
+    return t.keywords.reduce((acc, k) => acc + (combined.includes(k) ? 1 : 0), 0);
+  }
+
+  function runAISuggest() {
+    const audience = document.getElementById('aiAudience').value;
+    if (!audience) { alert('Please select Student or Working Professional.'); return; }
+    const name    = document.getElementById('aiName').value.trim();
+    const combined = [
+      document.getElementById('aiRole').value,
+      document.getElementById('aiOrg').value,
+      document.getElementById('aiUsecase').value
+    ].join(' ').toLowerCase();
+
+    const btn = document.getElementById('suggestBtn');
+    document.getElementById('suggestBtnTxt').textContent = 'Analysing…';
+    btn.disabled = true;
+    document.getElementById('aiThinking').classList.add('show');
+
+    setTimeout(() => {
+      // 1. Score all templates in the selected audience category
+      const pool = TEMPLATES.filter(t => t.audience === audience);
+      const scored = pool.map(t => ({ t, score: scoreTemplate(t, combined) }));
+      // 2. Sort by score desc, tie-break: original order (stable sort)
+      scored.sort((a, b) => b.score - a.score);
+      // 3. Top 3
+      const top3 = scored.slice(0, 3).map(s => s.t);
+      aiTopIds = top3.map(t => t.id);
+      const remaining = pool.filter(t => !aiTopIds.includes(t.id));
+
+      // 4. Hide pre-suggest grid, show recommended + explore sections
+      document.getElementById('gridSection').style.display = 'none';
+
+      // Build AI Recommended
+      const recSection = document.getElementById('aiRecSection');
+      const recTitle = document.getElementById('aiRecTitle');
+      const recSub   = document.getElementById('aiRecSub');
+      recTitle.textContent = `AI Recommended for ${name || 'You'}`;
+      recSub.textContent   = `Top 3 best-matching ${audience === 'student' ? 'student' : 'professional'} templates based on your profile`;
+      const recGrid = document.getElementById('aiRecGrid');
+      recGrid.innerHTML = '';
+      const rankLabels = ['🤖 #1 Best Match', '#2 Match', '#3 Match'];
+      const rankClasses = ['ribbon-1','ribbon-2','ribbon-3'];
+      top3.forEach((t, i) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'ai-rec-card-wrap';
+        const card = document.createElement('div');
+        card.className = 'tcard ai-rec';
+        card.onclick = () => openModal(t);
+        card.innerHTML = `
+          <div class="ai-ribbon ${rankClasses[i]}">${rankLabels[i]}</div>
+          ${buildMock(t)}
+          <div class="tcard-footer">
+            <div>
+              <div class="tci-badges"><span class="badge-ai">🤖 AI Pick</span></div>
+              <div class="tci-name">${t.name}</div>
+              <div class="tci-price"><strong>${t.price}</strong> / ${t.duration}</div>
+            </div>
+            <button class="btn-use" style="background:${t.a}" onclick="event.stopPropagation();pick('${t.id}')">Use</button>
+          </div>`;
+        const why = document.createElement('div');
+        why.className = 'ai-why';
+        why.innerHTML = `<strong>Why matched:</strong> ${t.reason}`;
+        wrap.appendChild(card);
+        wrap.appendChild(why);
+        recGrid.appendChild(wrap);
+      });
+      recSection.classList.add('show');
+
+      // Build Explore All
+      const exploreSection = document.getElementById('exploreSection');
+      const exploreLabel   = document.getElementById('exploreDivLabel');
+      const exploreBadge   = document.getElementById('exploreBadge');
+      exploreLabel.textContent = `Explore All ${audience === 'student' ? 'Student' : 'Professional'} Templates`;
+      exploreBadge.textContent = `${remaining.length} more`;
+      const exploreGrid = document.getElementById('exploreGrid');
+      exploreGrid.innerHTML = '';
+      remaining.forEach(t => {
+        const card = makeCard(t, false);
+        exploreGrid.appendChild(card);
+      });
+      exploreSection.style.display = 'block';
+
+      // Thinking done
+      document.getElementById('aiThinking').classList.remove('show');
+      document.getElementById('suggestBtnTxt').textContent = '✨ Get AI Suggestion';
+      btn.disabled = false;
+
+      // Scroll to recommendations
+      setTimeout(() => recSection.scrollIntoView({ behavior:'smooth', block:'start' }), 200);
+    }, 1600);
+  }
+
+  /* ════ PRE-SUGGEST GRID ════ */
+  let activeTab = 'all';
+  let activeModal = null;
+
+  function setTab(tab) {
+    activeTab = tab;
+    ['all','student','professional'].forEach(id => {
+      document.getElementById('tab-' + id).classList.toggle('active', id === tab);
+    });
+    renderGrid();
+  }
+
+  function filtered() {
+    const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+    return TEMPLATES.filter(t => {
+      const matchTab = activeTab === 'all' || t.audience === activeTab;
+      const matchQ   = !q || t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q) || t.keywords.some(k => k.includes(q));
+      return matchTab && matchQ;
+    });
+  }
+
+  function renderGrid() {
+    const root = document.getElementById('gridRoot');
+    root.innerHTML = '';
+    const list = filtered();
+    if (!list.length) {
+      root.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No templates found</div><div class="empty-sub">Try a different tab or clear the search</div></div>`;
+      return;
+    }
+    if (activeTab === 'all') {
+      renderSection(root, '🎓 For Students', list.filter(t => t.audience === 'student'));
+      renderSection(root, '💼 For Professionals', list.filter(t => t.audience === 'professional'));
+    } else {
+      const g = document.createElement('div'); g.className = 'grid';
+      list.forEach(t => g.appendChild(makeCard(t, false)));
+      root.appendChild(g);
+    }
+  }
+
+  function renderSection(root, label, list) {
+    if (!list.length) return;
+    const h = document.createElement('div'); h.className = 'cat-div';
+    h.innerHTML = `<div class="cat-div-line"></div><span class="cat-div-label">${label}</span><div class="cat-div-line"></div>`;
+    root.appendChild(h);
+    const g = document.createElement('div'); g.className = 'grid';
+    list.forEach(t => g.appendChild(makeCard(t, false)));
+    root.appendChild(g);
+  }
+
+  function makeCard(t, isAI) {
+    const el = document.createElement('div');
+    el.className = 'tcard' + (isAI ? ' ai-rec' : '');
+    el.dataset.tid = t.id;
+    el.onclick = () => openModal(t);
+    const badges = [
+      t.popular ? '<span class="badge-popular">★ Popular</span>' : '',
+      t.premium ? '<span class="badge-premium">◆ Premium</span>' : '',
+    ].filter(Boolean).join('');
+    const swatches = PALETTES.map((p, i) =>
+      `<div class="csw${i===0?' csw-on':''}" style="background:${p.c}" title="${['Blue','Teal','Purple','Green','Amber','Rose'][i]}"
+        onclick="setCardColor('${t.id}','${p.grad}','${p.a}',this)"></div>`
+    ).join('');
+    el.innerHTML = `
+      ${buildMock(t)}
+      <div class="tcard-colors">
+        <span class="color-lbl">Color</span>${swatches}
+      </div>
+      <div class="tcard-footer">
+        <div>
+          ${badges ? `<div class="tci-badges">${badges}</div>` : ''}
+          <div class="tci-name">${t.name}</div>
+          <div class="tci-price"><strong>${t.price}</strong> / ${t.duration}</div>
+        </div>
+        <button class="btn-use" style="background:${t.a}"
+          onclick="event.stopPropagation();pick('${t.id}')">Use</button>
+      </div>`;
+    return el;
+  }
+
+  /* ════ MODAL ════ */
+  function openModal(t) {
+    activeModal = t;
+    const previewEl = document.getElementById('modalCardPreview');
+    previewEl.innerHTML = buildMock(t);
+    const cm = previewEl.querySelector('.cm');
+    if (cm) { cm.style.borderRadius = '14px'; cm.style.overflow = 'hidden'; cm.style.boxShadow = '0 4px 20px rgba(0,0,0,.1)'; }
+    document.getElementById('modalName').textContent = t.name;
+    document.getElementById('modalPlan').textContent = t.plan;
+    document.getElementById('modalDesc').textContent = t.desc;
+    document.getElementById('modalPrice').innerHTML = `${t.price} <span>/ ${t.duration}</span>`;
+    document.getElementById('modalFeatures').innerHTML = t.features.map(f =>
+      `<li><span class="mcheck" style="background:${t.a}22;color:${t.a}">✓</span>${f}</li>`
+    ).join('');
+    document.getElementById('modalUseBtn').style.background = t.a;
+    document.getElementById('modalBg').classList.add('show');
+  }
+  function onBgClick(e) { if (e.target === document.getElementById('modalBg')) closeModal(); }
+  function closeModal() { document.getElementById('modalBg').classList.remove('show'); activeModal = null; }
+  function useModal() { if (activeModal) pick(activeModal.id); closeModal(); }
+
+  function pick(id) {
+    const t = TEMPLATES.find(x => x.id === id);
+    if (t) showToast(`"${t.name}" selected!`);
+  }
+
+  let tt;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    el.classList.add('show');
+    clearTimeout(tt);
+    tt = setTimeout(() => el.classList.remove('show'), 2600);
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  // Update tab counts
+  document.getElementById('cnt-all').textContent = TEMPLATES.length;
+  document.getElementById('cnt-student').textContent = TEMPLATES.filter(t=>t.audience==='student').length;
+  document.getElementById('cnt-professional').textContent = TEMPLATES.filter(t=>t.audience==='professional').length;
+
+  renderGrid();
+</script>
+</body>
+</html>

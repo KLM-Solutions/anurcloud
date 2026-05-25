@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Insta VIZ — Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ac:   #2563EB; --ac-l: #EFF6FF; --ac-m: #BFDBFE; --ac-d: #1D4ED8;
+      --pb1:  #7C3AED; --pb1-l:#F5F3FF; --pb1-m:#DDD6FE; --pb1-d:#6D28D9;
+      --dark: #0F172A;
+      --s700: #334155; --s600: #475569; --s400: #94A3B8;
+      --s300: #CBD5E1; --s200: #E2E8F0; --s100: #F1F5F9; --s50: #F8FAFC;
+      --white:#FFFFFF;
+      --err: #DC2626; --err-l: #FEF2F2;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #EFF6FF 0%, #F5F3FF 50%, #ECFDF5 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .login-wrap {
+      width: 100%;
+      max-width: 420px;
+      padding: 24px;
+    }
+
+    /* Brand badge */
+    .brand {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--white);
+      border: 1px solid var(--s200);
+      border-radius: 28px;
+      padding: 8px 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      margin-bottom: 16px;
+    }
+    .brand-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .brand-dot-ac { background: var(--ac); }
+    .brand-dot-pb { background: var(--pb1); }
+    .brand-name {
+      font-size: 13px; font-weight: 700; color: var(--dark); letter-spacing: -.1px;
+    }
+    .brand-x { color: var(--s300); font-size: 14px; font-weight: 300; }
+    .brand-title {
+      font-size: 26px; font-weight: 900; color: var(--dark); letter-spacing: -.5px; margin-bottom: 6px;
+    }
+    .brand-sub {
+      font-size: 13px; color: var(--s600); line-height: 1.55;
+    }
+
+    /* Card */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--s200);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.07), 0 1px 4px rgba(0,0,0,.04);
+    }
+
+    .card-title {
+      font-size: 15px; font-weight: 800; color: var(--dark); margin-bottom: 4px;
+    }
+    .card-sub {
+      font-size: 12px; color: var(--s400); margin-bottom: 28px;
+    }
+
+    /* Form */
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block;
+      font-size: 11.5px; font-weight: 600; color: var(--s700);
+      text-transform: uppercase; letter-spacing: .06em;
+      margin-bottom: 7px;
+    }
+    .field input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--s200);
+      border-radius: 9px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--dark);
+      background: var(--s50);
+      transition: border-color .15s, box-shadow .15s, background .15s;
+      outline: none;
+    }
+    .field input:focus {
+      border-color: var(--ac);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+    }
+    .field input.error {
+      border-color: var(--err);
+      background: var(--err-l);
+    }
+    .field input.error:focus {
+      box-shadow: 0 0 0 3px rgba(220,38,38,.1);
+    }
+
+    /* Error message */
+    .err-msg {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: var(--err-l);
+      border: 1px solid #FECACA;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 18px;
+      font-size: 12.5px;
+      color: var(--err);
+      font-weight: 500;
+    }
+    .err-msg.show { display: flex; }
+    .err-icon {
+      width: 16px; height: 16px; flex-shrink: 0;
+      background: var(--err);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 10px; font-weight: 800;
+    }
+
+    /* Submit button */
+    .btn-login {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--ac-d), var(--ac));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -.1px;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s, box-shadow .15s;
+      box-shadow: 0 2px 8px rgba(37,99,235,.3);
+    }
+    .btn-login:hover { opacity: .92; box-shadow: 0 4px 16px rgba(37,99,235,.35); }
+    .btn-login:active { transform: scale(.98); }
+    .btn-login:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    /* Footer hint */
+    .card-footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--s400);
+    }
+    .card-footer a { color: var(--ac); text-decoration: none; font-weight: 600; }
+
+    /* Spinner */
+    .spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-login.loading .btn-text { display: none; }
+    .btn-login.loading .spinner { display: block; }
+
+    /* Divider */
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 22px 0;
+      font-size: 11px; color: var(--s300);
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--s200);
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-wrap">
+
+  <div class="brand">
+    <div class="brand-badge">
+      <span class="brand-dot brand-dot-ac"></span>
+      <span class="brand-name">Insta VIZ</span>
+      <span class="brand-x">×</span>
+      <span class="brand-name">PxlBrain</span>
+      <span class="brand-dot brand-dot-pb"></span>
+    </div>
+    <div class="brand-title">Welcome back</div>
+    <div class="brand-sub">Sign in to access your smart card dashboard</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Sign in to your account</div>
+    <div class="card-sub">Enter your credentials to continue</div>
+
+    <div class="err-msg" id="errMsg">
+      <div class="err-icon">!</div>
+      <span id="errText">Invalid username or password.</span>
+    </div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="field">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          placeholder="Enter your username"
+          autocomplete="username"
+          required
+        />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required
+        />
+      </div>
+
+      <button type="submit" class="btn-login" id="loginBtn">
+        <span class="btn-text">Sign In</span>
+        <div class="spinner"></div>
+      </button>
+    </form>
+
+    <div class="card-footer">
+      View the <a href="flow.html">integration flow diagram</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const CREDENTIALS = { username: 'admin', password: 'instaviz123' };
+
+  function handleLogin(e) {
+    e.preventDefault();
+
+    const usernameEl = document.getElementById('username');
+    const passwordEl = document.getElementById('password');
+    const btn        = document.getElementById('loginBtn');
+    const errMsg     = document.getElementById('errMsg');
+    const errText    = document.getElementById('errText');
+
+    // Clear previous error
+    errMsg.classList.remove('show');
+    usernameEl.classList.remove('error');
+    passwordEl.classList.remove('error');
+
+    const username = usernameEl.value.trim();
+    const password = passwordEl.value;
+
+    // Show loading
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    setTimeout(() => {
+      if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
+        sessionStorage.setItem('iv_auth', '1');
+        sessionStorage.setItem('iv_user', username);
+        window.location.href = 'templates.html';
+      } else {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+
+        errMsg.classList.add('show');
+
+        if (username !== CREDENTIALS.username) {
+          usernameEl.classList.add('error');
+          errText.textContent = 'Username not recognised.';
+        } else {
+          passwordEl.classList.add('error');
+          errText.textContent = 'Incorrect password. Please try again.';
+        }
+
+        // Shake the card
+        const card = document.querySelector('.card');
+        card.style.animation = 'none';
+        card.offsetHeight;
+        card.style.animation = 'shake .35s ease';
+      }
+    }, 600);
+  }
+
+  // If already logged in, skip to templates
+  if (sessionStorage.getItem('iv_auth') === '1') {
+    window.location.href = 'templates.html';
+  }
+</script>
+
+<style>
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%       { transform: translateX(-6px); }
+    40%       { transform: translateX(6px); }
+    60%       { transform: translateX(-4px); }
+    80%       { transform: translateX(4px); }
+  }
+</style>
+
+</body>
+</html>
