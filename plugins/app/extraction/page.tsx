@@ -115,7 +115,10 @@ function outputFormat(pt: ProfileType): string {
 export default function ExtractionPage() {
   const [file, setFile] = useState<File | null>(null);
   const [profileType, setProfileType] = useState<ProfileType>("student");
-  const [token, setToken] = useState("demo-token");
+  // Pre-fill the access token from a public env var so the demo works out of the box.
+  // NOTE: NEXT_PUBLIC_* is exposed in the client bundle by design — treat this as a
+  // shared access token, not a hidden secret. Value lives in env, never in git.
+  const [token, setToken] = useState(process.env.NEXT_PUBLIC_EXTRACT_TOKEN ?? "");
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>("idle");
@@ -332,7 +335,12 @@ export default function ExtractionPage() {
 
             {/* Auth */}
             <Labeled label="Bearer token">
-              <input value={token} onChange={(e) => setToken(e.target.value)} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+              <input
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                placeholder="Paste your access token to run live"
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-sm outline-none placeholder:font-sans placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
             </Labeled>
 
             {error && (
