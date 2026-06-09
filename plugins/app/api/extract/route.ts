@@ -1,0 +1,100 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { isProfileType, validateSourceFile } from "@/lib/validation";
+import { schemaFieldKeys } from "@/lib/schema";
+import { extractProfile } from "@/lib/llama";
+import type { ExtractSuccess } from "@/lib/types";
+
+// File parsing needs the Node.js runtime (not Edge).
+export const runtime = "nodejs";
+// Extraction (parse + LLM) can take a while. Pro plan max is 800s (~13 min);
+// typical runs finish in ~15–25s, so this is a safe ceiling.
+export const maxDuration = 800;
+
+function fail(code: string, message: string, status: number) {
+  return NextResponse.json({ status: "error", error: { code, message } }, { status });
+}
+
+/**
+ * Module 1 — Extraction endpoint (Handoff 1).
+ *
+ *   POST /api/extract
+ *   Authorization: Bearer <auth_token>
+ *   multipart/form-data: file (PDF/DOCX/JPG/PNG), profile_type, user_id
+ *
+ * Validates the upload, selects the schema by profile_type (Approach A), runs the
+ * extraction engine, and returns the structured profile + confidence.
+ */
+export async function POST(request: NextRequest) {
+  // 1. Auth — Authorization: Bearer <token>
+  const authHeader = request.headers.get("authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+  if (!token) {
+    return fail("UNAUTHORIZED", "Missing or malformed Authorization Bearer token.", 401);
+  }
+  // TODO: verify the AnurCloud-issued token once its scheme (JWT/introspection) is confirmed.
+
+  // 2. Parse the multipart body
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return fail("INVALID_BODY", "Request body must be multipart/form-data.", 400);
+  }
+
+  const file = formData.get("file");
+  const profileTypeRaw = formData.get("profile_type");
+  const userIdRaw = formData.get("user_id");
+
+  // 3. Validate file (presence + type; no size limit)
+  if (!(file instanceof File)) {
+    return fail("NO_FILE", 'A "file" field (PDF/DOCX/JPG/PNG) is required.', 400);
+  }
+  const fileError = validateSourceFile({ name: file.name, size: file.size, type: file.type });
+  if (fileError) {
+    const status = fileError.code === "UNSUPPORTED_TYPE" ? 415 : 400;
+    return fail(fileError.code, fileError.message, status);
+  }
+
+  // 4. Validate profile_type — selects which schema we extract against
+  if (!isProfileType(profileTypeRaw)) {
+    return fail("INVALID_PROFILE_TYPE", '"profile_type" must be "student" or "professional".', 400);
+  }
+
+  // 5. Validate user_id
+  if (typeof userIdRaw !== "string" || !userIdRaw.trim()) {
+    return fail("MISSING_USER_ID", 'A "user_id" field is required.', 400);
+  }
+
+  // 6. No engine key configured → fall back to the validation-only stub.
+  if (!process.env.LLAMA_CLOUD_API_KEY) {
+    return NextResponse.json({
+      status: "received",
+      message: "File validated. The extraction engine is not configured.",
+      received: {
+        file: { filename: file.name, size_bytes: file.size, mime_type: file.type || "unknown" },
+        profile_type: profileTypeRaw,
+        user_id: userIdRaw,
+      },
+      schema_preview: { profile_type: profileTypeRaw, fields: schemaFieldKeys(profileTypeRaw) },
+    });
+  }
+
+  // 7. Run the extraction engine against the profile-type schema and return the contract.
+  try {
+    const result = await extractProfile(file, profileTypeRaw);
+    return NextResponse.json({
+      status: "success",
+      profile_type: profileTypeRaw,
+      data: result.data,
+      confidence_scores: result.confidence_scores,
+      flagged_fields: result.flagged_fields,
+    } satisfies ExtractSuccess);
+  } catch (err) {
+    console.error("[extract] engine error:", err);
+    return fail(
+      "EXTRACTION_FAILED",
+      err instanceof Error ? err.message : "Extraction engine error.",
+      502,
+    );
+  }
+}
