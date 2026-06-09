@@ -68,6 +68,9 @@ const SAMPLE: ActiveResult = {
   flagged_fields: ["projects"],
 };
 
+/* Live deployment endpoint AnurCloud calls. */
+const ENDPOINT = "https://anurcloud.vercel.app/api/extract";
+
 /* Sample resumes (served from /public/samples) — one-click load into the uploader. */
 const SAMPLES = [
   { file: "karthick-r.pdf", label: "Karthick R" },
@@ -201,7 +204,7 @@ export default function ExtractionPage() {
     setTimeout(() => setCopied(false), 1500);
   }
 
-  const curlExample = `curl -X POST https://<your-app>.vercel.app/api/extract \\
+  const curlExample = `curl -X POST ${ENDPOINT} \\
   -H "Authorization: Bearer <auth_token>" \\
   -F "file=@resume.pdf" \\
   -F "profile_type=${profileType}" \\
@@ -437,18 +440,30 @@ export default function ExtractionPage() {
             {tab === "input" && (
               <div className="h-full overflow-y-auto p-5">
                 <div className="space-y-3 font-mono text-xs">
-                  <div className="flex items-center gap-2">
+                  {/* Endpoint */}
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-md bg-blue-600 px-1.5 py-0.5 font-bold text-white">POST</span>
-                    <span className="text-slate-700">/api/extract</span>
+                    <span className="break-all text-slate-700">{ENDPOINT}</span>
                   </div>
+                  {/* Headers */}
                   <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-600">
                     <div><span className="text-violet-700">Authorization:</span> Bearer &lt;auth_token&gt;</div>
                     <div><span className="text-violet-700">Content-Type:</span> multipart/form-data</div>
                   </div>
+                  {/* Body fields */}
                   <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
                     <PayloadRow name="file" type="File" desc="PDF · DOCX · JPG · PNG" />
                     <PayloadRow name="profile_type" type='"student" | "professional"' />
                     <PayloadRow name="user_id" type="string" />
+                  </div>
+                  {/* Ready-to-run example */}
+                  <div>
+                    <div className="mb-1 font-sans text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                      Example request
+                    </div>
+                    <pre className="overflow-x-auto rounded-lg border border-slate-200 bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-100">
+                      {curlExample}
+                    </pre>
                   </div>
                 </div>
               </div>

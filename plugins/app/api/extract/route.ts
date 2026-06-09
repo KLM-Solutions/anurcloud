@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { isProfileType, validateSourceFile } from "@/lib/validation";
 import { schemaFieldKeys } from "@/lib/schema";
@@ -15,6 +16,20 @@ function fail(code: string, message: string, status: number) {
 }
 
 /**
+ * Service-to-service auth. AnurCloud sends a shared secret as the Bearer token.
+ * When EXTRACT_AUTH_TOKEN is configured, the token must match (constant-time).
+ * Returns true only when the configured secret is present AND matches.
+ * (Real AnurCloud JWT verification can replace this later.)
+ */
+function tokenMatches(token: string): boolean {
+  const expected = process.env.EXTRACT_AUTH_TOKEN;
+  if (!expected) return false;
+  const a = Buffer.from(token);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+/**
  * Module 1 — Extraction endpoint (Handoff 1).
  *
  *   POST /api/extract
@@ -25,13 +40,20 @@ function fail(code: string, message: string, status: number) {
  * extraction engine, and returns the structured profile + confidence.
  */
 export async function POST(request: NextRequest) {
-  // 1. Auth — Authorization: Bearer <token>
+  // 1. Auth — Authorization: Bearer <shared service secret>
   const authHeader = request.headers.get("authorization") ?? "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
   if (!token) {
     return fail("UNAUTHORIZED", "Missing or malformed Authorization Bearer token.", 401);
   }
-  // TODO: verify the AnurCloud-issued token once its scheme (JWT/introspection) is confirmed.
+  // Never run "open": refuse until a secret is configured (avoids credit abuse on a public URL).
+  if (!process.env.EXTRACT_AUTH_TOKEN) {
+    return fail("AUTH_NOT_CONFIGURED", "Extraction auth is not configured.", 503);
+  }
+  if (!tokenMatches(token)) {
+    return fail("UNAUTHORIZED", "Invalid authorization token.", 401);
+  }
+  // TODO: swap the shared secret for AnurCloud JWT/introspection when its scheme is confirmed.
 
   // 2. Parse the multipart body
   let formData: FormData;
@@ -90,11 +112,9 @@ export async function POST(request: NextRequest) {
       flagged_fields: result.flagged_fields,
     } satisfies ExtractSuccess);
   } catch (err) {
+    // Full detail stays server-side; the client gets a generic message so we never
+    // leak engine/vendor internals or stack details.
     console.error("[extract] engine error:", err);
-    return fail(
-      "EXTRACTION_FAILED",
-      err instanceof Error ? err.message : "Extraction engine error.",
-      502,
-    );
+    return fail("EXTRACTION_FAILED", "The extraction engine could not process this request.", 502);
   }
 }
