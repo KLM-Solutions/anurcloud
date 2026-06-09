@@ -17,7 +17,7 @@ const MODULES = [
     icon: "📄",
     accent: "from-blue-600 to-blue-400",
     chip: "bg-blue-50 text-blue-700",
-    input: "File (PDF · DOCX · JPG · PNG) + profile_type + user_id",
+    input: "File (PDF · DOCX · JPG · PNG) + profile_type",
     output: "Structured profile JSON · confidence_scores · flagged_fields",
     desc: "Reads any resume, portfolio, or visiting card and maps it onto a profile-type-aware schema — students get projects & education, professionals get experience & registrations.",
     ready: true,

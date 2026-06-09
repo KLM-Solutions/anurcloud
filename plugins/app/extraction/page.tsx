@@ -115,7 +115,6 @@ function outputFormat(pt: ProfileType): string {
 export default function ExtractionPage() {
   const [file, setFile] = useState<File | null>(null);
   const [profileType, setProfileType] = useState<ProfileType>("student");
-  const [userId, setUserId] = useState("user_demo_001");
   const [token, setToken] = useState("demo-token");
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -174,14 +173,12 @@ export default function ExtractionPage() {
 
   async function onSubmit() {
     if (!file) return setError("Please choose a PDF, DOCX, JPG, or PNG file.");
-    if (!userId.trim()) return setError("user_id is required.");
     setError(null);
     setStatus("uploading");
     setResponse(null);
     const body = new FormData();
     body.append("file", file);
     body.append("profile_type", profileType);
-    body.append("user_id", userId.trim());
     try {
       const res = await fetch("/api/extract", {
         method: "POST",
@@ -207,8 +204,7 @@ export default function ExtractionPage() {
   const curlExample = `curl -X POST ${ENDPOINT} \\
   -H "Authorization: Bearer <auth_token>" \\
   -F "file=@resume.pdf" \\
-  -F "profile_type=${profileType}" \\
-  -F "user_id=user_123"`;
+  -F "profile_type=${profileType}"`;
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-7 px-5 py-10">
@@ -334,15 +330,10 @@ export default function ExtractionPage() {
               <SoonRow icon="🖼️" label="Upload a logo" />
             </div>
 
-            {/* Fields */}
-            <div className="grid grid-cols-2 gap-3">
-              <Labeled label="user_id">
-                <input value={userId} onChange={(e) => setUserId(e.target.value)} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-              </Labeled>
-              <Labeled label="Bearer token">
-                <input value={token} onChange={(e) => setToken(e.target.value)} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
-              </Labeled>
-            </div>
+            {/* Auth */}
+            <Labeled label="Bearer token">
+              <input value={token} onChange={(e) => setToken(e.target.value)} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            </Labeled>
 
             {error && (
               <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
@@ -454,7 +445,6 @@ export default function ExtractionPage() {
                   <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
                     <PayloadRow name="file" type="File" desc="PDF · DOCX · JPG · PNG" />
                     <PayloadRow name="profile_type" type='"student" | "professional"' />
-                    <PayloadRow name="user_id" type="string" />
                   </div>
                   {/* Ready-to-run example */}
                   <div>

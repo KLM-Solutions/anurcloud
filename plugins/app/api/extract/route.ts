@@ -34,7 +34,7 @@ function tokenMatches(token: string): boolean {
  *
  *   POST /api/extract
  *   Authorization: Bearer <auth_token>
- *   multipart/form-data: file (PDF/DOCX/JPG/PNG), profile_type, user_id
+ *   multipart/form-data: file (PDF/DOCX/JPG/PNG), profile_type
  *
  * Validates the upload, selects the schema by profile_type (Approach A), runs the
  * extraction engine, and returns the structured profile + confidence.
@@ -65,7 +65,6 @@ export async function POST(request: NextRequest) {
 
   const file = formData.get("file");
   const profileTypeRaw = formData.get("profile_type");
-  const userIdRaw = formData.get("user_id");
 
   // 3. Validate file (presence + type; no size limit)
   if (!(file instanceof File)) {
@@ -82,12 +81,7 @@ export async function POST(request: NextRequest) {
     return fail("INVALID_PROFILE_TYPE", '"profile_type" must be "student" or "professional".', 400);
   }
 
-  // 5. Validate user_id
-  if (typeof userIdRaw !== "string" || !userIdRaw.trim()) {
-    return fail("MISSING_USER_ID", 'A "user_id" field is required.', 400);
-  }
-
-  // 6. No engine key configured → fall back to the validation-only stub.
+  // 5. No engine key configured → fall back to the validation-only stub.
   if (!process.env.LLAMA_CLOUD_API_KEY) {
     return NextResponse.json({
       status: "received",
@@ -95,7 +89,6 @@ export async function POST(request: NextRequest) {
       received: {
         file: { filename: file.name, size_bytes: file.size, mime_type: file.type || "unknown" },
         profile_type: profileTypeRaw,
-        user_id: userIdRaw,
       },
       schema_preview: { profile_type: profileTypeRaw, fields: schemaFieldKeys(profileTypeRaw) },
     });

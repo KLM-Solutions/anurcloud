@@ -4,7 +4,7 @@
  * Input from AnurCloud (Handoff 1, see flow.html):
  *   POST /api/extract  (multipart/form-data)
  *   Authorization: Bearer <auth_token>
- *   fields: file (PDF/DOCX/JPG/PNG), profile_type, user_id   — no size limit
+ *   fields: file (PDF/DOCX/JPG/PNG), profile_type   — no size limit
  *
  * Output is profile-type-shaped (Approach A): one rich superset schema per
  * type, every field optional → absent data comes back null/empty ("if present").
@@ -134,7 +134,6 @@ export interface ExtractReceived {
   received: {
     file: { filename: string; size_bytes: number; mime_type: string };
     profile_type: ProfileType;
-    user_id: string;
   };
   schema_preview: { profile_type: ProfileType; fields: string[] };
 }
