@@ -94,6 +94,7 @@ export interface StudentProfile extends BaseProfile {
 }
 
 export interface ProfessionalProfile extends BaseProfile {
+  current_company: string | null;
   experience: ExperienceItem[];
   total_years_experience: string | null;
   projects: ProjectItem[];

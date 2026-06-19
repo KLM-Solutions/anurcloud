@@ -80,6 +80,8 @@ const SAMPLES = [
 const asStr = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v : null);
 const asArr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 
+const OBJECT_PRIMARY_KEYS = ["title", "name", "role", "degree", "platform", "activity", "type"];
+
 /* Output payload as a TYPE/FORMAT spec (not sample values), per profile type.
    object[] fields are expanded across lines so nothing overflows horizontally. */
 function outputFormat(pt: ProfileType): string {
@@ -375,12 +377,30 @@ export default function ExtractionPage() {
                     const score = live.confidence_scores[f.key];
                     const flagged = live.flagged_fields.includes(f.key);
                     const empty = value == null || value === "" || (Array.isArray(value) && value.length === 0);
+                    const chips: string[] =
+                      f.type === "string[]"
+                        ? (asArr(value) as string[])
+                        : f.type === "object[]"
+                        ? (asArr(value) as Record<string, unknown>[])
+                            .map((item) => OBJECT_PRIMARY_KEYS.map((k) => asStr(item[k])).find(Boolean))
+                            .filter((v): v is string => Boolean(v))
+                        : [];
                     return (
-                      <div key={f.key} className="flex items-center gap-3 px-3 py-2 text-sm">
+                      <div key={f.key} className={`flex gap-3 px-3 py-2 text-sm ${!empty && chips.length ? "items-start" : "items-center"}`}>
                         <span className="w-32 shrink-0 truncate text-xs font-medium text-slate-500">{f.label}</span>
-                        <span className={`flex-1 truncate ${empty ? "text-slate-300" : "text-slate-800"}`}>
-                          {Array.isArray(value) ? (value.length ? `${value.length} item${value.length === 1 ? "" : "s"}` : "—") : value ? String(value) : "—"}
-                        </span>
+                        <div className="flex flex-1 flex-wrap gap-1 min-w-0">
+                          {empty ? (
+                            <span className="text-slate-300">—</span>
+                          ) : chips.length ? (
+                            chips.map((chip, i) => (
+                              <span key={i} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                                {chip}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-slate-800">{asStr(value)}</span>
+                          )}
+                        </div>
                         {typeof score === "number" && (
                           <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${flagged ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
                             {flagged ? "⚠" : "✓"} {score.toFixed(2)}

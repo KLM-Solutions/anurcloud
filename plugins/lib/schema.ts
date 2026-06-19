@@ -18,6 +18,8 @@ export interface SubField {
   label: string;
   /** Sub-field value type; defaults to "string". */
   type?: "string" | "string[]";
+  /** Guides the extraction engine — same role as SchemaField.description but for nested properties. */
+  description?: string;
 }
 
 export interface SchemaField {
@@ -25,6 +27,8 @@ export interface SchemaField {
   label: string;
   type: FieldType;
   description: string;
+  /** For `string[]` fields — guides the engine on what each individual item should contain. */
+  itemDescription?: string;
   /** Present for `object[]` fields. */
   fields?: SubField[];
 }
@@ -58,21 +62,23 @@ const COMMON: SchemaField[] = [
     label: "Skills",
     type: "string[]",
     description: "Technical and professional skills mentioned.",
+    itemDescription: "One skill per item in title case e.g. 'React', 'Node.js', 'Machine Learning'. Do not combine multiple skills into one item.",
   },
   {
     key: "languages",
     label: "Languages",
     type: "string[]",
     description: "Spoken/written languages mentioned.",
+    itemDescription: "One language per item e.g. 'English', 'Tamil', 'Hindi'. Do not include proficiency level.",
   },
   {
     key: "social_links",
     label: "Social links",
     type: "object[]",
-    description: "Profiles and links — LinkedIn, GitHub, portfolio, Twitter/X, etc.",
+    description: "Profiles and links — LinkedIn, GitHub, portfolio, Twitter/X, etc. Extract both visible URLs and URLs written near platform names. If a URL is not visible, still record the platform with a null URL.",
     fields: [
-      { key: "platform", label: "Platform" },
-      { key: "url", label: "URL" },
+      { key: "platform", label: "Platform", description: "Platform name e.g. LinkedIn, GitHub, Twitter/X, Behance, Dribbble, portfolio." },
+      { key: "url", label: "URL", description: "Full URL to the profile or page. Include the scheme (https://). If only a partial URL is visible e.g. 'linkedin.com/in/username', expand it to the full URL. Return null if no URL is found." },
     ],
   },
   {
@@ -81,11 +87,11 @@ const COMMON: SchemaField[] = [
     type: "object[]",
     description: "Academic history.",
     fields: [
-      { key: "degree", label: "Degree" },
-      { key: "field", label: "Field of study" },
-      { key: "institution", label: "Institution" },
-      { key: "year", label: "Year / duration" },
-      { key: "grade", label: "GPA / grade" },
+      { key: "degree", label: "Degree", description: "Degree type e.g. B.Tech, M.Sc, MBA, MBBS, Ph.D, High School Diploma." },
+      { key: "field", label: "Field of study", description: "Major or field of study e.g. Computer Science, Mechanical Engineering, Medicine." },
+      { key: "institution", label: "Institution", description: "Full name of the university, college, or school." },
+      { key: "year", label: "Year / duration", description: "Study period or graduation year e.g. '2021–2025' or '2023'." },
+      { key: "grade", label: "GPA / grade", description: "Grade as stated on the document — include the scale e.g. '8.4/10', '3.8/4.0', '92%', 'First Class'. Do not convert or normalise." },
     ],
   },
   {
@@ -94,9 +100,9 @@ const COMMON: SchemaField[] = [
     type: "object[]",
     description: "Certifications and licences.",
     fields: [
-      { key: "name", label: "Name" },
-      { key: "issuer", label: "Issuer" },
-      { key: "year", label: "Year" },
+      { key: "name", label: "Name", description: "Full name of the certification or licence." },
+      { key: "issuer", label: "Issuer", description: "Issuing organisation e.g. AWS, Google, Microsoft, Coursera, NASSCOM." },
+      { key: "year", label: "Year", description: "Year the certification was issued or completed." },
     ],
   },
   {
@@ -105,8 +111,8 @@ const COMMON: SchemaField[] = [
     type: "object[]",
     description: "Awards, honours, and notable achievements.",
     fields: [
-      { key: "title", label: "Title" },
-      { key: "year", label: "Year" },
+      { key: "title", label: "Title", description: "Name of the award, honour, or achievement." },
+      { key: "year", label: "Year", description: "Year the achievement was received." },
     ],
   },
 ];
@@ -119,10 +125,10 @@ const STUDENT_ONLY: SchemaField[] = [
     type: "object[]",
     description: "Academic, personal, or hackathon projects.",
     fields: [
-      { key: "title", label: "Title" },
-      { key: "description", label: "Description" },
-      { key: "technologies", label: "Technologies / tools", type: "string[]" },
-      { key: "link", label: "Link" },
+      { key: "title", label: "Title", description: "Project name." },
+      { key: "description", label: "Description", description: "Brief description of what the project does or its purpose." },
+      { key: "technologies", label: "Technologies / tools", type: "string[]", description: "Technologies, frameworks, and tools used; one item per technology." },
+      { key: "link", label: "Link", description: "URL to the project, demo, or repository if present." },
     ],
   },
   {
@@ -131,10 +137,10 @@ const STUDENT_ONLY: SchemaField[] = [
     type: "object[]",
     description: "Internship experiences.",
     fields: [
-      { key: "role", label: "Role" },
-      { key: "organization", label: "Organization" },
-      { key: "duration", label: "Duration" },
-      { key: "description", label: "Description" },
+      { key: "role", label: "Role", description: "Job title or role during the internship." },
+      { key: "organization", label: "Organization", description: "Name of the company or organisation." },
+      { key: "duration", label: "Duration", description: "Duration or period e.g. 'Summer 2024', 'Jun–Aug 2023', '3 months'." },
+      { key: "description", label: "Description", description: "Summary of work done, responsibilities, or key contributions." },
     ],
   },
   {
@@ -143,8 +149,8 @@ const STUDENT_ONLY: SchemaField[] = [
     type: "object[]",
     description: "Clubs, sports, cultural and volunteer activities.",
     fields: [
-      { key: "activity", label: "Activity" },
-      { key: "role", label: "Role" },
+      { key: "activity", label: "Activity", description: "Name of the club, sport, cultural activity, or volunteer programme." },
+      { key: "role", label: "Role", description: "Role held e.g. President, Member, Volunteer, Captain. Leave empty if not stated." },
     ],
   },
   {
@@ -153,10 +159,10 @@ const STUDENT_ONLY: SchemaField[] = [
     type: "object[]",
     description: "Research papers / publications (research & medical students).",
     fields: [
-      { key: "title", label: "Title" },
-      { key: "venue", label: "Venue" },
-      { key: "year", label: "Year" },
-      { key: "link", label: "Link" },
+      { key: "title", label: "Title", description: "Full title of the paper, article, or publication." },
+      { key: "venue", label: "Venue", description: "Journal name, conference, or platform where it was published." },
+      { key: "year", label: "Year", description: "Year of publication." },
+      { key: "link", label: "Link", description: "URL or DOI link to the publication if present." },
     ],
   },
 ];
@@ -164,23 +170,31 @@ const STUDENT_ONLY: SchemaField[] = [
 /* ── Professional-only ── */
 const PROFESSIONAL_ONLY: SchemaField[] = [
   {
+    key: "current_company",
+    label: "Current company",
+    type: "string",
+    description:
+      "The professional's current or most recent employer. Identify it by finding the experience entry with the latest or ongoing date range (e.g. 'present', '2024–now'). Use the company name exactly as written. Do not pick the first listed company — resumes can be ordered oldest-first or newest-first.",
+  },
+  {
     key: "experience",
     label: "Work experience",
     type: "object[]",
     description: "Professional work history.",
     fields: [
-      { key: "role", label: "Role" },
-      { key: "company", label: "Company" },
-      { key: "duration", label: "Duration" },
-      { key: "location", label: "Location" },
-      { key: "highlights", label: "Highlights", type: "string[]" },
+      { key: "role", label: "Role", description: "Exact job title as written on the document e.g. 'Senior Software Engineer', 'Product Manager'." },
+      { key: "company", label: "Company", description: "Employer name." },
+      { key: "duration", label: "Duration", description: "Employment period e.g. 'Jan 2020 – Mar 2023', '2020–present'. Use 'present' if the role is ongoing." },
+      { key: "location", label: "Location", description: "City or country of the role. Leave empty if not stated." },
+      { key: "highlights", label: "Highlights", type: "string[]", description: "Key achievements or responsibilities; each bullet point or sentence is one array item. Do not merge multiple bullets into one item." },
     ],
   },
   {
     key: "total_years_experience",
     label: "Total years of experience",
     type: "string",
-    description: "Total professional experience, e.g. '8 years'.",
+    description:
+      "Total years of professional experience as a whole number followed by 'years', e.g. '5 years', '12 years'. Calculate from the earliest role start date to the present (or last role end date if no ongoing role). Round to the nearest whole year. If the document explicitly states a total, use that value directly instead of calculating.",
   },
   {
     key: "projects",
@@ -188,17 +202,18 @@ const PROFESSIONAL_ONLY: SchemaField[] = [
     type: "object[]",
     description: "Notable portfolio or professional projects.",
     fields: [
-      { key: "title", label: "Title" },
-      { key: "description", label: "Description" },
-      { key: "technologies", label: "Technologies / tools", type: "string[]" },
-      { key: "link", label: "Link" },
+      { key: "title", label: "Title", description: "Project name." },
+      { key: "description", label: "Description", description: "Brief description of the project's purpose or outcome." },
+      { key: "technologies", label: "Technologies / tools", type: "string[]", description: "Technologies, frameworks, and tools used; one item per technology." },
+      { key: "link", label: "Link", description: "URL to the project, demo, or repository if present." },
     ],
   },
   {
     key: "portfolio_links",
     label: "Portfolio links",
     type: "string[]",
-    description: "Links to portfolio, website, or work samples.",
+    description: "Links to portfolio, personal website, or project demos.",
+    itemDescription: "A direct URL to a portfolio, personal website, or project demo. Do not include LinkedIn, GitHub, or social profile URLs here — those belong in social_links.",
   },
   {
     key: "publications",
@@ -206,10 +221,10 @@ const PROFESSIONAL_ONLY: SchemaField[] = [
     type: "object[]",
     description: "Research papers / publications (academics, researchers, doctors).",
     fields: [
-      { key: "title", label: "Title" },
-      { key: "venue", label: "Venue" },
-      { key: "year", label: "Year" },
-      { key: "link", label: "Link" },
+      { key: "title", label: "Title", description: "Full title of the paper, article, or publication." },
+      { key: "venue", label: "Venue", description: "Journal name, conference, or platform where it was published." },
+      { key: "year", label: "Year", description: "Year of publication." },
+      { key: "link", label: "Link", description: "URL or DOI link to the publication if present." },
     ],
   },
   {
@@ -219,8 +234,8 @@ const PROFESSIONAL_ONLY: SchemaField[] = [
     description:
       "Profession-specific registrations/memberships, e.g. Bar Council or Medical Council number.",
     fields: [
-      { key: "type", label: "Type" },
-      { key: "id", label: "ID / number" },
+      { key: "type", label: "Type", description: "Registration type e.g. 'Bar Council Number', 'Medical Council ID', 'CPA License', 'ICAI Membership'." },
+      { key: "id", label: "ID / number", description: "The registration number or identifier string exactly as written." },
     ],
   },
 ];
@@ -256,14 +271,25 @@ function fieldToJsonSchema(field: SchemaField): JsonSchema {
     case "string":
       return { type: "string", description: field.description };
     case "string[]":
-      return { type: "array", description: field.description, items: { type: "string" } };
+      return {
+        type: "array",
+        description: field.description,
+        items: field.itemDescription
+          ? { type: "string", description: field.itemDescription }
+          : { type: "string" },
+      };
     case "object[]": {
       const properties: JsonSchema = {};
       for (const sub of field.fields ?? []) {
-        properties[sub.key] =
-          sub.type === "string[]"
-            ? { type: "array", items: { type: "string" } }
+        if (sub.type === "string[]") {
+          properties[sub.key] = sub.description
+            ? { type: "array", items: { type: "string" }, description: sub.description }
+            : { type: "array", items: { type: "string" } };
+        } else {
+          properties[sub.key] = sub.description
+            ? { type: "string", description: sub.description }
             : { type: "string" };
+        }
       }
       return {
         type: "array",
@@ -276,12 +302,15 @@ function fieldToJsonSchema(field: SchemaField): JsonSchema {
 
 /**
  * Builds the JSON Schema for a profile type from the field catalog above.
- * Every field is optional → absent data comes back null/empty ("if present").
+ * All fields are marked required so LlamaExtract always returns every key
+ * (null or [] when absent) — prevents silent field omission on uncertain fields.
  */
 export function toJsonSchema(profileType: ProfileType): JsonSchema {
   const properties: JsonSchema = {};
+  const required: string[] = [];
   for (const field of EXTRACTION_SCHEMA[profileType]) {
     properties[field.key] = fieldToJsonSchema(field);
+    required.push(field.key);
   }
-  return { type: "object", properties };
+  return { type: "object", properties, required, additionalProperties: false };
 }
