@@ -60,7 +60,7 @@ export async function extractProfile(
   // Throw if the job did not succeed so callers get a proper error instead of
   // silently receiving an all-null profile. LlamaCloud terminal statuses are
   // "SUCCESS", "ERROR", "CANCELLED", and "PARTIAL".
-  if (job.status !== "SUCCESS") {
+  if (job.status !== "COMPLETED") {
     throw new Error(`Extraction job ended with status "${job.status}".`);
   }
 
