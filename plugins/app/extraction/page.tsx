@@ -8,6 +8,7 @@ import type { ExtractResponse, ProfileType } from "@/lib/types";
 
 type Status = "idle" | "uploading" | "done" | "error";
 type Tab = "preview" | "fields" | "input" | "output";
+type SourceMode = "file" | "url";
 
 const TYPE_LABEL: Record<SchemaField["type"], string> = {
   string: "Text",
@@ -68,8 +69,9 @@ const SAMPLE: ActiveResult = {
   flagged_fields: ["projects"],
 };
 
-/* Live deployment endpoint AnurCloud calls. */
+/* Live deployment endpoints AnurCloud calls. */
 const ENDPOINT = "https://anurcloud.vercel.app/api/extract";
+const URL_ENDPOINT = "https://anurcloud.vercel.app/api/extract-url";
 
 /* Sample resumes (served from /public/samples) — one-click load into the uploader. */
 const SAMPLES = [
@@ -116,6 +118,8 @@ function outputFormat(pt: ProfileType): string {
 
 export default function ExtractionPage() {
   const [file, setFile] = useState<File | null>(null);
+  const [sourceMode, setSourceMode] = useState<SourceMode>("file");
+  const [url, setUrl] = useState("");
   const [profileType, setProfileType] = useState<ProfileType>("student");
   // Pre-fill the access token from a public env var so the demo works out of the box.
   // NOTE: NEXT_PUBLIC_* is exposed in the client bundle by design — treat this as a
@@ -129,6 +133,13 @@ export default function ExtractionPage() {
   const [copied, setCopied] = useState(false);
   const [loadingSample, setLoadingSample] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  function switchSourceMode(mode: SourceMode) {
+    setSourceMode(mode);
+    setError(null);
+    setResponse(null);
+    setStatus("idle");
+  }
 
   const live: ActiveResult | null =
     response?.status === "success"
@@ -177,6 +188,30 @@ export default function ExtractionPage() {
   }
 
   async function onSubmit() {
+    if (sourceMode === "url") {
+      const trimmed = url.trim();
+      if (!trimmed) return setError("Please paste a URL to extract from.");
+      try { new URL(trimmed); } catch { return setError("Please enter a valid URL starting with http:// or https://"); }
+      setError(null);
+      setStatus("uploading");
+      setResponse(null);
+      try {
+        const res = await fetch("/api/extract-url", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ url: trimmed, profile_type: profileType }),
+        });
+        const json = (await res.json()) as ExtractResponse;
+        setResponse(json);
+        setStatus(res.ok ? "done" : "error");
+        if (res.ok) setTab("preview");
+      } catch (e) {
+        setResponse({ status: "error", error: { code: "NETWORK", message: String(e) } });
+        setStatus("error");
+      }
+      return;
+    }
+
     if (!file) return setError("Please choose a PDF, DOCX, JPG, or PNG file.");
     setError(null);
     setStatus("uploading");
@@ -206,10 +241,10 @@ export default function ExtractionPage() {
     setTimeout(() => setCopied(false), 1500);
   }
 
-  const curlExample = `curl -X POST ${ENDPOINT} \\
-  -H "Authorization: Bearer <auth_token>" \\
-  -F "file=@resume.pdf" \\
-  -F "profile_type=${profileType}"`;
+  const curlExample =
+    sourceMode === "url"
+      ? `curl -X POST ${URL_ENDPOINT} \\\n  -H "Authorization: Bearer <auth_token>" \\\n  -H "Content-Type: application/json" \\\n  -d '{"url":"${url || "https://example.com/profile"}","profile_type":"${profileType}"}'`
+      : `curl -X POST ${ENDPOINT} \\\n  -H "Authorization: Bearer <auth_token>" \\\n  -F "file=@resume.pdf" \\\n  -F "profile_type=${profileType}"`;
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-7 px-5 py-10">
@@ -249,7 +284,7 @@ export default function ExtractionPage() {
         <section className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:h-[740px]">
           <CardHead dot="bg-blue-600" title="Try it live">
             <span className="rounded-md bg-slate-100 px-2 py-1 font-mono text-[10px] font-semibold text-slate-500">
-              POST /api/extract
+              POST {sourceMode === "url" ? "/api/extract-url" : "/api/extract"}
             </span>
           </CardHead>
 
@@ -276,62 +311,101 @@ export default function ExtractionPage() {
             {/* Source */}
             <div className="flex flex-col gap-2.5">
               <Eyebrow>Source</Eyebrow>
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOver(true);
-                }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={onDrop}
-                onClick={() => inputRef.current?.click()}
-                className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-6 py-7 text-center transition-colors ${
-                  dragOver ? "border-blue-500 bg-blue-50" : "border-slate-300 bg-slate-50/50 hover:border-slate-400"
-                }`}
-              >
-                <div className="text-2xl">📄</div>
-                {file ? (
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-semibold text-slate-800">{file.name}</span>
-                    <span className="text-slate-400">· {formatBytes(file.size)}</span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        chooseFile(null);
-                        if (inputRef.current) inputRef.current.value = "";
-                      }}
-                      className="rounded-full bg-slate-200 px-2 text-xs font-bold text-slate-500 hover:bg-slate-300"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-sm font-semibold text-slate-700">Upload a file</p>
-                    <p className="text-xs text-slate-400">drag &amp; drop or browse · PDF · DOCX · JPG · PNG</p>
-                  </>
-                )}
-                <input ref={inputRef} type="file" accept={ACCEPT_ATTR} className="hidden" onChange={(e) => chooseFile(e.target.files?.[0] ?? null)} />
+
+              {/* Mode toggle */}
+              <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+                <button
+                  type="button"
+                  onClick={() => switchSourceMode("file")}
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    sourceMode === "file" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  📄 File
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchSourceMode("url")}
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    sourceMode === "url" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  🔗 URL
+                </button>
               </div>
 
-              {/* Sample resumes — one-click load, or upload your own above */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-medium text-slate-400">Or try a sample:</span>
-                {SAMPLES.map((s) => (
-                  <button
-                    key={s.file}
-                    type="button"
-                    onClick={() => loadSample(s)}
-                    disabled={loadingSample !== null}
-                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-blue-400 hover:text-blue-700 disabled:opacity-50"
+              {sourceMode === "file" ? (
+                <>
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDragOver(true);
+                    }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={onDrop}
+                    onClick={() => inputRef.current?.click()}
+                    className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-6 py-7 text-center transition-colors ${
+                      dragOver ? "border-blue-500 bg-blue-50" : "border-slate-300 bg-slate-50/50 hover:border-slate-400"
+                    }`}
                   >
-                    <span>📄</span>
-                    {loadingSample === s.file ? "Loading…" : s.label}
-                  </button>
-                ))}
-              </div>
+                    <div className="text-2xl">📄</div>
+                    {file ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="font-semibold text-slate-800">{file.name}</span>
+                        <span className="text-slate-400">· {formatBytes(file.size)}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            chooseFile(null);
+                            if (inputRef.current) inputRef.current.value = "";
+                          }}
+                          className="rounded-full bg-slate-200 px-2 text-xs font-bold text-slate-500 hover:bg-slate-300"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm font-semibold text-slate-700">Upload a file</p>
+                        <p className="text-xs text-slate-400">drag &amp; drop or browse · PDF · DOCX · JPG · PNG</p>
+                      </>
+                    )}
+                    <input ref={inputRef} type="file" accept={ACCEPT_ATTR} className="hidden" onChange={(e) => chooseFile(e.target.files?.[0] ?? null)} />
+                  </div>
 
-              <SoonRow icon="🔗" label="Paste a site / portfolio URL" />
+                  {/* Sample resumes — one-click load, or upload your own above */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-medium text-slate-400">Or try a sample:</span>
+                    {SAMPLES.map((s) => (
+                      <button
+                        key={s.file}
+                        type="button"
+                        onClick={() => loadSample(s)}
+                        disabled={loadingSample !== null}
+                        className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-blue-400 hover:text-blue-700 disabled:opacity-50"
+                      >
+                        <span>📄</span>
+                        {loadingSample === s.file ? "Loading…" : s.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://yourportfolio.com or personal website URL"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                  <p className="text-xs text-slate-400">
+                    Crawls up to 25 pages of the site automatically — so achievements, projects, and other sub-pages are included too.
+                  </p>
+                </div>
+              )}
+
               <SoonRow icon="🖼️" label="Upload a logo" />
             </div>
 
@@ -358,7 +432,11 @@ export default function ExtractionPage() {
               disabled={status === "uploading"}
               className="rounded-xl bg-gradient-to-r from-blue-700 to-blue-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/30 transition hover:opacity-95 disabled:opacity-60"
             >
-              {status === "uploading" ? "Extracting… (a few seconds)" : "Run extraction →"}
+              {status === "uploading"
+                ? sourceMode === "url"
+                  ? "Crawling site & extracting… (up to 30s)"
+                  : "Extracting… (a few seconds)"
+                : "Run extraction →"}
             </button>
 
             {response?.status === "error" && (
@@ -377,26 +455,43 @@ export default function ExtractionPage() {
                     const score = live.confidence_scores[f.key];
                     const flagged = live.flagged_fields.includes(f.key);
                     const empty = value == null || value === "" || (Array.isArray(value) && value.length === 0);
-                    const chips: string[] =
-                      f.type === "string[]"
-                        ? (asArr(value) as string[])
-                        : f.type === "object[]"
+                    const strChips: string[] = f.type === "string[]" ? (asArr(value) as string[]) : [];
+                    const objChips: { label: string; href: string | null }[] =
+                      f.type === "object[]"
                         ? (asArr(value) as Record<string, unknown>[])
-                            .map((item) => OBJECT_PRIMARY_KEYS.map((k) => asStr(item[k])).find(Boolean))
-                            .filter((v): v is string => Boolean(v))
+                            .map((item) => ({
+                              label: OBJECT_PRIMARY_KEYS.map((k) => asStr(item[k])).find(Boolean) ?? "",
+                              href: asStr(item.url) ?? asStr(item.link) ?? null,
+                            }))
+                            .filter((c) => c.label)
                         : [];
+                    const hasChips = strChips.length > 0 || objChips.length > 0;
                     return (
-                      <div key={f.key} className={`flex gap-3 px-3 py-2 text-sm ${!empty && chips.length ? "items-start" : "items-center"}`}>
+                      <div key={f.key} className={`flex gap-3 px-3 py-2 text-sm ${!empty && hasChips ? "items-start" : "items-center"}`}>
                         <span className="w-32 shrink-0 truncate text-xs font-medium text-slate-500">{f.label}</span>
                         <div className="flex flex-1 flex-wrap gap-1 min-w-0">
                           {empty ? (
                             <span className="text-slate-300">—</span>
-                          ) : chips.length ? (
-                            chips.map((chip, i) => (
+                          ) : strChips.length ? (
+                            strChips.map((chip, i) => (
                               <span key={i} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
                                 {chip}
                               </span>
                             ))
+                          ) : objChips.length ? (
+                            objChips.map((chip, i) =>
+                              chip.href ? (
+                                <a key={i} href={chip.href} target="_blank" rel="noopener noreferrer"
+                                  className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 transition hover:bg-blue-50 hover:text-blue-700">
+                                  {chip.label}
+                                  <span className="text-[9px] opacity-60">↗</span>
+                                </a>
+                              ) : (
+                                <span key={i} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                                  {chip.label}
+                                </span>
+                              )
+                            )
                           ) : (
                             <span className="text-slate-800">{asStr(value)}</span>
                           )}
@@ -462,17 +557,29 @@ export default function ExtractionPage() {
                   {/* Endpoint */}
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-md bg-blue-600 px-1.5 py-0.5 font-bold text-white">POST</span>
-                    <span className="break-all text-slate-700">{ENDPOINT}</span>
+                    <span className="break-all text-slate-700">{sourceMode === "url" ? URL_ENDPOINT : ENDPOINT}</span>
                   </div>
                   {/* Headers */}
                   <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-600">
                     <div><span className="text-violet-700">Authorization:</span> Bearer &lt;auth_token&gt;</div>
-                    <div><span className="text-violet-700">Content-Type:</span> multipart/form-data</div>
+                    <div>
+                      <span className="text-violet-700">Content-Type:</span>{" "}
+                      {sourceMode === "url" ? "application/json" : "multipart/form-data"}
+                    </div>
                   </div>
                   {/* Body fields */}
                   <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-                    <PayloadRow name="file" type="File" desc="PDF · DOCX · JPG · PNG" />
-                    <PayloadRow name="profile_type" type='"student" | "professional"' />
+                    {sourceMode === "url" ? (
+                      <>
+                        <PayloadRow name="url" type="string" desc="public profile / portfolio" />
+                        <PayloadRow name="profile_type" type='"student" | "professional"' />
+                      </>
+                    ) : (
+                      <>
+                        <PayloadRow name="file" type="File" desc="PDF · DOCX · JPG · PNG" />
+                        <PayloadRow name="profile_type" type='"student" | "professional"' />
+                      </>
+                    )}
                   </div>
                   {/* Ready-to-run example */}
                   <div>
@@ -527,76 +634,235 @@ function PhonePreview({
 
   const name = asStr(data.full_name) ?? "Your name";
   const title = asStr(data.designation) ?? "Your designation";
+  const summary = asStr(data.summary);
   const skills = asArr(data.skills) as string[];
-  const SECTIONS = [
-    { key: "education", label: "Education" },
-    { key: "experience", label: "Experience" },
-    { key: "projects", label: "Projects" },
-    { key: "internships", label: "Internships" },
-    { key: "certifications", label: "Certifications" },
-    { key: "publications", label: "Publications" },
-  ].filter((s) => asArr(data[s.key]).length > 0);
+  const languages = asArr(data.languages) as string[];
+  const socialLinks = asArr(data.social_links) as Record<string, unknown>[];
+  const education = asArr(data.education) as Record<string, unknown>[];
+  const experience = asArr(data.experience) as Record<string, unknown>[];
+  const projects = asArr(data.projects) as Record<string, unknown>[];
+  const internships = asArr(data.internships) as Record<string, unknown>[];
+  const certifications = asArr(data.certifications) as Record<string, unknown>[];
+  const achievements = asArr(data.achievements) as Record<string, unknown>[];
+  const publications = asArr(data.publications) as Record<string, unknown>[];
 
   return (
-    <div className="mx-auto flex min-h-[600px] w-full max-w-[300px] flex-col overflow-hidden rounded-[2.25rem] border-[8px] border-slate-900 bg-white shadow-2xl">
+    <div className="mx-auto flex h-[620px] w-full max-w-[300px] flex-col overflow-hidden rounded-[2.25rem] border-[8px] border-slate-900 bg-white shadow-2xl">
       {/* App bar */}
-      <div className="bg-gradient-to-r from-blue-700 to-blue-500 px-5 py-4 text-white">
+      <div className="shrink-0 bg-gradient-to-r from-blue-700 to-blue-500 px-5 py-4 text-white">
         <div className="text-[11px] font-semibold uppercase tracking-wider opacity-80">Insta VIZ</div>
         <div className="text-base font-bold">Review your profile</div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3.5 p-5">
+      {/* Scrollable content */}
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+
         {/* Identity */}
         <div className="flex items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-2xl">👤</div>
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-slate-100 text-2xl">👤</div>
           <div className="min-w-0">
             <div className="truncate text-base font-bold text-slate-900">{name}</div>
             <div className="truncate text-sm text-slate-500">{title}</div>
           </div>
         </div>
 
-        {/* Contacts */}
-        <div className="flex flex-col gap-1.5">
-          <ContactRow icon="✉️" value={asStr(data.email)} state={stateOf("email")} />
-          <ContactRow icon="☎️" value={asStr(data.phone)} state={stateOf("phone")} />
-          <ContactRow icon="📍" value={asStr(data.location)} state={stateOf("location")} />
-        </div>
+        {/* Summary */}
+        {summary && (
+          <div>
+            <PhoneSectionLabel>About</PhoneSectionLabel>
+            <p className="mt-1 text-[11px] leading-relaxed text-slate-600">{summary}</p>
+          </div>
+        )}
 
         {/* Skills */}
         {skills.length > 0 && (
           <div>
-            <FieldLabel>Skills</FieldLabel>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {skills.slice(0, 8).map((s, i) => (
-                <span key={i} className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">
-                  {s}
-                </span>
+            <PhoneSectionLabel flagged={flaggedSet.has("skills")}>Skills</PhoneSectionLabel>
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {skills.map((s, i) => (
+                <span key={i} className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">{s}</span>
               ))}
-              {skills.length > 8 && <span className="px-1 text-[11px] text-slate-400">+{skills.length - 8}</span>}
             </div>
           </div>
         )}
 
-        {/* Sections */}
-        {SECTIONS.map((s) => {
-          const count = asArr(data[s.key]).length;
-          const flag = flaggedSet.has(s.key);
-          return (
-            <div key={s.key} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-              <span className="text-xs font-medium text-slate-600">{s.label}</span>
-              <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                {count} {count === 1 ? "entry" : "entries"}
-                {flag && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">⚠ check</span>}
-              </span>
+        {/* Languages */}
+        {languages.length > 0 && (
+          <div>
+            <PhoneSectionLabel flagged={flaggedSet.has("languages")}>Languages</PhoneSectionLabel>
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {languages.map((l, i) => (
+                <span key={i} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">{l}</span>
+              ))}
             </div>
-          );
-        })}
+          </div>
+        )}
 
-        {/* CTA — pinned to the bottom of the phone */}
-        <button type="button" disabled className="mt-auto cursor-default rounded-xl bg-gradient-to-r from-blue-700 to-blue-500 py-2.5 text-sm font-bold text-white opacity-95">
+        {/* Education */}
+        {education.length > 0 && (
+          <div>
+            <PhoneSectionLabel flagged={flaggedSet.has("education")}>Education</PhoneSectionLabel>
+            <div className="mt-1.5 flex flex-col gap-2">
+              {education.map((e, i) => (
+                <div key={i} className="rounded-lg bg-slate-50 px-3 py-2">
+                  <div className="text-[11px] font-semibold text-slate-800">
+                    {[asStr(e.degree), asStr(e.field)].filter(Boolean).join(" · ")}
+                  </div>
+                  <div className="text-[10px] text-slate-500">{asStr(e.institution)}</div>
+                  <div className="text-[10px] text-slate-400">{[asStr(e.year), asStr(e.grade)].filter(Boolean).join(" · ")}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Experience */}
+        {experience.length > 0 && (
+          <div>
+            <PhoneSectionLabel flagged={flaggedSet.has("experience")}>Experience</PhoneSectionLabel>
+            <div className="mt-1.5 flex flex-col gap-2">
+              {experience.map((e, i) => (
+                <div key={i} className="rounded-lg bg-slate-50 px-3 py-2">
+                  <div className="text-[11px] font-semibold text-slate-800">{asStr(e.role)}</div>
+                  <div className="text-[10px] text-slate-500">{asStr(e.company)}</div>
+                  <div className="text-[10px] text-slate-400">{[asStr(e.duration), asStr(e.location)].filter(Boolean).join(" · ")}</div>
+                  {(asArr(e.highlights) as string[]).slice(0, 2).map((h, j) => (
+                    <div key={j} className="mt-0.5 text-[10px] leading-relaxed text-slate-500">· {h}</div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Projects */}
+        {projects.length > 0 && (
+          <div>
+            <PhoneSectionLabel flagged={flaggedSet.has("projects")}>Projects</PhoneSectionLabel>
+            <div className="mt-1.5 flex flex-col gap-2">
+              {projects.map((p, i) => (
+                <div key={i} className="rounded-lg bg-slate-50 px-3 py-2">
+                  <div className="text-[11px] font-semibold text-slate-800">{asStr(p.title)}</div>
+                  {asStr(p.description) && <div className="text-[10px] text-slate-500">{asStr(p.description)}</div>}
+                  {(asArr(p.technologies) as string[]).length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {(asArr(p.technologies) as string[]).map((t, j) => (
+                        <span key={j} className="rounded bg-white px-1.5 py-0.5 text-[9px] font-medium text-slate-500 border border-slate-200">{t}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Internships */}
+        {internships.length > 0 && (
+          <div>
+            <PhoneSectionLabel flagged={flaggedSet.has("internships")}>Internships</PhoneSectionLabel>
+            <div className="mt-1.5 flex flex-col gap-2">
+              {internships.map((e, i) => (
+                <div key={i} className="rounded-lg bg-slate-50 px-3 py-2">
+                  <div className="text-[11px] font-semibold text-slate-800">{asStr(e.role)}</div>
+                  <div className="text-[10px] text-slate-500">{asStr(e.organization)}</div>
+                  <div className="text-[10px] text-slate-400">{asStr(e.duration)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Certifications */}
+        {certifications.length > 0 && (
+          <div>
+            <PhoneSectionLabel flagged={flaggedSet.has("certifications")}>Certifications</PhoneSectionLabel>
+            <div className="mt-1.5 flex flex-col gap-2">
+              {certifications.map((c, i) => (
+                <div key={i} className="rounded-lg bg-slate-50 px-3 py-2">
+                  <div className="text-[11px] font-semibold text-slate-800">{asStr(c.name)}</div>
+                  <div className="text-[10px] text-slate-400">{[asStr(c.issuer), asStr(c.year)].filter(Boolean).join(" · ")}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Achievements */}
+        {achievements.length > 0 && (
+          <div>
+            <PhoneSectionLabel flagged={flaggedSet.has("achievements")}>Achievements</PhoneSectionLabel>
+            <div className="mt-1.5 flex flex-col gap-1.5">
+              {achievements.map((a, i) => (
+                <div key={i} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                  <span className="text-[11px] font-medium text-slate-700">{asStr(a.title)}</span>
+                  {asStr(a.year) && <span className="text-[10px] text-slate-400">{asStr(a.year)}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Publications */}
+        {publications.length > 0 && (
+          <div>
+            <PhoneSectionLabel flagged={flaggedSet.has("publications")}>Publications</PhoneSectionLabel>
+            <div className="mt-1.5 flex flex-col gap-2">
+              {publications.map((p, i) => (
+                <div key={i} className="rounded-lg bg-slate-50 px-3 py-2">
+                  <div className="text-[11px] font-semibold text-slate-800">{asStr(p.title)}</div>
+                  <div className="text-[10px] text-slate-400">{[asStr(p.venue), asStr(p.year)].filter(Boolean).join(" · ")}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Social links */}
+        {socialLinks.length > 0 && (
+          <div>
+            <PhoneSectionLabel flagged={flaggedSet.has("social_links")}>Links</PhoneSectionLabel>
+            <div className="mt-1.5 flex flex-col gap-1">
+              {socialLinks.map((l, i) => (
+                <div key={i} className="flex items-center gap-2 text-[11px]">
+                  <span className="w-20 shrink-0 font-medium text-slate-500">{asStr(l.platform)}</span>
+                  {asStr(l.url) ? (
+                    <a href={asStr(l.url)!} target="_blank" rel="noopener noreferrer" className="truncate text-blue-600 hover:underline">
+                      {asStr(l.url)}
+                    </a>
+                  ) : (
+                    <span className="text-slate-300">—</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Contacts — moved to bottom */}
+        <div>
+          <PhoneSectionLabel>Contact</PhoneSectionLabel>
+          <div className="mt-1.5 flex flex-col gap-1.5">
+            <ContactRow icon="✉️" value={asStr(data.email)} state={stateOf("email")} />
+            <ContactRow icon="☎️" value={asStr(data.phone)} state={stateOf("phone")} />
+            <ContactRow icon="📍" value={asStr(data.location)} state={stateOf("location")} />
+          </div>
+        </div>
+
+        {/* CTA */}
+        <button type="button" disabled className="cursor-default rounded-xl bg-gradient-to-r from-blue-700 to-blue-500 py-2.5 text-sm font-bold text-white opacity-95">
           Looks good →
         </button>
       </div>
+    </div>
+  );
+}
+
+function PhoneSectionLabel({ children, flagged }: { children: ReactNode; flagged?: boolean }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{children}</span>
+      {flagged && <span className="rounded bg-amber-100 px-1 py-0.5 text-[9px] font-bold text-amber-600">⚠</span>}
     </div>
   );
 }
