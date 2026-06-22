@@ -406,7 +406,6 @@ export default function ExtractionPage() {
                 </div>
               )}
 
-              <SoonRow icon="🖼️" label="Upload a logo" />
             </div>
 
             {/* Auth */}
@@ -976,9 +975,6 @@ function Eyebrow({ children }: { children: ReactNode }) {
   return <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{children}</span>;
 }
 
-function FieldLabel({ children }: { children: ReactNode }) {
-  return <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{children}</span>;
-}
 
 function Labeled({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -989,15 +985,6 @@ function Labeled({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function SoonRow({ icon, label }: { icon: string; label: string }) {
-  return (
-    <div className="flex items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/40 px-4 py-2.5 opacity-70">
-      <span className="text-base grayscale">{icon}</span>
-      <span className="text-sm text-slate-400">{label}</span>
-      <span className="ml-auto rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">Soon</span>
-    </div>
-  );
-}
 
 function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
   return (
