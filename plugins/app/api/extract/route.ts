@@ -1,8 +1,8 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { isProfileType, validateSourceFile } from "@/lib/validation";
 import { schemaFieldKeys } from "@/lib/schema";
 import { extractProfile } from "@/lib/llama";
+import { fail, tokenMatches } from "@/lib/route-helpers";
 import type { ExtractSuccess } from "@/lib/types";
 
 // File parsing needs the Node.js runtime (not Edge).
@@ -10,24 +10,6 @@ export const runtime = "nodejs";
 // Extraction (parse + LLM) can take a while. Pro plan max is 800s (~13 min);
 // typical runs finish in ~15–25s, so this is a safe ceiling.
 export const maxDuration = 800;
-
-function fail(code: string, message: string, status: number) {
-  return NextResponse.json({ status: "error", error: { code, message } }, { status });
-}
-
-/**
- * Service-to-service auth. AnurCloud sends a shared secret as the Bearer token.
- * When EXTRACT_AUTH_TOKEN is configured, the token must match (constant-time).
- * Returns true only when the configured secret is present AND matches.
- * (Real AnurCloud JWT verification can replace this later.)
- */
-function tokenMatches(token: string): boolean {
-  const expected = process.env.EXTRACT_AUTH_TOKEN;
-  if (!expected) return false;
-  const a = Buffer.from(token);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 /**
  * Module 1 — Extraction endpoint (Handoff 1).

@@ -11,7 +11,11 @@ import { EXTRACTION_SCHEMA, toJsonSchema } from "@/lib/schema";
 import type { ConfidenceScores, ExtractedProfile, ProfileType } from "@/lib/types";
 
 /** Fields with combined confidence below this are flagged for manual review. */
-const FLAG_THRESHOLD = Number(process.env.EXTRACT_FLAG_THRESHOLD ?? "0.7");
+const _rawThreshold = parseFloat(process.env.EXTRACT_FLAG_THRESHOLD ?? "");
+const FLAG_THRESHOLD =
+  Number.isFinite(_rawThreshold) && _rawThreshold > 0 && _rawThreshold <= 1
+    ? _rawThreshold
+    : 0.7;
 
 let cached: LlamaCloud | null = null;
 function getClient(): LlamaCloud {
@@ -52,6 +56,13 @@ export async function extractProfile(
   const job = await client.extract.waitForCompletion(created.id, {
     expand: ["extract_metadata"],
   });
+
+  // Throw if the job did not succeed so callers get a proper error instead of
+  // silently receiving an all-null profile. LlamaCloud terminal statuses are
+  // "SUCCESS", "ERROR", "CANCELLED", and "PARTIAL".
+  if (job.status !== "SUCCESS") {
+    throw new Error(`Extraction job ended with status "${job.status}".`);
+  }
 
   // 3. Normalize extracted data → our ExtractedProfile shape.
   const raw = (job.extract_result ?? {}) as Record<string, unknown>;

@@ -1,24 +1,13 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { isProfileType } from "@/lib/validation";
+import { schemaFieldKeys } from "@/lib/schema";
 import { extractProfile } from "@/lib/llama";
+import { fail, tokenMatches } from "@/lib/route-helpers";
 import type { ExtractSuccess } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 800;
-
-function fail(code: string, message: string, status: number) {
-  return NextResponse.json({ status: "error", error: { code, message } }, { status });
-}
-
-function tokenMatches(token: string): boolean {
-  const expected = process.env.EXTRACT_AUTH_TOKEN;
-  if (!expected) return false;
-  const a = Buffer.from(token);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 /**
  * Module 1 — URL extraction endpoint.
@@ -80,6 +69,7 @@ export async function POST(request: NextRequest) {
       status: "received",
       message: "URL validated. Extraction engine or Firecrawl is not configured.",
       received: { url: url.trim(), profile_type: profileTypeRaw },
+      schema_preview: { profile_type: profileTypeRaw, fields: schemaFieldKeys(profileTypeRaw) },
     });
   }
 
@@ -92,11 +82,12 @@ export async function POST(request: NextRequest) {
       scrapeOptions: { formats: ["markdown", "links"] },
     });
 
-    const pageUrls = job.data.map((doc) => doc.metadata?.url ?? "unknown");
+    const pages = Array.isArray(job.data) ? job.data : [];
+    const pageUrls = pages.map((doc) => doc.metadata?.url ?? "unknown");
     console.log(`[extract-url] pages crawled (${pageUrls.length}):`, pageUrls);
 
     const sections: string[] = [];
-    for (const doc of job.data) {
+    for (const doc of pages) {
       const md = doc.markdown?.trim();
       if (!md) continue;
 
@@ -113,13 +104,16 @@ export async function POST(request: NextRequest) {
     }
     pageText = sections.join("\n\n---\n\n");
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return fail("FETCH_FAILED", `Could not crawl the site: ${msg}`, 422);
+    console.error("[extract-url] firecrawl error:", err);
+    return fail("FETCH_FAILED", "Could not retrieve content from the provided URL.", 422);
   }
 
-  // 7. Wrap markdown in a virtual file and run the extraction pipeline
+  // 7. Wrap markdown in a virtual file and run the extraction pipeline.
+  // Use text/plain + .txt: LlamaCloud's extract purpose accepts plain-text files
+  // but not text/markdown, so this avoids an opaque engine rejection after a
+  // full Firecrawl crawl has already been paid for.
   const slug = parsedUrl.hostname.replace(/[^a-z0-9]/gi, "-").slice(0, 40);
-  const mdFile = new File([pageText], `${slug}.md`, { type: "text/markdown" });
+  const mdFile = new File([pageText], `${slug}.txt`, { type: "text/plain" });
 
   try {
     const result = await extractProfile(mdFile, profileTypeRaw);
@@ -133,7 +127,7 @@ export async function POST(request: NextRequest) {
       if (!existing.includes(submittedUrl)) {
         data.portfolio_links = [submittedUrl, ...existing];
       }
-    } else {
+    } else if (profileTypeRaw === "student") {
       const existing = Array.isArray(data.social_links)
         ? (data.social_links as { platform: string; url: string | null }[])
         : [];

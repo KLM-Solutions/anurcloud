@@ -81,6 +81,9 @@ const SAMPLES = [
 
 const asStr = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v : null);
 const asArr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+/** Only allow http/https URLs as hrefs — blocks javascript:, data:, etc. */
+const safeHref = (url: string | null): string | null =>
+  url && /^https?:\/\//i.test(url) ? url : null;
 
 const OBJECT_PRIMARY_KEYS = ["title", "name", "role", "degree", "platform", "activity", "type"];
 
@@ -130,7 +133,7 @@ export default function ExtractionPage() {
   const [status, setStatus] = useState<Status>("idle");
   const [response, setResponse] = useState<ExtractResponse | null>(null);
   const [tab, setTab] = useState<Tab>("preview");
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"input" | "output" | null>(null);
   const [loadingSample, setLoadingSample] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -235,10 +238,10 @@ export default function ExtractionPage() {
     }
   }
 
-  function copy(text: string) {
+  function copy(text: string, key: "input" | "output") {
     navigator.clipboard?.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 1500);
   }
 
   const curlExample =
@@ -460,7 +463,7 @@ export default function ExtractionPage() {
                         ? (asArr(value) as Record<string, unknown>[])
                             .map((item) => ({
                               label: OBJECT_PRIMARY_KEYS.map((k) => asStr(item[k])).find(Boolean) ?? "",
-                              href: asStr(item.url) ?? asStr(item.link) ?? null,
+                              href: safeHref(asStr(item.url) ?? asStr(item.link)),
                             }))
                             .filter((c) => c.label)
                         : [];
@@ -531,13 +534,13 @@ export default function ExtractionPage() {
             <TabBtn active={tab === "input"} onClick={() => setTab("input")}>Input</TabBtn>
             <TabBtn active={tab === "output"} onClick={() => setTab("output")}>Output</TabBtn>
             {tab === "input" && (
-              <button onClick={() => copy(curlExample)} className="ml-auto mb-2 rounded-md border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-500 hover:border-slate-300 hover:text-slate-700">
-                {copied ? "✓ Copied" : "Copy cURL"}
+              <button onClick={() => copy(curlExample, "input")} className="ml-auto mb-2 rounded-md border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-500 hover:border-slate-300 hover:text-slate-700">
+                {copied === "input" ? "✓ Copied" : "Copy cURL"}
               </button>
             )}
             {tab === "output" && (
-              <button onClick={() => copy(outputFormat(profileType))} className="ml-auto mb-2 rounded-md border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-500 hover:border-slate-300 hover:text-slate-700">
-                {copied ? "✓ Copied" : "Copy"}
+              <button onClick={() => copy(outputFormat(profileType), "output")} className="ml-auto mb-2 rounded-md border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-500 hover:border-slate-300 hover:text-slate-700">
+                {copied === "output" ? "✓ Copied" : "Copy"}
               </button>
             )}
           </div>
@@ -825,8 +828,8 @@ function PhonePreview({
               {socialLinks.map((l, i) => (
                 <div key={i} className="flex items-center gap-2 text-[11px]">
                   <span className="w-20 shrink-0 font-medium text-slate-500">{asStr(l.platform)}</span>
-                  {asStr(l.url) ? (
-                    <a href={asStr(l.url)!} target="_blank" rel="noopener noreferrer" className="truncate text-blue-600 hover:underline">
+                  {safeHref(asStr(l.url)) ? (
+                    <a href={safeHref(asStr(l.url))!} target="_blank" rel="noopener noreferrer" className="truncate text-blue-600 hover:underline">
                       {asStr(l.url)}
                     </a>
                   ) : (
