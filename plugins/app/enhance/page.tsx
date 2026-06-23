@@ -28,7 +28,9 @@ const SAMPLE_STUDENT: EnhanceSuccess = {
 const SAMPLE_PROFESSIONAL: EnhanceSuccess = {
   status: "success",
   bio: "I'm a Senior Product Manager at Razorpay with 8 years of experience building B2B SaaS products across fintech and HR tech. I led the payments SDK redesign adopted by over 50,000 merchants and drove an 18% uplift in checkout conversion. As a certified scrum practitioner, I combine data-driven thinking with strong stakeholder management to ship products at scale.",
-  projects: [],
+  projects: [
+    { title: "Payments SDK Redesign", description: "I led the full redesign of Razorpay's payments SDK — simplifying the integration surface, improving error handling, and shipping a new checkout flow now used by 50,000+ merchants." },
+  ],
   internships: [],
   experience: [
     { role: "Senior Product Manager", company: "Razorpay", highlights: ["Led the end-to-end redesign of the payments SDK, now adopted by 50,000+ merchants nationwide.", "Drove an 18% uplift in checkout conversion through data-driven UX improvements."] },
@@ -178,7 +180,7 @@ export default function EnhancePage() {
 }
 
 // students  → bio + projects + internships (experience: [])
-// professionals → bio + experience (internships: [])`;
+// professionals → bio + projects + experience (internships: [])`;
 
   return (
     <div className="flex min-h-screen flex-col">
