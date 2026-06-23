@@ -3,8 +3,9 @@ import Link from "next/link";
 
 const FLOW = [
   { who: "AnurCloud", label: "User uploads", desc: "Resume, portfolio, or visiting card", tone: "slate" as const },
-  { who: "PxlBrain", label: "Module 1 · Extraction", desc: "Document → structured profile JSON with per-field confidence", tone: "blue" as const, status: "Live" },
-  { who: "PxlBrain", label: "Module 3 · Enhance", desc: "Polished bio, normalized skills, completeness score", tone: "violet" as const, status: "Soon" },
+  { who: "PxlBrain", label: "Module 1 · Extraction", desc: "Returns structured profile JSON with per-field confidence scores", tone: "blue" as const, status: "Live" },
+  { who: "AnurCloud", label: "User reviews & confirms", desc: "AnurCloud shows extracted fields to the user — they fill missing fields, fix errors, and confirm. Only confirmed data moves forward.", tone: "slate" as const },
+  { who: "PxlBrain", label: "Module 3 · Enhancement", desc: "Receives the confirmed profile from AnurCloud and returns a polished bio + enhanced descriptions. Nothing is inferred — only confirmed fields are used.", tone: "violet" as const, status: "Live" },
   { who: "PxlBrain", label: "Module 2 · Template", desc: "3–5 ranked card designs with match scores", tone: "emerald" as const, status: "Soon" },
   { who: "AnurCloud", label: "Card goes live", desc: "Smart card rendered, shareable & analytics-ready", tone: "slate" as const },
 ];
@@ -23,16 +24,16 @@ const MODULES = [
     ready: true,
   },
   {
-    href: "#",
+    href: "/enhance",
     n: "03",
     name: "Enhance",
     icon: "✨",
     accent: "from-violet-600 to-violet-400",
     chip: "bg-violet-50 text-violet-700",
-    input: "Raw extracted profile from Module 1",
+    input: "Verified profile from Module 1",
     output: "Polished bio · normalized skills · completeness score",
-    desc: "Rewrites raw extracted content into a clean, on-card bio, de-duplicates and categorizes skills, and scores how complete the profile is.",
-    ready: false,
+    desc: "Receives the user-confirmed profile from AnurCloud and returns a polished first-person bio and enhanced descriptions. Only fields the user confirmed are used — nothing is guessed or added.",
+    ready: true,
   },
   {
     href: "#",
@@ -48,13 +49,22 @@ const MODULES = [
   },
 ];
 
-const CAPS = [
+const CAPS_M1 = [
   "Resumes & portfolios",
   "Visiting cards (image OCR)",
   "Student & professional schemas",
   "Projects · education · experience",
   "Per-field confidence scoring",
   "PDF · DOCX · JPG · PNG",
+];
+
+const CAPS_M3 = [
+  "Polished 2–3 sentence bio",
+  "Technical skill categorization",
+  "Soft & domain skill buckets",
+  "De-duplicated, normalized skills",
+  "0–100 completeness score",
+  "Actionable completeness notes",
 ];
 
 const TONE: Record<string, { bar: string; chip: string; dot: string }> = {
@@ -76,12 +86,20 @@ export default function Home() {
               PxlBrain <span className="font-light text-slate-300">×</span> AnurCloud
             </span>
           </div>
-          <Link
-            href="/extraction"
-            className="rounded-lg bg-slate-900 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-700"
-          >
-            Open Module 1 →
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/extraction"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              📄 Module 1
+            </Link>
+            <Link
+              href="/enhance"
+              className="rounded-lg bg-slate-900 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-700"
+            >
+              ✨ Module 3
+            </Link>
+          </div>
         </div>
       </nav>
 
@@ -112,7 +130,7 @@ export default function Home() {
             card-ready profile.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {["3 modules · 1 live", "PDF · DOCX · JPG · PNG", "Per-field confidence"].map((s) => (
+            {["2 modules live", "PDF · DOCX · JPG · PNG", "Per-field confidence"].map((s) => (
               <span
                 key={s}
                 className="rounded-full border border-slate-200 bg-white/70 px-3.5 py-1.5 text-xs font-semibold text-slate-600 shadow-sm"
@@ -121,12 +139,20 @@ export default function Home() {
               </span>
             ))}
           </div>
-          <Link
-            href="/extraction"
-            className="mt-2 rounded-xl bg-gradient-to-r from-blue-700 to-blue-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition hover:opacity-95"
-          >
-            Try Module 1 — Extraction →
-          </Link>
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/extraction"
+              className="rounded-xl bg-gradient-to-r from-blue-700 to-blue-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition hover:opacity-95"
+            >
+              Try Extraction →
+            </Link>
+            <Link
+              href="/enhance"
+              className="rounded-xl bg-gradient-to-r from-violet-700 to-violet-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-violet-500/30 transition hover:opacity-95"
+            >
+              Try Enhancement →
+            </Link>
+          </div>
         </section>
 
         {/* ── Flow ── */}
@@ -225,19 +251,38 @@ export default function Home() {
 
         {/* ── Capabilities ── */}
         <section className="py-10">
-          <SectionHead eyebrow="Module 1 · live now" title="What Extraction handles" />
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {CAPS.map((c) => (
-              <div
-                key={c}
-                className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-              >
-                <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-blue-50 text-sm text-blue-600">
-                  ✓
-                </span>
-                <span className="text-sm font-medium text-slate-700">{c}</span>
+          <SectionHead eyebrow="2 modules live" title="What PxlBrain handles today" />
+          <div className="mt-8 grid gap-8 lg:grid-cols-2">
+            {/* M1 */}
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-400 text-sm shadow-sm">📄</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-700">Module 1 · Extraction</span>
               </div>
-            ))}
+              <div className="grid gap-2 sm:grid-cols-2">
+                {CAPS_M1.map((c) => (
+                  <div key={c} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm">
+                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-blue-50 text-xs text-blue-600">✓</span>
+                    <span className="text-xs font-medium text-slate-700">{c}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* M3 */}
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-violet-400 text-sm shadow-sm">✨</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-violet-700">Module 3 · Enhancement</span>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {CAPS_M3.map((c) => (
+                  <div key={c} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm">
+                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-violet-50 text-xs text-violet-600">✓</span>
+                    <span className="text-xs font-medium text-slate-700">{c}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
       </main>

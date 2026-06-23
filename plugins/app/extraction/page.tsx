@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef, useState, type DragEvent, type ReactNode } from "react";
 import { ACCEPT_ATTR, PROFILE_TYPES, formatBytes, validateSourceFile } from "@/lib/validation";
 import { EXTRACTION_SCHEMA, SCHEMA_GROUPS, type SchemaField } from "@/lib/schema";
@@ -136,6 +137,16 @@ export default function ExtractionPage() {
   const [copied, setCopied] = useState<"input" | "output" | null>(null);
   const [loadingSample, setLoadingSample] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  function goToEnhance() {
+    if (!live) return;
+    sessionStorage.setItem(
+      "enhance_prefill",
+      JSON.stringify({ profile_type: live.profile_type, profile: live.data }),
+    );
+    router.push("/enhance");
+  }
 
   function switchSourceMode(mode: SourceMode) {
     setSourceMode(mode);
@@ -436,7 +447,7 @@ export default function ExtractionPage() {
             >
               {status === "uploading"
                 ? sourceMode === "url"
-                  ? "Crawling site & extracting… (up to 30s)"
+                  ? "Crawling site & extracting…"
                   : "Extracting… (a few seconds)"
                 : "Run extraction →"}
             </button>
@@ -516,6 +527,17 @@ export default function ExtractionPage() {
                 </div>
               )}
             </div>
+
+            {/* Test shortcut — for internal testing only, not part of production flow */}
+            {live && (
+              <button
+                type="button"
+                onClick={goToEnhance}
+                className="rounded-xl bg-gradient-to-r from-violet-700 to-violet-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-violet-500/30 transition hover:opacity-95"
+              >
+                ✨ Enhance this profile →
+              </button>
+            )}
           </div>
         </section>
 

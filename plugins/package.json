@@ -12,6 +12,7 @@
     "@llamaindex/llama-cloud": "^2.8.0",
     "@mendable/firecrawl-js": "^4.28.2",
     "next": "16.2.7",
+    "openai": "^6.44.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "zod": "^4.4.3"
