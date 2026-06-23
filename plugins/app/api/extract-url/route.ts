@@ -105,6 +105,16 @@ export async function POST(request: NextRequest) {
     pageText = sections.join("\n\n---\n\n");
   } catch (err) {
     console.error("[extract-url] firecrawl error:", err);
+    const isRateLimit =
+      err instanceof Error &&
+      (err.message.includes("Rate limit") || (err as { status?: number }).status === 429);
+    if (isRateLimit) {
+      return fail(
+        "RATE_LIMITED",
+        "The URL crawling service is temporarily rate-limited. Please wait a moment and try again.",
+        429,
+      );
+    }
     return fail("FETCH_FAILED", "Could not retrieve content from the provided URL.", 422);
   }
 
