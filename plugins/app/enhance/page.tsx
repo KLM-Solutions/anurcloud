@@ -178,279 +178,409 @@ export default function EnhancePage() {
 }
 
 // students  → bio + projects + internships (experience: [])
-// professionals → bio + projects + experience (internships: [])`;
+// professionals → bio + experience (internships: [])`;
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-7 px-5 py-10">
-      {/* Header */}
-      <header className="flex flex-col gap-2">
-        <Link href="/" className="w-fit text-xs font-semibold text-slate-400 transition-colors hover:text-violet-600">
-          ← Modules
-        </Link>
-        <div className="flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-bold text-slate-700 shadow-sm backdrop-blur">
-          <span className="h-2 w-2 rounded-full bg-blue-600" />
-          PxlBrain
-          <span className="font-light text-slate-300">×</span>
-          AnurCloud
-          <span className="h-2 w-2 rounded-full bg-violet-600" />
-        </div>
-        <h1 className="bg-gradient-to-r from-slate-900 via-violet-800 to-violet-600 bg-clip-text text-3xl font-black tracking-tight text-transparent">
-          Module 3 — AI Content Enhancement
-        </h1>
-        <p className="max-w-2xl text-sm text-slate-500">
-          Paste the verified profile on the left; see the polished bio, categorized skills, and
-          completeness score on the right — exactly what AnurCloud receives.
-        </p>
-      </header>
-
-      {/* Pipeline strip */}
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white/70 px-5 py-4 shadow-sm backdrop-blur">
-        <PipeStep icon="✅" title="Verified profile" sub="human-confirmed JSON" tone="slate" />
-        <span className="text-slate-300">→</span>
-        <PipeStep icon="✨" title="PxlBrain AI" sub="bio · skills · score" tone="violet" />
-        <span className="text-slate-300">→</span>
-        <PipeStep icon="🎴" title="Output" sub="ready for card render" tone="emerald" />
-      </div>
-
-      {/* Two equal cards */}
-      <div className="grid gap-5 lg:grid-cols-2 lg:items-stretch">
-        {/* LEFT — Input */}
-        <section className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:h-[740px]">
-          <CardHead dot="bg-violet-600" title="Try it live">
-            <span className="rounded-md bg-slate-100 px-2 py-1 font-mono text-[10px] font-semibold text-slate-500">
-              POST /api/enhance
-            </span>
-          </CardHead>
-
-          <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-5">
-            {/* Profile type toggle */}
-            <div className="flex gap-2">
-              {(["student", "professional"] as ProfileType[]).map((pt) => (
-                <button
-                  key={pt}
-                  type="button"
-                  onClick={() => switchProfileType(pt)}
-                  className={`flex-1 rounded-xl border px-4 py-2.5 text-sm font-semibold capitalize transition-colors ${
-                    profileType === pt
-                      ? "border-violet-600 bg-violet-600 text-white"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                  }`}
-                >
-                  {pt === "student" ? "🎓 " : "💼 "}{pt}
-                </button>
-              ))}
+    <div className="flex min-h-screen flex-col">
+      {/* ── Top Nav ── */}
+      <nav className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/75 backdrop-blur-md">
+        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-5">
+          <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-black text-white shadow-sm">
+              P
             </div>
+            <span className="text-sm font-bold text-slate-800">PxlBrain</span>
+            <span className="text-sm font-light text-slate-300">×</span>
+            <span className="text-sm font-medium text-slate-500">AnurCloud</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/extraction"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+            >
+              <span>📄</span> Module 1
+            </Link>
+            <Link
+              href="/enhance"
+              className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm"
+            >
+              <span>✨</span> Module 3
+            </Link>
+          </div>
+        </div>
+      </nav>
 
-            {/* Profile JSON */}
-            <div className="flex flex-col gap-2">
-              <Eyebrow>Profile JSON</Eyebrow>
-              <p className="text-[11px] text-slate-400">
-                Paste the human-verified profile from Module 1. Must include{" "}
-                <code className="font-mono">profile_type</code> and a{" "}
-                <code className="font-mono">profile</code> object.
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-7 px-5 py-8">
+        {/* ── Header ── */}
+        <header className="flex flex-col gap-4">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-violet-400 text-2xl shadow-md shadow-violet-500/20">
+              ✨
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600">
+                  Module 03
+                </span>
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200">
+                  ● Live
+                </span>
+              </div>
+              <h1 className="mt-0.5 bg-gradient-to-r from-slate-900 via-violet-800 to-violet-600 bg-clip-text text-3xl font-black tracking-tight text-transparent">
+                AI Content Enhancement
+              </h1>
+              <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-500">
+                Paste the verified profile on the left; see the polished bio and enhanced
+                descriptions on the right — exactly what AnurCloud receives.
               </p>
-              <textarea
-                value={profileJson}
-                onChange={(e) => handleJsonChange(e.target.value)}
-                onBlur={() => validateJson(profileJson)}
-                rows={16}
-                spellCheck={false}
-                className={`w-full resize-none rounded-xl border bg-slate-50 px-3 py-2.5 font-mono text-[11px] leading-relaxed outline-none transition-colors focus:ring-2 ${
-                  jsonError
-                    ? "border-red-300 focus:border-red-500 focus:ring-red-100"
-                    : "border-slate-200 focus:border-violet-500 focus:ring-violet-100"
-                }`}
-              />
-              {jsonError && (
-                <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] font-medium text-red-700">
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">!</span>
-                  Invalid JSON: {jsonError}
+            </div>
+          </div>
+        </header>
+
+        {/* ── Pipeline strip ── */}
+        <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white/90 px-6 py-4 shadow-sm">
+          <PipeStep icon="✅" title="Verified profile" sub="human-confirmed JSON" tone="slate" />
+          <ChevronArrow />
+          <PipeStep icon="✨" title="PxlBrain AI" sub="bio · descriptions" tone="violet" />
+          <ChevronArrow />
+          <PipeStep icon="🎴" title="Output" sub="ready for card render" tone="emerald" />
+        </div>
+
+        {/* ── Two equal cards ── */}
+        <div className="grid gap-5 lg:grid-cols-2 lg:items-stretch">
+          {/* LEFT — Input */}
+          <section className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:h-[740px]">
+            <CardHead accent="bg-gradient-to-r from-violet-600 to-violet-400" title="Try it live">
+              <span className="rounded-lg bg-slate-100 px-2.5 py-1 font-mono text-[10px] font-semibold text-slate-500">
+                POST /api/enhance
+              </span>
+            </CardHead>
+
+            <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-5">
+              {/* Profile type toggle */}
+              <div className="flex gap-2 rounded-xl bg-slate-100 p-1">
+                {(["student", "professional"] as ProfileType[]).map((pt) => (
+                  <button
+                    key={pt}
+                    type="button"
+                    onClick={() => switchProfileType(pt)}
+                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold capitalize transition-all ${
+                      profileType === pt
+                        ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-900/5"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    {pt === "student" ? "🎓" : "💼"} {pt}
+                  </button>
+                ))}
+              </div>
+
+              {/* Profile JSON */}
+              <div className="flex flex-col gap-2">
+                <Eyebrow>Profile JSON</Eyebrow>
+                <p className="text-[11px] text-slate-400">
+                  Paste the human-verified profile from Module 1. Must include{" "}
+                  <code className="font-mono">profile_type</code> and a{" "}
+                  <code className="font-mono">profile</code> object.
+                </p>
+                <textarea
+                  value={profileJson}
+                  onChange={(e) => handleJsonChange(e.target.value)}
+                  onBlur={() => validateJson(profileJson)}
+                  rows={16}
+                  spellCheck={false}
+                  className={`w-full resize-none rounded-xl border bg-slate-50 px-3 py-2.5 font-mono text-[11px] leading-relaxed shadow-sm outline-none transition-all focus:ring-2 ${
+                    jsonError
+                      ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                      : "border-slate-200 focus:border-violet-400 focus:ring-violet-100"
+                  }`}
+                />
+                {jsonError && (
+                  <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-[11px] font-medium text-red-700">
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                      !
+                    </span>
+                    Invalid JSON: {jsonError}
+                  </div>
+                )}
+              </div>
+
+              {/* Bearer token */}
+              <Labeled label="Bearer token">
+                <input
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  placeholder="Paste your access token"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-mono text-sm shadow-sm outline-none placeholder:font-sans placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all"
+                />
+              </Labeled>
+
+              {response?.status === "error" && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  <strong>{response.error.code}</strong> — {response.error.message}
                 </div>
+              )}
+
+              <button
+                type="button"
+                onClick={onSubmit}
+                disabled={status === "running" || !!jsonError}
+                className="group flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-violet-700 to-violet-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-violet-500/25 transition hover:shadow-violet-500/40 hover:opacity-95 disabled:opacity-60"
+              >
+                {status === "running" ? (
+                  <>
+                    <LoadingSpinner />
+                    Enhancing…
+                  </>
+                ) : (
+                  <>
+                    Run enhancement
+                    <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </section>
+
+          {/* RIGHT — Output */}
+          <section className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:h-[740px]">
+            <CardHead accent="bg-gradient-to-r from-emerald-600 to-emerald-400" title="Integration">
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ring-1 ${
+                  live
+                    ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                    : "bg-amber-50 text-amber-700 ring-amber-200"
+                }`}
+              >
+                {live ? "● Live data" : "Sample data"}
+              </span>
+            </CardHead>
+
+            {/* Tabs */}
+            <div className="flex items-center gap-0.5 border-b border-slate-100 px-4 pt-3">
+              <TabBtn active={tab === "preview"} onClick={() => setTab("preview")}>
+                ✨ Preview
+              </TabBtn>
+              <TabBtn active={tab === "input"} onClick={() => setTab("input")}>
+                Input
+              </TabBtn>
+              <TabBtn active={tab === "output"} onClick={() => setTab("output")}>
+                Output
+              </TabBtn>
+              {tab === "input" && (
+                <button
+                  onClick={() => copy(curlExample, "input")}
+                  className="ml-auto mb-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-700"
+                >
+                  {copied === "input" ? "✓ Copied" : "Copy cURL"}
+                </button>
+              )}
+              {tab === "output" && (
+                <button
+                  onClick={() => copy(outputShape, "output")}
+                  className="ml-auto mb-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-700"
+                >
+                  {copied === "output" ? "✓ Copied" : "Copy"}
+                </button>
               )}
             </div>
 
-            {/* Bearer token */}
-            <Labeled label="Bearer token">
-              <input
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="Paste your access token to run live"
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-sm outline-none placeholder:font-sans placeholder:text-slate-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
-              />
-            </Labeled>
+            <div className="flex-1 overflow-hidden bg-slate-50/50">
+              {tab === "preview" && (
+                <div className="flex h-full flex-col gap-4 overflow-y-auto p-5">
+                  {/* Bio */}
+                  <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-5 shadow-sm">
+                    <div className="mb-3 flex items-center gap-2">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-600 text-xs text-white shadow-sm">
+                        ✍️
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600">
+                        Polished Bio
+                      </span>
+                    </div>
+                    <p className="text-sm leading-relaxed text-slate-800">{active.bio}</p>
+                  </div>
 
-            {response?.status === "error" && (
-              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                <strong>{response.error.code}</strong> — {response.error.message}
-              </div>
-            )}
+                  {/* Projects */}
+                  {active.projects.length > 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <div className="mb-4 flex items-center gap-2">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-600 text-xs text-white shadow-sm">
+                          📝
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
+                          Enhanced Project Descriptions
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-4">
+                        {active.projects.map((p, i) => (
+                          <div key={i} className="border-l-[3px] border-violet-400 pl-4">
+                            <div className="text-xs font-bold text-slate-700">{p.title}</div>
+                            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                              {p.description}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-            <button
-              type="button"
-              onClick={onSubmit}
-              disabled={status === "running" || !!jsonError}
-              className="rounded-xl bg-gradient-to-r from-violet-700 to-violet-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-violet-500/30 transition hover:opacity-95 disabled:opacity-60"
-            >
-              {status === "running" ? "Enhancing… (a few seconds)" : "Run enhancement →"}
-            </button>
-          </div>
-        </section>
+                  {/* Internships */}
+                  {active.internships.length > 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <div className="mb-4 flex items-center gap-2">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-600 text-xs text-white shadow-sm">
+                          🏢
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
+                          Enhanced Internship Descriptions
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-4">
+                        {active.internships.map((n, i) => (
+                          <div key={i} className="border-l-[3px] border-blue-400 pl-4">
+                            <div className="text-xs font-bold text-slate-700">
+                              {n.role} · {n.organization}
+                            </div>
+                            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                              {n.description}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-        {/* RIGHT — Output */}
-        <section className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:h-[740px]">
-          <CardHead dot="bg-emerald-600" title="Integration">
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${live ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-              {live ? "Live data" : "Sample data"}
-            </span>
-          </CardHead>
-
-          {/* Tabs */}
-          <div className="flex items-center gap-1 border-b border-slate-100 px-5 pt-3">
-            <TabBtn active={tab === "preview"} onClick={() => setTab("preview")}>✨ Preview</TabBtn>
-            <TabBtn active={tab === "input"} onClick={() => setTab("input")}>Input</TabBtn>
-            <TabBtn active={tab === "output"} onClick={() => setTab("output")}>Output</TabBtn>
-            {tab === "input" && (
-              <button
-                onClick={() => copy(curlExample, "input")}
-                className="ml-auto mb-2 rounded-md border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-500 hover:border-slate-300 hover:text-slate-700"
-              >
-                {copied === "input" ? "✓ Copied" : "Copy cURL"}
-              </button>
-            )}
-            {tab === "output" && (
-              <button
-                onClick={() => copy(outputShape, "output")}
-                className="ml-auto mb-2 rounded-md border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-500 hover:border-slate-300 hover:text-slate-700"
-              >
-                {copied === "output" ? "✓ Copied" : "Copy"}
-              </button>
-            )}
-          </div>
-
-          <div className="flex-1 overflow-hidden bg-slate-50/40">
-            {tab === "preview" && (
-              <div className="flex h-full flex-col gap-4 overflow-y-auto p-5">
-                {/* Bio */}
-                <div className="rounded-xl border border-violet-100 bg-violet-50 p-4">
-                  <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-violet-500">Polished Bio</div>
-                  <p className="text-sm leading-relaxed text-slate-800">{active.bio}</p>
+                  {/* Experience */}
+                  {active.experience.length > 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <div className="mb-4 flex items-center gap-2">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-600 text-xs text-white shadow-sm">
+                          💼
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                          Enhanced Experience Highlights
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-4">
+                        {active.experience.map((e, i) => (
+                          <div key={i} className="border-l-[3px] border-emerald-400 pl-4">
+                            <div className="text-xs font-bold text-slate-700">
+                              {e.role} · {e.company}
+                            </div>
+                            <ul className="mt-1.5 flex flex-col gap-1">
+                              {e.highlights.map((h, j) => (
+                                <li
+                                  key={j}
+                                  className="flex items-start gap-1.5 text-xs leading-relaxed text-slate-500"
+                                >
+                                  <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-emerald-400" />
+                                  {h}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
+              )}
 
-                {/* Projects */}
-                {active.projects.length > 0 && (
-                  <div className="rounded-xl border border-slate-200 bg-white p-4">
-                    <div className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">Enhanced Project Descriptions</div>
-                    <div className="flex flex-col gap-3">
-                      {active.projects.map((p, i) => (
-                        <div key={i} className="border-l-2 border-violet-300 pl-3">
-                          <div className="text-xs font-bold text-slate-700">{p.title}</div>
-                          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{p.description}</p>
-                        </div>
-                      ))}
+              {tab === "input" && (
+                <div className="h-full overflow-y-auto p-5">
+                  <div className="space-y-3 font-mono text-xs">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-md bg-violet-600 px-2 py-0.5 font-bold text-white shadow-sm">
+                        POST
+                      </span>
+                      <span className="break-all text-slate-700">{ENDPOINT}</span>
                     </div>
-                  </div>
-                )}
-
-                {/* Internships — student */}
-                {active.internships.length > 0 && (
-                  <div className="rounded-xl border border-slate-200 bg-white p-4">
-                    <div className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">Enhanced Internship Descriptions</div>
-                    <div className="flex flex-col gap-3">
-                      {active.internships.map((n, i) => (
-                        <div key={i} className="border-l-2 border-blue-300 pl-3">
-                          <div className="text-xs font-bold text-slate-700">{n.role} · {n.organization}</div>
-                          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.description}</p>
-                        </div>
-                      ))}
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-600 shadow-sm">
+                      <div>
+                        <span className="text-violet-600">Authorization:</span> Bearer &lt;auth_token&gt;
+                      </div>
+                      <div>
+                        <span className="text-violet-600">Content-Type:</span> application/json
+                      </div>
                     </div>
-                  </div>
-                )}
-
-                {/* Experience — professional */}
-                {active.experience.length > 0 && (
-                  <div className="rounded-xl border border-slate-200 bg-white p-4">
-                    <div className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">Enhanced Experience Highlights</div>
-                    <div className="flex flex-col gap-3">
-                      {active.experience.map((e, i) => (
-                        <div key={i} className="border-l-2 border-emerald-300 pl-3">
-                          <div className="text-xs font-bold text-slate-700">{e.role} · {e.company}</div>
-                          <ul className="mt-1 flex flex-col gap-0.5">
-                            {e.highlights.map((h, j) => (
-                              <li key={j} className="text-xs leading-relaxed text-slate-500">· {h}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
+                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                      <PayloadRow name="profile_type" type='"student" | "professional"' required />
+                      <PayloadRow name="profile" type="object" required desc="verified profile fields" />
+                      <PayloadRow name="profile.full_name" type="string | null" />
+                      <PayloadRow name="profile.designation" type="string | null" />
+                      <PayloadRow name="profile.summary" type="string | null" />
+                      <PayloadRow name="profile.skills" type="string[]" />
+                      <PayloadRow name="profile.education" type="object[]" />
+                      <PayloadRow name="profile.experience" type="object[]" />
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {tab === "input" && (
-              <div className="h-full overflow-y-auto p-5">
-                <div className="space-y-3 font-mono text-xs">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-md bg-violet-600 px-1.5 py-0.5 font-bold text-white">POST</span>
-                    <span className="break-all text-slate-700">{ENDPOINT}</span>
-                  </div>
-                  <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-600">
-                    <div><span className="text-violet-700">Authorization:</span> Bearer &lt;auth_token&gt;</div>
-                    <div><span className="text-violet-700">Content-Type:</span> application/json</div>
-                  </div>
-                  <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-                    <PayloadRow name="profile_type" type='"student" | "professional"' required />
-                    <PayloadRow name="profile" type="object" required desc="verified profile fields" />
-                    <PayloadRow name="profile.full_name" type="string | null" />
-                    <PayloadRow name="profile.designation" type="string | null" />
-                    <PayloadRow name="profile.summary" type="string | null" />
-                    <PayloadRow name="profile.skills" type="string[]" />
-                    <PayloadRow name="profile.education" type="object[]" />
-                    <PayloadRow name="profile.experience" type="object[]" />
-                  </div>
-                  <div>
-                    <div className="mb-1 font-sans text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                      Example request
+                    <div>
+                      <div className="mb-1.5 font-sans text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        Example request
+                      </div>
+                      <pre className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-900 p-3.5 text-[11px] leading-relaxed text-slate-100 shadow-sm">
+                        {curlExample}
+                      </pre>
                     </div>
-                    <pre className="overflow-x-auto rounded-lg border border-slate-200 bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-100">
-                      {curlExample}
-                    </pre>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {tab === "output" && (
-              <div className="flex h-full flex-col gap-3 overflow-auto p-5">
-                <div className="flex items-center gap-2 rounded-lg border border-violet-100 bg-violet-50 px-3 py-2 text-xs text-violet-700">
-                  <span>ℹ️</span>
-                  <span>
-                    Only fields present in the confirmed profile are used —
-                    nothing is invented or inferred.
-                  </span>
+              {tab === "output" && (
+                <div className="flex h-full flex-col gap-3 overflow-auto p-5">
+                  <div className="flex items-center gap-2.5 rounded-xl border border-violet-100 bg-violet-50 px-3.5 py-2.5 text-xs text-violet-700">
+                    <span>ℹ️</span>
+                    <span>
+                      Only fields present in the confirmed profile are used — nothing is invented or
+                      inferred.
+                    </span>
+                  </div>
+                  <pre className="overflow-x-auto whitespace-pre rounded-xl border border-slate-200 bg-white p-4 font-mono text-[11px] leading-relaxed text-slate-700 shadow-sm">
+                    {outputShape}
+                  </pre>
                 </div>
-                <pre className="overflow-x-auto whitespace-pre rounded-xl border border-slate-200 bg-white p-4 font-mono text-[11px] leading-relaxed text-slate-700">
-                  {outputShape}
-                </pre>
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
-    </main>
+              )}
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
   );
 }
 
+/* ── Shared components ── */
 
-function PipeStep({ icon, title, sub, tone }: { icon: string; title: string; sub: string; tone: string }) {
+function ChevronArrow() {
+  return (
+    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-400">
+      →
+    </span>
+  );
+}
+
+function PipeStep({
+  icon,
+  title,
+  sub,
+  tone,
+}: {
+  icon: string;
+  title: string;
+  sub: string;
+  tone: string;
+}) {
   const tones: Record<string, string> = {
     slate: "from-slate-500 to-slate-400",
     violet: "from-violet-600 to-violet-400",
     emerald: "from-emerald-600 to-emerald-400",
   };
   return (
-    <div className="flex items-center gap-2.5">
-      <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br ${tones[tone]} text-base shadow-sm`}>{icon}</div>
+    <div className="flex items-center gap-3">
+      <div
+        className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${tones[tone]} text-lg shadow-sm`}
+      >
+        {icon}
+      </div>
       <div>
         <div className="text-xs font-bold text-slate-800">{title}</div>
         <div className="text-[10px] text-slate-400">{sub}</div>
@@ -459,20 +589,32 @@ function PipeStep({ icon, title, sub, tone }: { icon: string; title: string; sub
   );
 }
 
-function CardHead({ dot, title, children }: { dot: string; title: string; children?: ReactNode }) {
+function CardHead({
+  accent,
+  title,
+  children,
+}: {
+  accent: string;
+  title: string;
+  children?: ReactNode;
+}) {
   return (
-    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
-      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-        <span className={`h-2 w-2 rounded-full ${dot}`} />
-        {title}
+    <div>
+      <div className={`h-1 w-full ${accent}`} />
+      <div className="flex items-center justify-between px-5 py-3.5">
+        <div className="text-xs font-bold uppercase tracking-wider text-slate-600">{title}</div>
+        {children}
       </div>
-      {children}
     </div>
   );
 }
 
 function Eyebrow({ children }: { children: ReactNode }) {
-  return <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{children}</span>;
+  return (
+    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+      {children}
+    </span>
+  );
 }
 
 function Labeled({ label, children }: { label: string; children: ReactNode }) {
@@ -484,13 +626,23 @@ function Labeled({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+function TabBtn({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`-mb-px border-b-2 px-3 py-2 text-xs font-bold transition-colors ${
-        active ? "border-violet-600 text-violet-700" : "border-transparent text-slate-400 hover:text-slate-600"
+      className={`-mb-px border-b-2 px-3 py-2 text-xs font-semibold transition-colors ${
+        active
+          ? "border-violet-600 text-violet-700"
+          : "border-transparent text-slate-400 hover:text-slate-600"
       }`}
     >
       {children}
@@ -498,13 +650,45 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
   );
 }
 
-function PayloadRow({ name, type, required, desc }: { name: string; type: string; required?: boolean; desc?: string }) {
+function PayloadRow({
+  name,
+  type,
+  required,
+  desc,
+}: {
+  name: string;
+  type: string;
+  required?: boolean;
+  desc?: string;
+}) {
   return (
     <div className="flex items-center gap-2 border-b border-slate-100 px-3 py-2 last:border-b-0">
       <span className="font-semibold text-slate-800">{name}</span>
       <span className="text-slate-400">{type}</span>
-      {required && <span className="rounded bg-red-50 px-1.5 text-[9px] font-bold text-red-600">required</span>}
+      {required && (
+        <span className="rounded-md bg-red-50 px-1.5 py-0.5 text-[9px] font-bold text-red-600 ring-1 ring-red-100">
+          required
+        </span>
+      )}
       {desc && <span className="ml-auto text-[10px] text-slate-400">{desc}</span>}
     </div>
+  );
+}
+
+function LoadingSpinner() {
+  return (
+    <svg
+      className="h-4 w-4 animate-spin text-white/70"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
+    </svg>
   );
 }

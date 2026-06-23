@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
 :root {
-  /* Force light everywhere — the app is light-only, never follow OS dark mode. */
   color-scheme: light;
   --background: #f8fafc;
   --foreground: #0f172a;
@@ -20,16 +19,15 @@ html {
 }
 
 body {
-  /* Insta VIZ branded soft gradient (light) */
   background:
+    radial-gradient(circle at 1.5px 1.5px, rgba(148, 163, 184, 0.09) 1.5px, transparent 0) 0 0 / 28px 28px,
     radial-gradient(1100px 620px at 8% -8%, #eff6ff 0%, transparent 55%),
     radial-gradient(900px 520px at 100% -5%, #f5f3ff 0%, transparent 52%),
     radial-gradient(900px 700px at 50% 120%, #ecfdf5 0%, transparent 55%),
     linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   background-attachment: fixed;
   color: var(--foreground);
-  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
-    sans-serif;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
