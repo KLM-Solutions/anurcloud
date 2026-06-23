@@ -281,6 +281,15 @@ export default function ExtractionPage() {
             >
               <span>✨</span> Module 3
             </Link>
+            <Link
+              href="/template"
+              className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
+            >
+              <span>🎴</span> Module 2
+              <span className="rounded-full bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-800">
+                Soon
+              </span>
+            </Link>
           </div>
         </div>
       </nav>
