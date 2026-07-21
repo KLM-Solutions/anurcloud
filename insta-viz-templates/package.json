@@ -1,0 +1,38 @@
+{
+  "name": "@pxlbrain/insta-viz-templates",
+  "version": "0.1.0",
+  "description": "Insta VIZ smart-card templates — themeable (colour / font / size / logo), framework-agnostic. Call a template by number, get back rendered HTML. Built by PxlBrain.",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "demo": "npm run build && npx --yes serve . -l 4477",
+    "playground": "npm run build && node scripts/build-playground.mjs",
+    "preview": "npm run build && node scripts/build-preview.mjs"
+  },
+  "keywords": [
+    "insta-viz",
+    "smart-card",
+    "templates",
+    "pxlbrain"
+  ],
+  "author": "PxlBrain",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}
