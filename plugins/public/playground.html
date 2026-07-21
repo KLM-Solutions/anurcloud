@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Smart-Card Templates — Playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Montserrat:wght@400;600;700;800&family=Playfair+Display:wght@600;700;800&family=Space+Grotesk:wght@500;700&family=Lato:wght@400;700;900&family=Nunito:wght@400;700;800&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet" />
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:Inter,system-ui,sans-serif;background:#eef1f6;color:#0f172a;}
+  .bar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #e2e8f0;box-shadow:0 4px 16px -10px rgba(15,23,42,.3);padding:14px 22px;}
+  .bar h1{margin:0 0 12px;font-family:Poppins;font-size:16px;font-weight:800;}
+  .bar h1 small{font-weight:500;color:#64748b;font-size:12px;margin-left:8px;}
+  .controls{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-end;}
+  .ctrl{display:flex;flex-direction:column;gap:6px;}
+  .ctrl label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#64748b;}
+  select{padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;font-family:inherit;min-width:150px;background:#fff;}
+  .swatches{display:flex;gap:6px;align-items:center;}
+  .sw{width:24px;height:24px;border-radius:7px;border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;cursor:pointer;padding:0;transition:transform .1s;}
+  .sw:hover{transform:scale(1.12);}
+  .sw.on{box-shadow:0 0 0 2px #0f172a;transform:scale(1.12);}
+  .sw-custom{width:26px;height:26px;border:1px solid #cbd5e1;border-radius:7px;padding:1px;background:#fff;cursor:pointer;}
+  .seg{display:flex;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;}
+  .seg button{border:0;background:#fff;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;color:#475569;font-family:inherit;}
+  .seg button.on{background:#0f172a;color:#fff;}
+  .stage{padding:40px 24px 60px;}
+  .cards{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start;justify-content:center;}
+  .slot{display:flex;flex-direction:column;align-items:center;gap:12px;}
+  .slot .cap{font-size:12px;font-weight:700;color:#475569;}
+</style></head>
+<body>
+  <div class="bar">
+    <h1>Smart-Card Templates <small>pick a profile — each has its own templates; font &amp; colours update them live</small></h1>
+    <div class="controls">
+      <div class="ctrl"><label>Font</label><select id="font"><option value="Poppins">Poppins</option><option value="Inter">Inter</option><option value="Montserrat">Montserrat</option><option value="Playfair Display">Playfair Display</option><option value="Space Grotesk">Space Grotesk</option><option value="Lato">Lato</option><option value="Nunito">Nunito</option><option value="Merriweather">Merriweather</option></select></div>
+      <div class="ctrl"><label>Primary colour</label><div class="swatches" id="primarySw"><button class="sw" data-kind="primary" data-c="#4338ca" style="background:#4338ca" title="#4338ca"></button><button class="sw" data-kind="primary" data-c="#7c3aed" style="background:#7c3aed" title="#7c3aed"></button><button class="sw" data-kind="primary" data-c="#0f766e" style="background:#0f766e" title="#0f766e"></button><button class="sw" data-kind="primary" data-c="#be123c" style="background:#be123c" title="#be123c"></button><button class="sw" data-kind="primary" data-c="#2563eb" style="background:#2563eb" title="#2563eb"></button><button class="sw" data-kind="primary" data-c="#059669" style="background:#059669" title="#059669"></button><button class="sw" data-kind="primary" data-c="#ea580c" style="background:#ea580c" title="#ea580c"></button><button class="sw" data-kind="primary" data-c="#334155" style="background:#334155" title="#334155"></button><input type="color" class="sw-custom" id="primaryCustom" value="#4338ca" /></div></div>
+      <div class="ctrl"><label>Accent colour</label><div class="swatches" id="accentSw"><button class="sw" data-kind="accent" data-c="#4f46e5" style="background:#4f46e5" title="#4f46e5"></button><button class="sw" data-kind="accent" data-c="#8b5cf6" style="background:#8b5cf6" title="#8b5cf6"></button><button class="sw" data-kind="accent" data-c="#f97316" style="background:#f97316" title="#f97316"></button><button class="sw" data-kind="accent" data-c="#e11d48" style="background:#e11d48" title="#e11d48"></button><button class="sw" data-kind="accent" data-c="#0ea5e9" style="background:#0ea5e9" title="#0ea5e9"></button><button class="sw" data-kind="accent" data-c="#10b981" style="background:#10b981" title="#10b981"></button><button class="sw" data-kind="accent" data-c="#f59e0b" style="background:#f59e0b" title="#f59e0b"></button><button class="sw" data-kind="accent" data-c="#64748b" style="background:#64748b" title="#64748b"></button><input type="color" class="sw-custom" id="accentCustom" value="#4f46e5" /></div></div>
+      <div class="ctrl"><label>Profile</label><div class="seg" id="ptype"><button data-v="professional" class="on">Professional</button><button data-v="student">Student</button></div></div>
+      <div class="ctrl"><label>Size</label><div class="seg" id="size"><button data-v="sm">SM</button><button data-v="md" class="on">MD</button><button data-v="lg">LG</button></div></div>
+    </div>
+  </div>
+  <div class="stage" id="stage"></div>
+
+  <script>"use strict";var IVT=(()=>{var z=Object.defineProperty;var ni=Object.getOwnPropertyDescriptor;var ri=Object.getOwnPropertyNames;var ai=Object.prototype.hasOwnProperty;var oi=(t,i)=>{for(var e in i)z(t,e,{get:i[e],enumerable:!0})},si=(t,i,e,n)=>{if(i&&typeof i=="object"||typeof i=="function")for(let r of ri(i))!ai.call(t,r)&&r!==e&&z(t,r,{get:()=>i[r],enumerable:!(n=ni(i,r))||n.enumerable});return t};var ci=t=>si(z({},"__esModule",{value:!0}),t);var Ei={};oi(Ei,{renderCard:()=>Ci,resolveTheme:()=>x,templateCount:()=>ki,templates:()=>K,templatesFor:()=>zi});var B={sm:320,md:380,lg:440},u={background:"#f4f6fa",surface:"#ffffff",text:"#0f172a",muted:"#64748b",onPrimary:"#ffffff"},li={professional:{primary:"#4338ca",accent:"#4f46e5"},student:{primary:"#7c3aed",accent:"#8b5cf6"}},di=0;function vi(t){return Math.max(0,Math.min(255,Math.round(t)))}function fi(t){let i=t.trim().replace(/^#/,"");return i.length===3&&(i=i.split("").map(e=>e+e).join("")),i.length!==6||/[^0-9a-fA-F]/.test(i)?null:[parseInt(i.slice(0,2),16),parseInt(i.slice(2,4),16),parseInt(i.slice(4,6),16)]}function pi(t){return"#"+t.map(i=>vi(i).toString(16).padStart(2,"0")).join("")}function P(t,i){let e=fi(t);if(!e)return t;let n=i/100,r=s=>n<0?s*(1+n):s+(255-s)*n;return pi([r(e[0]),r(e[1]),r(e[2])])}function mi(t,i){return typeof t=="string"?{primary:t}:t??{}}function ui(t){return typeof t=="string"?{heading:t,body:t}:t??{}}function x(t={},i="professional"){let e=li[i],n=mi(t.colors,i),r=n.primary??e.primary,s=n.accent??e.accent,$=n.onPrimary??u.onPrimary,b=P(r,-24),l={primary:r,accent:s,background:n.background??u.background,surface:n.surface??u.surface,text:n.text??u.text,muted:n.muted??u.muted,onPrimary:$,primaryDark:b},w=t.gradient??[P(r,10),b],j=ui(t.font),C=j.heading??"Poppins",E=j.body??"Inter",L=t.fontScale&&t.fontScale>0?t.fontScale:1,k=typeof t.size=="number"?t.size:B[t.size??"md"]??B.md,S=t.responsive??!1,I=t.radius??20,X=t.scopeId??`ivc${di+=1}`,A=ei=>`'${ei}', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`,J=[`--iv-primary:${l.primary}`,`--iv-primary-dark:${l.primaryDark}`,`--iv-accent:${l.accent}`,`--iv-bg:${l.background}`,`--iv-surface:${l.surface}`,`--iv-text:${l.text}`,`--iv-muted:${l.muted}`,`--iv-onp:${l.onPrimary}`,`--iv-grad:linear-gradient(135deg, ${w[0]}, ${w[1]})`,`--iv-radius:${I}px`,`--iv-font-h:${A(C)}`,`--iv-font-b:${A(E)}`].join(";"),ii=S?`width:100%;max-width:${k}px`:`width:${k}px`,ti=`${J};${ii};font-size:${(16*L).toFixed(2)}px`;return{colors:l,gradient:w,fontHeading:C,fontBody:E,scale:L,widthPx:k,responsive:S,radius:I,logo:t.logo??null,scopeId:X,rootStyle:ti}}function o(t){return t==null?"":String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}function g(t){return o(t)}function a(t){return typeof t=="string"&&t.trim().length>0}function gi(t){let i="";for(let e of t){let n=e.codePointAt(0)??0;n>32&&n!==127&&(i+=e)}return i}function y(t,{allowDataImage:i=!1}={}){if(!a(t))return null;let e=gi(t);return e?/^https?:\/\//i.test(e)||/^mailto:/i.test(e)||/^tel:/i.test(e)||i&&/^data:image\/(png|jpe?g|gif|webp|svg\+xml);/i.test(e)?e:/^\/\//.test(e)?"https:"+e:/^[a-z0-9.-]+\.[a-z]{2,}(\/|$|\?)/i.test(e)&&!/^[a-z][a-z0-9+.-]*:/i.test(e)?"https://"+e:null:null}function hi(t){if(!a(t))return"?";let i=t.trim().split(/\s+/).filter(Boolean),e=i[0]?.[0]??"",n=i.length>1?i[i.length-1]?.[0]??"":"";return(e+n).toUpperCase()||"?"}function c(t){return t.profileType==="student"?"student":"professional"}function T(t){return a(t.bio)?t.bio.trim():a(t.summary)?t.summary.trim():null}function d(t){if(c(t)==="professional"){let n="Professional";if(a(t.totalYearsExperience)){let r=t.totalYearsExperience.trim();n=/year|yr/i.test(r)?r:`${r} yrs exp`}else a(t.currentCompany)&&(n=t.currentCompany.trim());return`<span class="iv-cred">\u{1F4BC} ${o(n)}</span>`}let i=(t.education??[]).map(n=>n.year).find(a),e=a(i)?`Class of ${i.trim()}`:"Student";return`<span class="iv-cred">\u{1F393} ${o(e)}</span>`}var M={linkedin:{label:"in",bg:"#0A66C2"},instagram:{label:"ig",bg:"#E1306C"},facebook:{label:"f",bg:"#1877F2"},x:{label:"\u{1D54F}",bg:"#111111"},twitter:{label:"\u{1D54F}",bg:"#111111"},github:{label:"gh",bg:"#181717"},youtube:{label:"yt",bg:"#FF0000"},website:{label:"\u{1F310}",bg:"#334155"},portfolio:{label:"\u{1F310}",bg:"#334155"}};function bi(t){let i=(t??"").toLowerCase();return i.includes("linkedin")?"linkedin":i.includes("insta")?"instagram":i.includes("face")?"facebook":i==="x"||i.includes("twitter")?"x":i.includes("git")?"github":i.includes("you")?"youtube":(i.includes("port")||i.includes("web")||i.includes("site"),"website")}function Q(t,i=4){let e=(t??[]).map(n=>({platform:n.platform,href:y(n.url)})).filter(n=>n.href!==null).slice(0,i);return e.length===0?"":e.map(n=>{let r=M[bi(n.platform)]??M.website;return`<a class="iv-si" href="${g(n.href)}" target="_blank" rel="noopener noreferrer" style="background:${r.bg}" aria-label="${g(n.platform??"link")}">${o(r.label)}</a>`}).join("")}function D(t){return(t??[]).filter(i=>y(i.url)!==null).length}function O(t){let i=[];return a(t.phone)&&i.push(["Mobile",t.phone]),a(t.email)&&i.push(["E-mail",t.email]),a(t.location)&&i.push(["Location",t.location]),i.length===0?"":i.map(([e,n])=>`<div class="iv-crow"><span class="iv-clabel">${o(e)}</span><span class="iv-cval">${o(n)}</span></div>`).join("")}function F(t,i=6){let e=(t??[]).filter(a).slice(0,i);return e.length===0?"":`<div class="iv-chips">${e.map(n=>`<span class="iv-chip">${o(n)}</span>`).join("")}</div>`}function v(t){let i=y(t?.url,{allowDataImage:!0});if(i){let n=t?.height??22;return`<img class="iv-logo-img" src="${g(i)}" alt="logo" style="height:${n}px" />`}let e=t?.text;return a(e)?`<span class="iv-logo-txt">${o(e)}</span>`:'<span class="iv-logo-txt iv-logo-empty">Logo</span>'}function m(t,i=!1){let r=`xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.32;z-index:0" viewBox="${i?"0 0 60 200":"0 0 300 80"}" preserveAspectRatio="xMidYMid slice"`;return t==="student"?`<svg ${r}><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
+      <g transform="translate(18,10) rotate(-14)"><polygon points="9,2 17,6 9,10 1,6" fill="#fff" stroke="none" opacity=".55"/><line x1="9" y1="6" x2="9" y2="13" stroke-width="1.4"/><path d="M5,9.5 Q5,14 9,14 Q13,14 13,9.5" stroke-width="1.3"/></g>
+      <g transform="translate(70,6) rotate(6) scale(.9)" stroke-width="1.2"><path d="M1,2 Q7,0 9,3 Q11,0 17,2 L17,14 Q11,12 9,15 Q7,12 1,14 Z"/><line x1="9" y1="3" x2="9" y2="15"/></g>
+      <g transform="translate(120,14) rotate(28)" stroke-width="1.2"><rect x="3.5" y="1" width="5" height="12" rx="1"/><polygon points="3.5,13 8.5,13 6,17.5" fill="#fff" stroke="none"/></g>
+      <g transform="translate(170,6) rotate(8)" stroke-width="1.1"><path d="M9,0 L10.5,7 L18,9 L10.5,11 L9,18 L7.5,11 L0,9 L7.5,7 Z" fill="#fff" opacity=".35" stroke="none"/><path d="M9,0 L10.5,7 L18,9 L10.5,11 L9,18 L7.5,11 L0,9 L7.5,7 Z"/></g>
+      <g transform="translate(224,10) rotate(10) scale(.8)"><polygon points="9,2 17,6 9,10 1,6" fill="#fff" stroke="none" opacity=".45"/><line x1="9" y1="6" x2="9" y2="13" stroke-width="1.6"/></g>
+      <g transform="translate(270,6) rotate(-5) scale(.78)" stroke-width="1.3"><path d="M1,2 Q7,0 9,3 Q11,0 17,2 L17,14 Q11,12 9,15 Q7,12 1,14 Z"/><line x1="9" y1="3" x2="9" y2="15"/></g>
+    </g></svg>`:`<svg ${r}><g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">
+    <g transform="translate(16,9) rotate(-9)" stroke-width="1.3"><rect x="1" y="6" width="16" height="11" rx="2"/><path d="M6,6 L6,3.5 Q6,1.5 9,1.5 Q12,1.5 12,3.5 L12,6"/><line x1="1" y1="11" x2="17" y2="11"/></g>
+    <g transform="translate(66,8) rotate(4)"><rect x="0" y="10" width="3.5" height="8" fill="#fff" opacity=".55"/><rect x="5.5" y="7" width="3.5" height="11" fill="#fff" opacity=".65"/><rect x="11" y="3" width="3.5" height="15" fill="#fff" opacity=".75"/></g>
+    <g transform="translate(114,6) rotate(3)" stroke-width="1.2"><rect x="2" y="1" width="13" height="17" rx="1"/><rect x="4" y="4" width="2" height="2" fill="#fff" stroke="none" opacity=".6"/><rect x="8.5" y="4" width="2" height="2" fill="#fff" stroke="none" opacity=".6"/><rect x="4" y="8" width="2" height="2" fill="#fff" stroke="none" opacity=".6"/></g>
+    <g transform="translate(160,7) rotate(5)" stroke-width="1.2"><polygon points="9,1 18,8 9,18 0,8"/><line x1="0" y1="8" x2="18" y2="8"/></g>
+    <g transform="translate(210,9) rotate(0)" stroke-width="1.2"><circle cx="9" cy="9" r="4.5"/><line x1="9" y1="0" x2="9" y2="4.5"/><line x1="9" y1="13.5" x2="9" y2="18"/><line x1="0" y1="9" x2="4.5" y2="9"/><line x1="13.5" y1="9" x2="18" y2="9"/></g>
+    <g transform="translate(260,8) rotate(12) scale(.85)" stroke-width="1.4"><rect x="1" y="6" width="16" height="11" rx="2"/><path d="M6,6 L6,3.5 Q6,1.5 9,1.5 Q12,1.5 12,3.5 L12,6"/></g>
+  </g></svg>`}function f(t,i=""){let e=y(t.photoUrl,{allowDataImage:!0});return e?`<div class="iv-av ${i}"><img src="${g(e)}" alt="${g(t.fullName??"photo")}" /></div>`:`<div class="iv-av iv-av-fallback ${i}"><span>${o(hi(t.fullName))}</span></div>`}function U(t){let i=`.${t}`;return`<style>
+${i}{box-sizing:border-box;position:relative;overflow:hidden;background:var(--iv-bg);border-radius:var(--iv-radius);
+  container-type:inline-size;
+  font-family:var(--iv-font-b);color:var(--iv-text);line-height:1.4;
+  box-shadow:0 10px 30px -12px rgba(15,23,42,.35),0 2px 6px rgba(15,23,42,.06);}
+${i} *{box-sizing:border-box;}
+${i} a{text-decoration:none;color:inherit;}
+
+/* header */
+${i} .iv-head{position:relative;background:var(--iv-grad);color:var(--iv-onp);padding:1em 1.15em 1.15em;overflow:hidden;}
+${i} .iv-head-top{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:.5em;margin-bottom:1em;}
+${i} .iv-logo-img{display:block;object-fit:contain;}
+${i} .iv-logo-txt{font-family:var(--iv-font-h);font-weight:800;font-size:.9em;letter-spacing:.2px;}
+${i} .iv-logo-empty{opacity:.7;font-weight:600;}
+${i} .iv-head-main{position:relative;z-index:1;display:flex;align-items:flex-end;justify-content:space-between;gap:.75em;}
+${i} .iv-name{font-family:var(--iv-font-h);font-weight:800;font-size:1.45em;line-height:1.1;margin:0;}
+${i} .iv-desig{font-size:.82em;font-weight:500;opacity:.92;margin-top:.25em;}
+${i} .iv-sub{font-size:.72em;opacity:.8;margin-top:.15em;}
+
+/* avatar */
+${i} .iv-av{width:4.6em;height:4.6em;border-radius:1em;overflow:hidden;flex:none;border:3px solid rgba(255,255,255,.85);background:rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.18);}
+${i} .iv-av img{width:100%;height:100%;object-fit:cover;display:block;}
+${i} .iv-av-fallback span{font-family:var(--iv-font-h);font-weight:800;font-size:1.4em;color:var(--iv-onp);}
+
+/* wave divider */
+${i} .iv-wave{display:block;width:100%;height:1.1em;margin-top:1em;margin-bottom:-1px;position:relative;z-index:1;}
+
+/* body */
+${i} .iv-body{background:var(--iv-bg);padding:1.05em 1.15em 1.2em;display:flex;flex-direction:column;gap:.85em;}
+${i} .iv-bio{font-size:.8em;color:var(--iv-muted);line-height:1.55;margin:0;}
+
+/* contact */
+${i} .iv-contact{background:var(--iv-surface);border:1px solid rgba(15,23,42,.07);border-radius:.85em;padding:.85em .95em;box-shadow:0 1px 2px rgba(15,23,42,.04);}
+${i} .iv-ctitle{font-family:var(--iv-font-h);font-weight:700;font-size:.7em;text-transform:uppercase;letter-spacing:.6px;color:var(--iv-muted);margin-bottom:.6em;}
+${i} .iv-crow{display:flex;justify-content:space-between;gap:.6em;padding:.28em 0;border-top:1px dashed rgba(15,23,42,.08);}
+${i} .iv-crow:first-of-type{border-top:0;}
+${i} .iv-clabel{font-size:.74em;color:var(--iv-muted);font-weight:500;}
+${i} .iv-cval{font-size:.76em;font-weight:600;text-align:right;word-break:break-word;}
+
+/* chips */
+${i} .iv-chips{display:flex;flex-wrap:wrap;gap:.35em;}
+${i} .iv-chip{font-size:.68em;font-weight:600;color:var(--iv-primary-dark);background:color-mix(in srgb,var(--iv-primary) 12%,#fff);
+  border:1px solid color-mix(in srgb,var(--iv-primary) 22%,#fff);padding:.28em .6em;border-radius:999px;}
+
+/* social */
+${i} .iv-social{display:flex;align-items:center;justify-content:space-between;gap:.5em;}
+${i} .iv-scount{display:flex;flex-direction:column;}
+${i} .iv-scount b{font-family:var(--iv-font-h);font-size:1em;font-weight:800;line-height:1;}
+${i} .iv-scount span{font-size:.66em;color:var(--iv-muted);}
+${i} .iv-si{display:flex;align-items:center;justify-content:center;width:2em;height:2em;border-radius:.55em;color:#fff;font-size:.68em;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.15);}
+${i} .iv-sirow{display:flex;gap:.4em;}
+
+/* CTA buttons */
+${i} .iv-cta{display:flex;gap:.5em;}
+${i} .iv-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:.35em;font-size:.76em;font-weight:700;color:#fff;
+  padding:.65em .5em;border-radius:.7em;box-shadow:0 3px 8px rgba(0,0,0,.12);}
+${i} .iv-btn-accent{background:var(--iv-accent);}
+${i} .iv-btn-wa{background:#22C55E;}
+
+/* sections (education / experience / projects) */
+${i} .iv-sec{display:flex;flex-direction:column;gap:.5em;}
+${i} .iv-sec-title{font-family:var(--iv-font-h);font-weight:700;font-size:.72em;text-transform:uppercase;letter-spacing:.6px;color:var(--iv-muted);}
+${i} .iv-item{border-left:2px solid color-mix(in srgb,var(--iv-primary) 45%,#fff);padding-left:.7em;}
+${i} .iv-item-h{font-family:var(--iv-font-h);font-weight:700;font-size:.82em;}
+${i} .iv-item-sub{font-size:.72em;color:var(--iv-primary-dark);font-weight:600;}
+${i} .iv-item-meta{font-size:.68em;color:var(--iv-muted);}
+${i} .iv-item-desc{font-size:.72em;color:var(--iv-muted);line-height:1.45;margin-top:.15em;}
+
+/* \u2500\u2500 SPLIT layout \u2500\u2500 */
+${i}.iv-split .iv-split-head{display:flex;position:relative;}
+${i}.iv-split .iv-split-left{position:relative;overflow:hidden;background:var(--iv-grad);color:var(--iv-onp);
+  width:38%;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6em;padding:1.1em .6em;}
+${i}.iv-split .iv-split-right{flex:1;padding:1.1em 1.1em;display:flex;flex-direction:column;gap:.3em;}
+${i}.iv-split .iv-split-right .iv-name{color:var(--iv-text);}
+${i}.iv-split .iv-split-right .iv-desig{color:var(--iv-primary-dark);opacity:1;}
+${i}.iv-split .iv-split-right .iv-logo-txt{color:var(--iv-primary-dark);}
+${i}.iv-split .iv-tags{display:flex;flex-wrap:wrap;gap:.35em;margin-top:.5em;}
+${i}.iv-split .iv-tag{font-size:.66em;font-weight:700;color:#fff;background:var(--iv-accent);padding:.3em .6em;border-radius:.5em;}
+${i}.iv-split .iv-tag-alt{background:#475569;}
+
+/* credential pill (audience differentiator) */
+${i} .iv-cred{display:inline-flex;align-items:center;gap:.3em;font-size:.66em;font-weight:700;
+  background:color-mix(in srgb,var(--iv-primary) 12%,#fff);color:var(--iv-primary-dark);
+  border:1px solid color-mix(in srgb,var(--iv-primary) 25%,#fff);padding:.32em .68em;border-radius:999px;}
+${i} .iv-head .iv-cred{background:rgba(255,255,255,.2);color:var(--iv-onp);border-color:rgba(255,255,255,.3);}
+${i} .iv-credrow{margin-top:.5em;}
+
+/* \u2500\u2500 ACADEMIC layout \u2500\u2500 */
+${i} .iv-acad-main{position:relative;z-index:1;display:flex;align-items:center;gap:.9em;}
+${i}.iv-acad .iv-av{width:4.1em;height:4.1em;}
+${i}.iv-acad .iv-name{font-size:1.3em;}
+
+/* professional stat tiles (audience differentiator) */
+${i} .iv-stats{display:flex;gap:.5em;}
+${i} .iv-stat{flex:1;background:color-mix(in srgb,var(--iv-primary) 8%,#fff);border:1px solid color-mix(in srgb,var(--iv-primary) 18%,#fff);border-radius:.7em;padding:.55em .65em;}
+${i} .iv-stat-v{font-family:var(--iv-font-h);font-weight:800;font-size:.9em;color:var(--iv-primary-dark);line-height:1.1;}
+${i} .iv-stat-l{font-size:.6em;text-transform:uppercase;letter-spacing:.5px;color:var(--iv-muted);margin-top:.2em;font-weight:700;}
+
+/* \u2500\u2500 EDITORIAL layout (template 4) \u2500\u2500 */
+${i}.iv-ed{background:var(--iv-surface);}
+${i} .iv-ed-body{padding:1.4em 1.35em 1.4em;display:flex;flex-direction:column;gap:.9em;}
+${i} .iv-ed-top{display:flex;align-items:center;justify-content:space-between;gap:.8em;}
+${i}.iv-ed .iv-logo-txt{color:var(--iv-primary-dark);font-size:.72em;text-transform:uppercase;letter-spacing:1.6px;}
+${i}.iv-ed .iv-av{width:3.1em;height:3.1em;border-radius:.75em;border:0;box-shadow:none;}
+${i}.iv-ed .iv-av-fallback{background:color-mix(in srgb,var(--iv-primary) 12%,#fff);}
+${i}.iv-ed .iv-av-fallback span{color:var(--iv-primary-dark);}
+${i} .iv-ed-name{font-family:var(--iv-font-h);font-weight:800;font-size:1.75em;line-height:1.06;letter-spacing:-.01em;color:var(--iv-text);margin-top:.15em;}
+${i} .iv-ed-desig{font-size:.9em;font-weight:600;color:var(--iv-primary-dark);margin-top:.15em;}
+${i} .iv-ed-meta{margin-top:.15em;}
+${i} .iv-ed-rule{height:2px;background:var(--iv-text);opacity:.14;}
+${i}.iv-ed .iv-contact{border:0;box-shadow:none;padding:0;background:transparent;}
+${i}.iv-ed .iv-ctitle{margin-bottom:.4em;}
+${i}.iv-ed .iv-chip{background:transparent;border-color:color-mix(in srgb,var(--iv-primary) 30%,#fff);}
+${i}.iv-ed .iv-si{background:transparent !important;color:var(--iv-text);border:1px solid rgba(15,23,42,.18);box-shadow:none;}
+${i}.iv-ed .iv-stat{background:transparent;}
+${i}.iv-ed .iv-btn{box-shadow:none;}
+${i}.iv-ed .iv-btn-wa{background:transparent;color:#16a34a;border:1px solid #16a34a;}
+
+/* \u2500\u2500 AUDIENCE differentiation: students get circular avatars, professionals stay squared \u2500\u2500 */
+${i}.iv-aud-stu .iv-av{border-radius:50% !important;}
+
+/* responsive: small containers stack the split header */
+@container (max-width: 300px){ ${i}.iv-split .iv-split-head{flex-direction:column;} ${i}.iv-split .iv-split-left{width:100%;} }
+</style>`}function N(t){let i=T(t);return a(i)?`<p class="iv-bio">${o(i)}</p>`:""}function R(t){let i=O(t);return i?`<div class="iv-contact">
+    <div class="iv-ctitle">Contact Details</div>
+    ${i}
+  </div>`:""}function Y(t){return F(t.skills,6)}function Z(t){let i=D(t.socialLinks),e=Q(t.socialLinks,4);return i===0?"":`<div class="iv-social">
+    <div class="iv-scount"><b>${String(i).padStart(2,"0")}</b><span>Active social ${i===1?"link":"links"}</span></div>
+    <div class="iv-sirow">${e}</div>
+  </div>`}function W(t){return`<div class="iv-cta">
+    ${a(t.phone)?`<a class="iv-btn iv-btn-wa" href="https://wa.me/${encodeURIComponent(t.phone.replace(/[^\d+]/g,""))}">\u{1F4AC} WhatsApp</a>`:'<span class="iv-btn iv-btn-wa">\u{1F4AC} WhatsApp</span>'}
+    <span class="iv-btn iv-btn-accent">\u{1F464} About me</span>
+  </div>`}function _(t){let i=(t.education??[]).find(r=>a(r.degree)||a(r.institution));if(!i)return"";let e=[i.degree,i.field].filter(a).join(" \xB7 "),n=[i.institution,i.year].filter(a).join(" \xB7 ");return`<div class="iv-sec">
+    <div class="iv-sec-title">Education</div>
+    <div class="iv-item">
+      <div class="iv-item-h">${o(e||i.institution||"")}</div>
+      ${n?`<div class="iv-item-meta">${o(n)}</div>`:""}
+    </div>
+  </div>`}function xi(t){if(c(t)!=="professional")return"";let i=[];if(a(t.totalYearsExperience)){let e=t.totalYearsExperience.trim();i.push(["Experience",/year|yr/i.test(e)?e:`${e} yrs`])}return a(t.currentCompany)&&i.push(["Company",t.currentCompany.trim()]),i.length===0?"":`<div class="iv-stats">${i.map(([e,n])=>`<div class="iv-stat"><div class="iv-stat-v">${o(n)}</div><div class="iv-stat-l">${o(e)}</div></div>`).join("")}</div>`}function yi(t){let i=(t.experience??[]).filter(n=>a(n.role)||a(n.company)).slice(0,2);return i.length===0?"":`<div class="iv-sec"><div class="iv-sec-title">Experience</div>${i.map(n=>{let r=[n.company,n.duration].filter(a).join(" \xB7 "),s=(n.highlights??[]).filter(a)[0];return`<div class="iv-item"><div class="iv-item-h">${o(n.role??"")}</div>${r?`<div class="iv-item-sub">${o(r)}</div>`:""}${a(s)?`<div class="iv-item-desc">${o(s)}</div>`:""}</div>`}).join("")}</div>`}function $i(t){let i=(t.projects??[]).filter(r=>a(r.title)).slice(0,2);if(i.length>0)return`<div class="iv-sec"><div class="iv-sec-title">Projects</div>${i.map(s=>`<div class="iv-item"><div class="iv-item-h">${o(s.title??"")}</div>${a(s.description)?`<div class="iv-item-desc">${o(s.description)}</div>`:""}</div>`).join("")}</div>`;let e=(t.internships??[]).filter(r=>a(r.role)||a(r.organization)).slice(0,2);return e.length===0?"":`<div class="iv-sec"><div class="iv-sec-title">Internships</div>${e.map(r=>{let s=[r.organization,r.duration].filter(a).join(" \xB7 ");return`<div class="iv-item"><div class="iv-item-h">${o(r.role??r.organization??"")}</div>${s?`<div class="iv-item-sub">${o(s)}</div>`:""}${a(r.description)?`<div class="iv-item-desc">${o(r.description)}</div>`:""}</div>`}).join("")}</div>`}function p(t){return c(t)==="professional"?[N(t),xi(t),yi(t),Y(t),_(t),R(t),Z(t),W(t)].join(`
+`):[N(t),Y(t),$i(t),_(t),R(t),Z(t),W(t)].join(`
+`)}function wi(t){return c(t)==="professional"?t.currentCompany??t.totalYearsExperience??"":t.education?.find(i=>a(i.institution))?.institution??""}function G(t,i){let e=wi(t);return`<div class="iv-head">
+    ${m(c(t))}
+    <div class="iv-head-top">
+      ${v(i.logo)}
+    </div>
+    <div class="iv-head-main">
+      <div>
+        <h2 class="iv-name">${o(t.fullName??"")}</h2>
+        ${a(t.designation)?`<div class="iv-desig">${o(t.designation)}</div>`:""}
+        ${a(e)?`<div class="iv-sub">${o(e)}</div>`:""}
+        <div class="iv-credrow">${d(t)}</div>
+      </div>
+      ${f(t)}
+    </div>
+    <svg class="iv-wave" viewBox="0 0 300 18" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0,18 C60,0 120,14 180,6 C240,-1 270,12 300,7 L300,18 Z" fill="var(--iv-bg)"/>
+    </svg>
+  </div>
+  <div class="iv-body">
+    ${p(t)}
+  </div>`}function V(t,i){return`<div class="iv-split-head">
+    <div class="iv-split-left">
+      ${m(c(t),!0)}
+      ${f(t)}
+    </div>
+    <div class="iv-split-right">
+      ${v(i.logo)}
+      <h2 class="iv-name">${o(t.fullName??"")}</h2>
+      ${a(t.designation)?`<div class="iv-desig">${o(t.designation)}</div>`:""}
+      <div class="iv-tags">${d(t)}</div>
+    </div>
+  </div>
+  <div class="iv-body">
+    ${p(t)}
+  </div>`}function H(t,i){let n=c(t)==="student"?t.education?.find(r=>a(r.institution))?.institution??"":t.currentCompany??t.totalYearsExperience??"";return`<div class="iv-head">
+    ${m(c(t))}
+    <div class="iv-head-top">
+      ${v(i.logo)}
+      ${d(t)}
+    </div>
+    <div class="iv-acad-main">
+      ${f(t)}
+      <div class="iv-acad-info">
+        <h2 class="iv-name">${o(t.fullName??"")}</h2>
+        ${a(t.designation)?`<div class="iv-desig">${o(t.designation)}</div>`:""}
+        ${a(n)?`<div class="iv-sub">${o(n)}</div>`:""}
+      </div>
+    </div>
+  </div>
+  <div class="iv-body">
+    ${p(t)}
+  </div>`}function q(t,i){return`<div class="iv-ed-body">
+    <div class="iv-ed-top">
+      ${v(i.logo)}
+      ${f(t)}
+    </div>
+    <h2 class="iv-ed-name">${o(t.fullName??"")}</h2>
+    ${a(t.designation)?`<div class="iv-ed-desig">${o(t.designation)}</div>`:""}
+    <div class="iv-ed-meta">${d(t)}</div>
+    <div class="iv-ed-rule"></div>
+    ${p(t)}
+  </div>`}var h=[{id:1,key:"wave",name:"Wave",description:"Coloured header banner with a wave divider into the body. Bold, friendly, energetic.",audience:"student",rootClass:"iv-wave-tpl",build:G},{id:2,key:"split",name:"Split",description:"Left coloured avatar panel, right-side details. Clean, directory-style, reads well at a glance.",audience:"professional",rootClass:"iv-split",build:V},{id:3,key:"academic",name:"Academic",description:"Scholarly header with a round avatar and institution line. Education-forward \u2014 suits students.",audience:"student",rootClass:"iv-acad",build:H},{id:4,key:"editorial",name:"Editorial",description:"No colour blocks \u2014 big typographic name, thin rules, generous whitespace. Premium, executive.",audience:"professional",rootClass:"iv-ed",build:q}],K=h.map(({id:t,key:i,name:e,description:n,audience:r})=>({id:t,key:i,name:e,description:n,audience:r})),ki=h.length;function zi(t){return K.filter(i=>i.audience===t)}function ji(t){let i=typeof t=="number"?h.find(e=>e.id===t):h.find(e=>e.key===t.toLowerCase());if(!i){let e=h.map(n=>`${n.id} (${n.key})`).join(", ");throw new Error(`[insta-viz-templates] Unknown template "${t}". Available: ${e}.`)}return i}function Ci(t,i,e={}){let n=ji(t),r=c(i),s=x(e,r),$=r==="student"?"iv-aud-stu":"iv-aud-pro",b=n.build(i,s);return`<div class="${s.scopeId} ${n.rootClass} ${$}" style="${s.rootStyle}" data-iv-template="${n.key}">${U(s.scopeId)}${b}</div>`}return ci(Ei);})();
+</script>
+  <script>
+    const SAMPLES = {"professional":{"profileType":"professional","fullName":"Karthick Chandrasekaran","designation":"Senior Software Engineer","currentCompany":"KLM Solutions","totalYearsExperience":"7 years","email":"karthick@klmsolutions.in","phone":"+91 98765 43210","location":"Chennai, India","bio":"Backend engineer focused on distributed systems, clean APIs and shipping reliable products at scale.","skills":["Node.js","TypeScript","AWS","PostgreSQL","Docker","Kubernetes"],"website":"https://karthick.dev","socialLinks":[{"platform":"linkedin","url":"https://linkedin.com/in/karthick"},{"platform":"github","url":"https://github.com/karthick"},{"platform":"x","url":"https://x.com/karthick"},{"platform":"website","url":"https://karthick.dev"}],"education":[{"degree":"B.E.","field":"Computer Science","institution":"Anna University","year":"2018"}],"experience":[{"role":"Senior Software Engineer","company":"KLM Solutions","duration":"2021 – present","highlights":["Led the migration to a microservices architecture serving 2M+ users."]}]},"student":{"profileType":"student","fullName":"Divya Subramani","designation":"Final-year CSE Student","email":"divya.s@psgtech.ac.in","phone":"+91 98840 00000","location":"Coimbatore, India","bio":"Aspiring product engineer who loves building for campus communities and tinkering with AR.","skills":["Python","React","Figma","TensorFlow"],"website":"https://divya.dev","socialLinks":[{"platform":"linkedin","url":"https://linkedin.com/in/divya"},{"platform":"instagram","url":"https://instagram.com/divya.builds"},{"platform":"github","url":"https://github.com/divya"}],"education":[{"degree":"B.Tech","field":"Computer Science","institution":"PSG College of Technology","year":"2026"}],"projects":[{"title":"Campus Navigator","description":"AR-based indoor maps that guide students across a 40-acre campus."}]}};
+    const state = { font: "Poppins", primary: "#4338ca", accent: "#4f46e5", ptype: "professional", size: "md" };
+    const stage = document.getElementById("stage");
+
+    function render(){
+      const opts = { colors:{ primary: state.primary, accent: state.accent }, font: state.font, size: state.size, logo:{ text: "Your Brand" } };
+      const p = SAMPLES[state.ptype];
+      const pool = IVT.templatesFor(state.ptype); // only this audience's templates
+      stage.innerHTML = '<div class="cards">' + pool.map(function(t){
+        return '<div class="slot"><div class="cap">Template ' + t.id + ' · ' + t.name + '</div>' + IVT.renderCard(t.id, p, opts) + '</div>';
+      }).join('') + '</div>';
+    }
+
+    function markOn(container, predicate){ [...container.children].forEach(el => el.classList && el.classList.toggle("on", predicate(el))); }
+
+    document.getElementById("font").addEventListener("change", e => { state.font = e.target.value; render(); });
+
+    function bindSwatches(id, key, customId){
+      const box = document.getElementById(id);
+      box.addEventListener("click", e => {
+        const b = e.target.closest(".sw"); if(!b) return;
+        state[key] = b.dataset.c;
+        document.getElementById(customId).value = b.dataset.c;
+        [...box.querySelectorAll(".sw")].forEach(s => s.classList.toggle("on", s === b));
+        render();
+      });
+      document.getElementById(customId).addEventListener("input", e => {
+        state[key] = e.target.value;
+        [...box.querySelectorAll(".sw")].forEach(s => s.classList.remove("on"));
+        render();
+      });
+    }
+    bindSwatches("primarySw", "primary", "primaryCustom");
+    bindSwatches("accentSw", "accent", "accentCustom");
+
+    function bindSeg(id, key){
+      const seg = document.getElementById(id);
+      seg.addEventListener("click", e => {
+        const b = e.target.closest("button"); if(!b) return;
+        state[key] = b.dataset.v;
+        markOn(seg, el => el === b);
+        render();
+      });
+    }
+    bindSeg("ptype", "ptype");
+    bindSeg("size", "size");
+
+    // mark default swatches active
+    document.querySelector('#primarySw .sw[data-c="#4338ca"]').classList.add("on");
+    document.querySelector('#accentSw .sw[data-c="#4f46e5"]').classList.add("on");
+    render();
+  </script>
+</body></html>
