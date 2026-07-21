@@ -28,8 +28,8 @@ const DEFAULT_COLORS = {
 };
 
 const AUDIENCE_DEFAULTS: Record<ProfileType, { primary: string; accent: string }> = {
-  professional: { primary: "#4338ca", accent: "#4f46e5" },
-  student: { primary: "#7c3aed", accent: "#8b5cf6" },
+  professional: { primary: "#be123c", accent: "#e11d48" },
+  student: { primary: "#be123c", accent: "#e11d48" },
 };
 
 let scopeCounter = 0;

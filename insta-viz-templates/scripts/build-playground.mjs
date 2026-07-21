@@ -101,8 +101,8 @@ const html = `<!doctype html>
     <h1>Smart-Card Templates <small>pick a profile — each has its own templates; font &amp; colours update them live</small></h1>
     <div class="controls">
       <div class="ctrl"><label>Font</label><select id="font">${fontOpts}</select></div>
-      <div class="ctrl"><label>Primary colour</label><div class="swatches" id="primarySw">${swatches(PRIMARIES, "primary")}<input type="color" class="sw-custom" id="primaryCustom" value="#4338ca" /></div></div>
-      <div class="ctrl"><label>Accent colour</label><div class="swatches" id="accentSw">${swatches(ACCENTS, "accent")}<input type="color" class="sw-custom" id="accentCustom" value="#4f46e5" /></div></div>
+      <div class="ctrl"><label>Primary colour</label><div class="swatches" id="primarySw">${swatches(PRIMARIES, "primary")}<input type="color" class="sw-custom" id="primaryCustom" value="#be123c" /></div></div>
+      <div class="ctrl"><label>Accent colour</label><div class="swatches" id="accentSw">${swatches(ACCENTS, "accent")}<input type="color" class="sw-custom" id="accentCustom" value="#e11d48" /></div></div>
       <div class="ctrl"><label>Profile</label><div class="seg" id="ptype"><button data-v="professional" class="on">Professional</button><button data-v="student">Student</button></div></div>
       <div class="ctrl"><label>Size</label><div class="seg" id="size"><button data-v="sm">SM</button><button data-v="md" class="on">MD</button><button data-v="lg">LG</button></div></div>
     </div>
@@ -112,7 +112,7 @@ const html = `<!doctype html>
   <script>${bundle}</script>
   <script>
     const SAMPLES = ${JSON.stringify(SAMPLES)};
-    const state = { font: "Poppins", primary: "#4338ca", accent: "#4f46e5", ptype: "professional", size: "md" };
+    const state = { font: "Poppins", primary: "#be123c", accent: "#e11d48", ptype: "professional", size: "md" };
     const stage = document.getElementById("stage");
 
     function render(){
@@ -159,8 +159,8 @@ const html = `<!doctype html>
     bindSeg("size", "size");
 
     // mark default swatches active
-    document.querySelector('#primarySw .sw[data-c="#4338ca"]').classList.add("on");
-    document.querySelector('#accentSw .sw[data-c="#4f46e5"]').classList.add("on");
+    document.querySelector('#primarySw .sw[data-c="#be123c"]').classList.add("on");
+    document.querySelector('#accentSw .sw[data-c="#e11d48"]').classList.add("on");
     render();
   </script>
 </body></html>`;
