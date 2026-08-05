@@ -3,8 +3,9 @@ import FirecrawlApp from "@mendable/firecrawl-js";
 import { isProfileType } from "@/lib/validation";
 import { schemaFieldKeys } from "@/lib/schema";
 import { extractProfile } from "@/lib/llama";
+import { brandFromSite, withProfileDefaults } from "@/lib/brand";
 import { fail, tokenMatches } from "@/lib/route-helpers";
-import type { ExtractSuccess } from "@/lib/types";
+import type { BrandTheme, ExtractSuccess } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 800;
@@ -72,6 +73,16 @@ export async function POST(request: NextRequest) {
       schema_preview: { profile_type: profileTypeRaw, fields: schemaFieldKeys(profileTypeRaw) },
     });
   }
+
+  // 5a. Kick off the brand lookup NOW so it runs alongside the crawl instead of
+  // after it. The crawl is the long pole (up to 25 pages), so the brand analysis
+  // costs no extra wall-clock. Deliberately not awaited here.
+  const brandPromise: Promise<BrandTheme | null> = brandFromSite(url.trim()).catch((err) => {
+    // Belt-and-braces: brandFromSite already swallows its own failures, but a brand
+    // lookup must never be able to fail an extraction request.
+    console.error("[extract-url] brand lookup error:", err);
+    return null;
+  });
 
   // 6. Firecrawl — crawls up to 25 pages, returning markdown + all hrefs per page
   let pageText: string;
@@ -147,12 +158,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // The brand lookup has been running since step 5a; collect it now.
+    const brand = withProfileDefaults(await brandPromise, profileTypeRaw);
+
     return NextResponse.json({
       status: "success",
       profile_type: profileTypeRaw,
       data: result.data,
       confidence_scores: result.confidence_scores,
       flagged_fields: result.flagged_fields,
+      brand,
     } satisfies ExtractSuccess);
   } catch (err) {
     console.error("[extract-url] engine error:", err);

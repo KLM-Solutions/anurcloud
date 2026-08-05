@@ -2,8 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isProfileType, validateSourceFile } from "@/lib/validation";
 import { schemaFieldKeys } from "@/lib/schema";
 import { extractProfile } from "@/lib/llama";
+import { brandFromImage, isSupportedLogo, withProfileDefaults } from "@/lib/brand";
 import { fail, tokenMatches } from "@/lib/route-helpers";
-import type { ExtractSuccess } from "@/lib/types";
+import type { BrandTheme, ExtractSuccess } from "@/lib/types";
 
 // File parsing needs the Node.js runtime (not Edge).
 export const runtime = "nodejs";
@@ -16,10 +17,13 @@ export const maxDuration = 800;
  *
  *   POST /api/extract
  *   Authorization: Bearer <auth_token>
- *   multipart/form-data: file (PDF/DOCX/JPG/PNG), profile_type
+ *   multipart/form-data: file (PDF/DOCX/JPG/PNG), profile_type, logo (optional image)
  *
  * Validates the upload, selects the schema by profile_type (Approach A), runs the
  * extraction engine, and returns the structured profile + confidence.
+ *
+ * An optional `logo` image yields the brand theme for the card — its colours are read
+ * straight from the image pixels, on our own server, with no model involved.
  */
 export async function POST(request: NextRequest) {
   // 1. Auth — Authorization: Bearer <shared service secret>
@@ -47,6 +51,7 @@ export async function POST(request: NextRequest) {
 
   const file = formData.get("file");
   const profileTypeRaw = formData.get("profile_type");
+  const logo = formData.get("logo");
 
   // 3. Validate file (presence + type; no size limit)
   if (!(file instanceof File)) {
@@ -61,6 +66,24 @@ export async function POST(request: NextRequest) {
   // 4. Validate profile_type — selects which schema we extract against
   if (!isProfileType(profileTypeRaw)) {
     return fail("INVALID_PROFILE_TYPE", '"profile_type" must be "student" or "professional".', 400);
+  }
+
+  // 4a. Optional logo → brand theme. Started before extraction so the two overlap.
+  // Rejected quietly rather than by erroring: a bad logo must not cost the caller
+  // their extraction, which is the actual purpose of the request.
+  let brandPromise: Promise<BrandTheme | null> = Promise.resolve(null);
+  if (logo instanceof File && logo.size > 0) {
+    if (!isSupportedLogo({ name: logo.name, type: logo.type })) {
+      console.warn("[extract] ignoring unsupported logo type:", logo.name, logo.type);
+    } else {
+      brandPromise = logo
+        .arrayBuffer()
+        .then((ab) => brandFromImage(Buffer.from(ab)))
+        .catch((err) => {
+          console.error("[extract] logo colour extraction failed:", err);
+          return null;
+        });
+    }
   }
 
   // 5. No engine key configured → fall back to the validation-only stub.
@@ -79,12 +102,16 @@ export async function POST(request: NextRequest) {
   // 7. Run the extraction engine against the profile-type schema and return the contract.
   try {
     const result = await extractProfile(file, profileTypeRaw);
+    const rawBrand = await brandPromise;
     return NextResponse.json({
       status: "success",
       profile_type: profileTypeRaw,
       data: result.data,
       confidence_scores: result.confidence_scores,
       flagged_fields: result.flagged_fields,
+      // Only present when a logo was actually supplied — no logo means no brand
+      // claim to make, rather than a default palette the caller didn't ask for.
+      brand: rawBrand ? withProfileDefaults(rawBrand, profileTypeRaw) : null,
     } satisfies ExtractSuccess);
   } catch (err) {
     // Full detail stays server-side; the client gets a generic message so we never
