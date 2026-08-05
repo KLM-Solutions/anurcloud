@@ -5,11 +5,27 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, type DragEvent, type ReactNode } from "react";
 import { ACCEPT_ATTR, PROFILE_TYPES, formatBytes, validateSourceFile } from "@/lib/validation";
 import { EXTRACTION_SCHEMA, SCHEMA_GROUPS, type SchemaField } from "@/lib/schema";
-import type { ExtractResponse, ProfileType } from "@/lib/types";
+import type { BrandTheme, ExtractResponse, ProfileType } from "@/lib/types";
 
 type Status = "idle" | "uploading" | "done" | "error";
 type Tab = "preview" | "fields" | "input" | "output";
 type SourceMode = "file" | "url";
+
+/** Images we can read a colour out of. `.ico` is excluded — sharp cannot decode it. */
+const LOGO_ACCEPT = ".png,.jpg,.jpeg,.webp,.svg,.avif,.gif,image/png,image/jpeg,image/webp,image/svg+xml";
+
+const BRAND_SOURCE_LABEL: Record<BrandTheme["source"], string> = {
+  firecrawl: "Read from the site design",
+  "logo-image": "Read from the logo image",
+  favicon: "Read from the site icon",
+  default: "Default for this profile type",
+};
+
+const BRAND_CONFIDENCE_STYLE: Record<BrandTheme["confidence"], string> = {
+  high: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  medium: "bg-amber-50 text-amber-700 ring-amber-200",
+  low: "bg-slate-100 text-slate-600 ring-slate-200",
+};
 
 const TYPE_LABEL: Record<SchemaField["type"], string> = {
   string: "Text",
@@ -113,7 +129,15 @@ function outputFormat(pt: ProfileType): string {
     ...dataLines,
     "  },",
     '  "confidence_scores": { "<field>": number },',
-    '  "flagged_fields": string[]',
+    '  "flagged_fields": string[],',
+    '  "brand": {',
+    '    "primary": string, "accent": string, "palette": string[],',
+    '    "logo_url": string | null,',
+    '    "fonts": { "heading": string | null, "body": string | null } | null,',
+    '    "source": "firecrawl" | "logo-image" | "favicon" | "default",',
+    '    "confidence": "high" | "medium" | "low",',
+    '    "notes": string | null',
+    "  } | null",
     "}",
   ].join("\n");
 }
@@ -131,7 +155,9 @@ export default function ExtractionPage() {
   const [tab, setTab] = useState<Tab>("preview");
   const [copied, setCopied] = useState<"input" | "output" | null>(null);
   const [loadingSample, setLoadingSample] = useState<string | null>(null);
+  const [logo, setLogo] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const logoRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   function goToEnhance() {
@@ -161,6 +187,8 @@ export default function ExtractionPage() {
         }
       : null;
   const active = live ?? SAMPLE;
+  const brand: BrandTheme | null =
+    response?.status === "success" ? response.brand ?? null : null;
 
   function chooseFile(next: File | null) {
     setResponse(null);
@@ -228,6 +256,8 @@ export default function ExtractionPage() {
     const body = new FormData();
     body.append("file", file);
     body.append("profile_type", profileType);
+    // Optional — when present, the brand colours come back read from its pixels.
+    if (logo) body.append("logo", logo);
     try {
       const res = await fetch("/api/extract", {
         method: "POST",
@@ -253,7 +283,7 @@ export default function ExtractionPage() {
   const curlExample =
     sourceMode === "url"
       ? `curl -X POST ${URL_ENDPOINT} \\\n  -H "Authorization: Bearer <auth_token>" \\\n  -H "Content-Type: application/json" \\\n  -d '{"url":"${url || "https://example.com/profile"}","profile_type":"${profileType}"}'`
-      : `curl -X POST ${ENDPOINT} \\\n  -H "Authorization: Bearer <auth_token>" \\\n  -F "file=@resume.pdf" \\\n  -F "profile_type=${profileType}"`;
+      : `curl -X POST ${ENDPOINT} \\\n  -H "Authorization: Bearer <auth_token>" \\\n  -F "file=@resume.pdf" \\\n  -F "profile_type=${profileType}"${logo ? ` \\\n  -F "logo=@${logo.name}"` : ""}`;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -452,6 +482,60 @@ export default function ExtractionPage() {
                         </button>
                       ))}
                     </div>
+
+                    {/* Optional logo — drives the card's brand colours. */}
+                    <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-600">
+                          Logo <span className="font-normal text-slate-400">— optional</span>
+                        </span>
+                        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500 ring-1 ring-slate-200">
+                          sets the card colours
+                        </span>
+                      </div>
+                      {logo ? (
+                        <div className="flex items-center gap-2.5">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={URL.createObjectURL(logo)}
+                            alt=""
+                            className="h-9 w-9 rounded-lg bg-white object-contain p-1 ring-1 ring-slate-200"
+                          />
+                          <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700">
+                            {logo.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLogo(null);
+                              if (logoRef.current) logoRef.current.value = "";
+                            }}
+                            className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-500 transition-colors hover:bg-red-100 hover:text-red-600"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => logoRef.current?.click()}
+                          className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-500 transition hover:border-blue-300 hover:text-blue-700"
+                        >
+                          🎨 Add a logo — PNG · JPG · SVG · WebP
+                        </button>
+                      )}
+                      <input
+                        ref={logoRef}
+                        type="file"
+                        accept={LOGO_ACCEPT}
+                        className="hidden"
+                        onChange={(e) => {
+                          setResponse(null);
+                          setStatus("idle");
+                          setLogo(e.target.files?.[0] ?? null);
+                        }}
+                      />
+                    </div>
                   </>
                 ) : (
                   <div className="flex flex-col gap-2">
@@ -464,6 +548,7 @@ export default function ExtractionPage() {
                     />
                     <p className="text-xs text-slate-400">
                       Crawls up to 25 pages automatically — achievements, projects, and sub-pages included.
+                      The site&rsquo;s brand colours and logo come back too.
                     </p>
                   </div>
                 )}
@@ -512,6 +597,9 @@ export default function ExtractionPage() {
                   <strong>{response.error.code}</strong> — {response.error.message}
                 </div>
               )}
+
+              {/* Brand theme — colours + logo for the card templates */}
+              {brand && <BrandPanel brand={brand} />}
 
               {/* Extracted fields */}
               <div className="flex flex-1 flex-col border-t border-slate-100 pt-4">
@@ -1069,6 +1157,150 @@ function ContactRow({
 }
 
 /* ── Fields tab ── */
+
+/**
+ * Brand theme result — the colours (and logo) the card templates will use.
+ *
+ * Shows where the theme came from and how confident we are, because the value is
+ * only as trustworthy as its source: colours read from a site's design are strong,
+ * a profile default means we found nothing usable.
+ */
+function BrandPanel({ brand }: { brand: BrandTheme }) {
+  const [logoBroken, setLogoBroken] = useState(false);
+  const swatches = brand.palette.length
+    ? brand.palette
+    : [brand.primary, brand.accent].filter((c): c is string => Boolean(c));
+
+  /*
+   * Route remote logos through our own origin. A logo URL found on someone else's
+   * site is not always loadable by a browser — tcs.com answers a direct image
+   * request with 403 (hotlink protection), which renders as a broken image.
+   * `data:` URIs are already inline, so they go straight to the tag.
+   */
+  const logoSrc = brand.logo_url
+    ? brand.logo_url.startsWith("data:")
+      ? brand.logo_url
+      : `/api/logo?src=${encodeURIComponent(brand.logo_url)}`
+    : null;
+
+  return (
+    <div className="flex flex-col gap-3 border-t border-slate-100 pt-4">
+      <div className="flex items-center justify-between gap-2">
+        <Eyebrow>Brand theme</Eyebrow>
+        <span
+          className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1 ${
+            BRAND_CONFIDENCE_STYLE[brand.confidence]
+          }`}
+        >
+          {brand.confidence} confidence
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="flex items-center gap-3">
+          {logoSrc &&
+            (logoBroken ? (
+              // Say why it's missing rather than showing a broken-image icon.
+              <span
+                title={brand.logo_url ?? undefined}
+                className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-lg bg-slate-50 text-center text-[8px] font-semibold leading-tight text-slate-400 ring-1 ring-slate-200"
+              >
+                logo
+                <br />
+                blocked
+              </span>
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={logoSrc}
+                alt=""
+                onError={() => setLogoBroken(true)}
+                className="h-11 w-11 shrink-0 rounded-lg bg-slate-50 object-contain p-1 ring-1 ring-slate-200"
+              />
+            ))}
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span
+                className="h-8 w-8 shrink-0 rounded-lg ring-1 ring-slate-900/10"
+                style={{ background: brand.primary ?? "transparent" }}
+              />
+              <div className="flex flex-col">
+                <span className="font-mono text-xs font-semibold text-slate-800">
+                  {brand.primary ?? "—"}
+                </span>
+                <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                  primary
+                </span>
+              </div>
+              <span
+                className="ml-2 h-8 w-8 shrink-0 rounded-lg ring-1 ring-slate-900/10"
+                style={{ background: brand.accent ?? "transparent" }}
+              />
+              <div className="flex flex-col">
+                <span className="font-mono text-xs font-semibold text-slate-800">
+                  {brand.accent ?? "—"}
+                </span>
+                <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                  accent
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {swatches.length > 2 && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+              Full palette
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {swatches.map((hex) => (
+                <span
+                  key={hex}
+                  title={hex}
+                  className="h-6 w-6 rounded-md ring-1 ring-slate-900/10"
+                  style={{ background: hex }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* A card header gradient is derived from primary, so preview it here. */}
+        {brand.primary && (
+          <div
+            className="flex h-12 items-center justify-center rounded-lg text-[11px] font-semibold tracking-wide text-white"
+            style={{
+              background: `linear-gradient(135deg, ${brand.primary}, ${brand.accent ?? brand.primary})`,
+            }}
+          >
+            card header preview
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+          <span className="font-medium text-slate-600">{BRAND_SOURCE_LABEL[brand.source]}</span>
+          {brand.fonts?.heading && (
+            <span>
+              heading <span className="font-medium text-slate-600">{brand.fonts.heading}</span>
+            </span>
+          )}
+          {brand.fonts?.body && (
+            <span>
+              body <span className="font-medium text-slate-600">{brand.fonts.body}</span>
+            </span>
+          )}
+        </div>
+
+        {brand.notes && (
+          <p className="rounded-lg bg-amber-50 px-2.5 py-2 text-[11px] leading-relaxed text-amber-800 ring-1 ring-amber-100">
+            {brand.notes}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function FieldsPanel({ profileType }: { profileType: ProfileType }) {
   const { common, specific } = SCHEMA_GROUPS[profileType];
