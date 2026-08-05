@@ -32,6 +32,7 @@
  *    does not see the card colour change between visits.
  */
 
+import { lookup as dnsLookup } from "node:dns/promises";
 import sharp from "sharp";
 import Firecrawl from "@mendable/firecrawl-js";
 import {
@@ -59,13 +60,132 @@ const siteCache = new Map<string, { at: number; theme: BrandTheme }>();
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const FETCH_TIMEOUT_MS = 8000;
+const MAX_REDIRECTS = 3;
 
 /**
- * Hosts we refuse to fetch. The image URL comes off a page we do not control, so
- * without this a crafted page could point us at a loopback or cloud-metadata
- * address and use us as a proxy into our own network.
+ * True for an IPv4 address we must never fetch from.
+ *
+ * An unparseable address returns true — if we cannot tell what it is, we do not
+ * connect to it.
  */
-const BLOCKED_HOST = /^(localhost$|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|0\.|\[?::1\]?$)/i;
+function isBlockedIpv4(ip: string): boolean {
+  const parts = ip.split(".").map(Number);
+  if (parts.length !== 4 || parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) {
+    return true;
+  }
+  const [a, b] = parts as [number, number, number, number];
+  if (a === 0) return true; // 0.0.0.0/8 "this host"
+  if (a === 10) return true; // private
+  if (a === 127) return true; // loopback
+  if (a === 169 && b === 254) return true; // link-local — this is the cloud metadata range
+  if (a === 172 && b >= 16 && b <= 31) return true; // private
+  if (a === 192 && b === 168) return true; // private
+  if (a === 192 && b === 0) return true; // protocol assignments + TEST-NET-1
+  if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
+  if (a === 198 && (b === 18 || b === 19)) return true; // benchmarking
+  if (a >= 224) return true; // multicast, reserved, broadcast
+  return false;
+}
+
+/**
+ * True for an IPv6 address we must never fetch from.
+ *
+ * The IPv4-mapped forms matter most: `::ffff:127.0.0.1` and its compressed hex
+ * spelling `::ffff:7f00:1` are loopback wearing a v6 costume, and a hostname
+ * check that only knows about `::1` waves both straight through.
+ */
+function isBlockedIpv6(ip: string): boolean {
+  const addr = ip.toLowerCase().split("%")[0]!; // drop any zone id (fe80::1%en0)
+
+  const mapped = /^::ffff:(.+)$/.exec(addr);
+  if (mapped) {
+    const tail = mapped[1]!;
+    if (tail.includes(".")) return isBlockedIpv4(tail);
+    const [hi, lo] = tail.split(":").map((g) => parseInt(g, 16));
+    if (hi === undefined || lo === undefined || !Number.isFinite(hi) || !Number.isFinite(lo)) {
+      return true;
+    }
+    return isBlockedIpv4(`${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`);
+  }
+
+  if (addr === "::" || addr === "::1") return true; // unspecified, loopback
+  if (/^f[cd]/.test(addr)) return true; // fc00::/7 unique-local
+  if (/^fe[89ab]/.test(addr)) return true; // fe80::/10 link-local
+  if (/^ff/.test(addr)) return true; // multicast
+  if (addr.startsWith("64:ff9b:")) return true; // NAT64
+  if (addr.startsWith("2002:")) return true; // 6to4 — can embed a private v4
+  return false;
+}
+
+/**
+ * Refuse a host that resolves anywhere internal.
+ *
+ * This resolves the name and checks the ADDRESSES, rather than string-matching the
+ * hostname. A name check cannot work: `metadata.google.internal` is an ordinary
+ * string that happens to point at 169.254.169.254, and no regex over hostnames
+ * will ever catch the general case.
+ *
+ * Every resolved address must be acceptable, not just the first — a name that
+ * returns one public and one private address is not safe to connect to.
+ *
+ * Residual risk, stated rather than papered over: this is a check-then-connect,
+ * so a DNS entry whose TTL expires between the two could still rebind to an
+ * internal address. Closing that needs pinning the connection to the address we
+ * validated, which Node's fetch does not currently expose.
+ */
+async function assertPublicHost(hostname: string): Promise<void> {
+  // `URL.hostname` keeps the brackets on an IPv6 literal (`[::1]`), and dns.lookup
+  // cannot parse that — it would throw, which reads as "unresolvable" rather than
+  // "blocked". Same refusal either way, but stripping them means the address
+  // checks below actually run on v6 literals instead of being skipped.
+  const host = hostname.startsWith("[") && hostname.endsWith("]")
+    ? hostname.slice(1, -1)
+    : hostname;
+
+  let addresses: Array<{ address: string; family: number }>;
+  try {
+    addresses = await dnsLookup(host, { all: true });
+  } catch {
+    throw new Error("could not resolve host");
+  }
+  if (addresses.length === 0) throw new Error("could not resolve host");
+  for (const { address, family } of addresses) {
+    if (family === 4 ? isBlockedIpv4(address) : isBlockedIpv6(address)) {
+      throw new Error("blocked host");
+    }
+  }
+}
+
+/**
+ * Read a response body, refusing to buffer more than the cap.
+ *
+ * The declared `Content-Length` is only a hint — a hostile host can lie or omit
+ * it — so the running total is what actually enforces the limit.
+ */
+async function readCapped(res: Response): Promise<Buffer> {
+  const declared = Number(res.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > MAX_IMAGE_BYTES) {
+    throw new Error("image exceeds 2 MB");
+  }
+  if (!res.body) throw new Error("empty response");
+
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_IMAGE_BYTES) throw new Error("image exceeds 2 MB");
+      chunks.push(value);
+    }
+  } catch (err) {
+    await reader.cancel().catch(() => {}); // tear the socket down rather than leaking it
+    throw err;
+  }
+  return Buffer.concat(chunks);
+}
 
 /** Decode a `data:` URI. Stripe serves its logo inlined rather than as a URL. */
 function decodeDataUri(src: string): Buffer | null {
@@ -92,7 +212,19 @@ export function absolutise(src: string | null | undefined, baseUrl: string): str
   }
 }
 
-/** Fetch an image, guarded. Throws on anything we will not accept. */
+/**
+ * Fetch an image, guarded. Throws on anything we will not accept.
+ *
+ * Redirects are followed BY HAND. This is the whole point of the function: with
+ * `fetch`'s default redirect handling, validating the URL we were given buys
+ * nothing, because a page we do not control can answer with `302 Location:
+ * http://169.254.169.254/…` and fetch will follow it without the guard ever
+ * running again. Every hop is re-validated here, so the last URL in a chain is
+ * held to exactly the same standard as the first.
+ *
+ * https only. A logo is not worth a cleartext fetch, and allowing `http:` hands
+ * an on-path attacker a way to redirect us wherever they like.
+ */
 export async function fetchImage(src: string, baseUrl?: string): Promise<Buffer> {
   if (src.startsWith("data:")) {
     const buf = decodeDataUri(src);
@@ -101,16 +233,29 @@ export async function fetchImage(src: string, baseUrl?: string): Promise<Buffer>
   }
 
   // Relative paths (`/assets/logo.svg`) resolve against the page they came from.
-  const resolved = baseUrl ? new URL(src, baseUrl) : new URL(src);
-  if (!["http:", "https:"].includes(resolved.protocol)) throw new Error("unsupported protocol");
-  if (BLOCKED_HOST.test(resolved.hostname)) throw new Error("blocked host");
+  let target = baseUrl ? new URL(src, baseUrl) : new URL(src);
+  // One deadline for the whole chain, so redirects cannot be used to stall us
+  // indefinitely a few seconds at a time.
+  const signal = AbortSignal.timeout(FETCH_TIMEOUT_MS);
 
-  const res = await fetch(resolved.href, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  for (let hop = 0; ; hop++) {
+    if (target.protocol !== "https:") throw new Error("unsupported protocol");
+    await assertPublicHost(target.hostname);
 
-  const buf = Buffer.from(await res.arrayBuffer());
-  if (buf.byteLength > MAX_IMAGE_BYTES) throw new Error("image exceeds 2 MB");
-  return buf;
+    const res = await fetch(target.href, { redirect: "manual", signal });
+
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get("location");
+      if (!location) throw new Error("redirect without a location");
+      if (hop >= MAX_REDIRECTS) throw new Error("too many redirects");
+      await res.body?.cancel().catch(() => {});
+      target = new URL(location, target);
+      continue;
+    }
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return readCapped(res);
+  }
 }
 
 /* ── path 2: read the colours out of an image ────────────────────────────── */

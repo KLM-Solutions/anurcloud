@@ -20,8 +20,9 @@ export const runtime = "nodejs";
  *
  * Deliberately NOT behind the Bearer token — an `<img src>` cannot send headers.
  * It is constrained instead, which is what keeps it from being an open proxy:
- *   - `fetchImage()` enforces https-only, blocks private/loopback/metadata hosts
- *     (SSRF), caps the body at 2 MB and times out at 8s.
+ *   - `fetchImage()` enforces https-only, resolves every redirect hop and refuses
+ *     any that lands on a private/loopback/link-local/metadata address (SSRF),
+ *     caps the body at 2 MB while reading it, and times out at 8s.
  *   - the response is only served when the fetched bytes really are an image;
  *     anything else is refused, so this cannot relay arbitrary content.
  */
