@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, type DragEvent, type ReactNode } from "react";
 import { ACCEPT_ATTR, PROFILE_TYPES, formatBytes, validateSourceFile } from "@/lib/validation";
 import { EXTRACTION_SCHEMA, SCHEMA_GROUPS, type SchemaField } from "@/lib/schema";
+import { ENHANCE_PREFILL, TEMPLATE_PREFILL, putHandoff } from "@/lib/handoff";
 import type { BrandTheme, ExtractResponse, ProfileType } from "@/lib/types";
 
 type Status = "idle" | "uploading" | "done" | "error";
@@ -160,13 +161,42 @@ export default function ExtractionPage() {
   const logoRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  /**
+   * Hand the extracted profile to the next step.
+   *
+   * `brand` travels with it in both directions. Without that the card would fall
+   * back to the default crimson even though the user just uploaded a logo, which
+   * reads as the colour feature being broken rather than skipped.
+   */
   function goToEnhance() {
     if (!live) return;
-    sessionStorage.setItem(
-      "enhance_prefill",
-      JSON.stringify({ profile_type: live.profile_type, profile: live.data }),
-    );
+    putHandoff(ENHANCE_PREFILL, {
+      profile_type: live.profile_type,
+      profile: live.data,
+      brand,
+    });
     router.push("/enhance");
+  }
+
+  /**
+   * To the card step — which runs enhancement itself before suggesting layouts.
+   *
+   * Enhancement is no longer skippable (owner's call, 11 Aug 2026): the pipeline
+   * is Extract → Review → Enhance → Template and every route to the card goes
+   * through it. Nothing extra is sent from here; the card panel is the single
+   * choke point that runs Module 3, so the chain cannot be bypassed by arriving
+   * from a different page. Going via /enhance first is still worth doing when the
+   * user wants to read and edit the bio rather than have it written for them.
+   */
+  function goToTemplate() {
+    if (!live) return;
+    putHandoff(TEMPLATE_PREFILL, {
+      profile_type: live.profile_type,
+      profile: live.data,
+      brand,
+      from: "extraction",
+    });
+    router.push("/template");
   }
 
   function switchSourceMode(mode: SourceMode) {
@@ -315,9 +345,9 @@ export default function ExtractionPage() {
               href="/template"
               className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
             >
-              <span>🎴</span> Module 2
+              <span>🎴</span> Module 4
               <span className="rounded-full bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-800">
-                Soon
+                Live
               </span>
             </Link>
           </div>
@@ -700,16 +730,36 @@ export default function ExtractionPage() {
                 )}
               </div>
 
-              {/* Test shortcut */}
+              {/* Test shortcuts — either next step, since enhancement is optional. */}
               {live && (
-                <button
-                  type="button"
-                  onClick={goToEnhance}
-                  className="group flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-violet-700 to-violet-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-violet-500/25 transition hover:shadow-violet-500/40 hover:opacity-95"
-                >
-                  ✨ Enhance this profile
-                  <span className="transition-transform group-hover:translate-x-0.5">→</span>
-                </button>
+                <>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={goToEnhance}
+                      className="group flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-violet-700 to-violet-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-violet-500/25 transition hover:shadow-violet-500/40 hover:opacity-95"
+                    >
+                      ✨ Enhance this profile
+                      <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={goToTemplate}
+                      className="group flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-emerald-700 to-emerald-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-emerald-500/25 transition hover:shadow-emerald-500/40 hover:opacity-95"
+                    >
+                      🎴 Enhance &amp; suggest cards
+                      <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                    </button>
+                  </div>
+                  {/* Both buttons run Module 3. The label has to say so, or the
+                      right-hand one reads as "skip enhancement" — which is what
+                      it used to do. */}
+                  <p className="text-[11px] leading-relaxed text-slate-400">
+                    Both routes run enhancement — the pipeline is Extract → Enhance → Template.
+                    The left one lets you read and edit the bio first; the right one writes it
+                    and goes straight to the three suggested layouts.
+                  </p>
+                </>
               )}
             </div>
           </section>

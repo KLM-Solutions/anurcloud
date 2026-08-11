@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ENHANCE_PREFILL, TEMPLATE_PREFILL, putHandoff, takeHandoff } from "@/lib/handoff";
+import type { BrandTheme } from "@/lib/types";
 import type { EnhanceResponse, EnhanceSuccess } from "@/lib/enhance-types";
 
 type Status = "idle" | "running" | "done" | "error";
@@ -89,6 +92,17 @@ export default function EnhancePage() {
   const [response, setResponse] = useState<EnhanceResponse | null>(null);
   const [tab, setTab] = useState<Tab>("preview");
   const [copied, setCopied] = useState<"input" | "output" | null>(null);
+  /**
+   * Brand colours travelling through from extraction.
+   *
+   * Held in state rather than in the editable JSON: enhancement has no use for
+   * a palette, so putting it in the request body would only invite the reader to
+   * think it does. It is picked up again when handing off to the card.
+   */
+  const [brand, setBrand] = useState<BrandTheme | null>(null);
+  /** Makes the once-only prefill read idempotent — see the effect below. */
+  const prefillRead = useRef(false);
+  const router = useRouter();
 
   const live: EnhanceSuccess | null = response?.status === "success" ? response : null;
   const SAMPLE = profileType === "student" ? SAMPLE_STUDENT : SAMPLE_PROFESSIONAL;
@@ -102,20 +116,62 @@ export default function EnhancePage() {
     setProfileJson(JSON.stringify(pt === "student" ? SAMPLE_INPUT_STUDENT : SAMPLE_INPUT_PROFESSIONAL, null, 2));
   }
 
-  // On mount: check if extraction page passed data via sessionStorage
+  /**
+   * One-shot handoff from the extraction page via sessionStorage.
+   *
+   * This has to stay in an effect. A lazy `useState` initialiser would read
+   * sessionStorage during the hydration render, while the prerendered HTML for
+   * this route was built with the default sample — that mismatch is a real bug,
+   * where the one extra render here is harmless and happens at most once per
+   * visit. Both values come from the same parse, so React batches them into a
+   * single re-render.
+   */
   useEffect(() => {
-    const raw = sessionStorage.getItem("enhance_prefill");
-    if (!raw) return;
-    sessionStorage.removeItem("enhance_prefill");
-    try {
-      const parsed = JSON.parse(raw) as { profile_type?: string; profile?: unknown };
-      const pt = parsed.profile_type === "professional" ? "professional" : "student";
-      setProfileType(pt);
-      setProfileJson(JSON.stringify(parsed, null, 2));
-    } catch {
-      // ignore malformed data
-    }
+    // Same StrictMode guard as app/template/your-card.tsx: takeHandoff deletes as
+    // it reads, and the effect runs twice on mount in development. This page
+    // survived without it only because its miss path happens to leave state
+    // alone — one added else-branch and it would break silently.
+    if (prefillRead.current) return;
+    prefillRead.current = true;
+
+    const parsed = takeHandoff<{
+      profile_type?: string;
+      profile?: unknown;
+      brand?: BrandTheme | null;
+    }>(ENHANCE_PREFILL);
+    if (!parsed) return;
+    const pt = parsed.profile_type === "professional" ? "professional" : "student";
+    /* eslint-disable react-hooks/set-state-in-effect -- justified above */
+    setProfileType(pt);
+    setBrand(parsed.brand ?? null);
+    // Only what this endpoint actually consumes goes in the editor.
+    setProfileJson(JSON.stringify({ profile_type: pt, profile: parsed.profile }, null, 2));
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
+
+  /**
+   * Hand the enhanced profile to the card step.
+   *
+   * The polished bio goes across as `enhanced`, which is what makes running this
+   * module worthwhile for the card: the engine prefers it over the raw summary.
+   */
+  function goToTemplate() {
+    let parsed: { profile_type?: string; profile?: unknown };
+    try {
+      parsed = JSON.parse(profileJson) as { profile_type?: string; profile?: unknown };
+    } catch {
+      setJsonError("The profile JSON must be valid before it can be sent to the card step.");
+      return;
+    }
+    putHandoff(TEMPLATE_PREFILL, {
+      profile_type: parsed.profile_type === "professional" ? "professional" : "student",
+      profile: parsed.profile ?? {},
+      enhanced: live ? { bio: live.bio } : null,
+      brand,
+      from: "enhance",
+    });
+    router.push("/template");
+  }
 
   function validateJson(text: string) {
     try {
@@ -212,9 +268,9 @@ export default function EnhancePage() {
               href="/template"
               className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
             >
-              <span>🎴</span> Module 2
+              <span>🎴</span> Module 4
               <span className="rounded-full bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-800">
-                Soon
+                Live
               </span>
             </Link>
           </div>
@@ -349,6 +405,17 @@ export default function EnhancePage() {
                     <span className="transition-transform group-hover:translate-x-0.5">→</span>
                   </>
                 )}
+              </button>
+
+              {/* Onward to the card. Available before a run too, since the card
+                  step does not require an enhanced bio. */}
+              <button
+                type="button"
+                onClick={goToTemplate}
+                className="group flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-100"
+              >
+                🎴 See card templates
+                <span className="transition-transform group-hover:translate-x-0.5">→</span>
               </button>
             </div>
           </section>
