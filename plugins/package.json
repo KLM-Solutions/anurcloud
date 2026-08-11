@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:templates": "node scripts/check-template-isolation.mjs",
+    "verify:foundation": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolver.mjs scripts/verify-foundation.mts",
+    "verify": "npm run check:templates && npm run verify:foundation && npm run stress && npm run check:overflow && npm run lint && npm run build",
+    "preview": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolver.mjs scripts/build-preview.mts",
+    "stress": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolver.mjs scripts/build-stress.mts",
+    "check:overflow": "node scripts/check-overflow.mjs"
   },
   "dependencies": {
     "@llamaindex/llama-cloud": "^2.8.0",

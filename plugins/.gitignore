@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated verification pages — rebuilt by `npm run preview` / `npm run stress`.
+# stress.html is ~3.5 MB of rendered cards; it is a measurement artefact, not source.
+/public/preview.html
+/public/stress.html
+
+# throwaway research scripts (read .env.local at runtime)
+try-brand.mjs
