@@ -272,6 +272,44 @@ const GOOD_CONFIDENCE_SHARE = 0.15;
  * Transparent pixels are skipped: most logos are transparent PNGs, and counting
  * them means "transparent black" wins every time.
  */
+/**
+ * Height the logo is downscaled to before being inlined, in px.
+ *
+ * The card renders it at ~22px, and 2× covers retina. Inlining the original
+ * would be the obvious mistake here: a 400 KB PNG becomes ~530 KB of base64 in
+ * every API response AND inside every rendered card's HTML, which AnurCloud then
+ * embeds in a page. 64px keeps it in single-digit KB.
+ */
+const LOGO_INLINE_HEIGHT = 64;
+
+/** Hard ceiling on the inlined logo. Past this we return null and show nothing. */
+const LOGO_INLINE_MAX_BYTES = 48_000;
+
+/**
+ * Downscale an uploaded logo and return it as a `data:image/webp` URI.
+ *
+ * Returns null on any failure — a logo that cannot be inlined must cost the
+ * caller nothing, exactly like a logo whose colours cannot be read.
+ */
+async function logoDataUri(buf: Buffer): Promise<string | null> {
+  try {
+    const out = await sharp(buf, { density: 200 })
+      .resize({ height: LOGO_INLINE_HEIGHT, fit: "inside", withoutEnlargement: true })
+      // WebP keeps transparency and beats PNG on size for flat brand marks.
+      .webp({ quality: 88 })
+      .toBuffer();
+
+    if (out.byteLength > LOGO_INLINE_MAX_BYTES) {
+      console.warn("[brand] inlined logo too large, skipping:", out.byteLength);
+      return null;
+    }
+    return `data:image/webp;base64,${out.toString("base64")}`;
+  } catch (err) {
+    console.warn("[brand] could not inline logo:", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
 export async function brandFromImage(buf: Buffer): Promise<BrandTheme | null> {
   let raw: Buffer;
   try {
@@ -328,7 +366,14 @@ export async function brandFromImage(buf: Buffer): Promise<BrandTheme | null> {
     primary: pick.primary,
     accent: pick.accent,
     palette: pick.palette,
-    logo_url: null,
+    // The uploaded bytes, re-served as a data URI so the card can actually SHOW
+    // the logo. This used to be hardcoded null, which meant an uploaded logo got
+    // its colours read and the image itself discarded — the card was themed but
+    // never branded. Logo placement is a commitment to the client (asked 20 Jul
+    // 2026, answered 22 Jul, accepted 3 Aug), so a null here broke a promise
+    // silently. The website path already returns a real URL; this is the
+    // upload path's equivalent, since uploaded bytes have no URL of their own.
+    logo_url: await logoDataUri(buf),
     fonts: null,
     source: "logo-image",
     confidence:
