@@ -1,5 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
+import { templates } from "@/templates";
+
+/** Read from the registry, never typed by hand — the copy cannot drift from the build. */
+const CARDS_BUILT = templates.length;
+const CARDS_PLANNED = 20;
 
 const FLOW = [
   {
@@ -35,10 +40,10 @@ const FLOW = [
   {
     who: "PxlBrain",
     step: "05",
-    label: "Module 2 · Template",
-    desc: "3–5 ranked card designs with match scores",
+    label: "Module 4 · Template",
+    desc: `Returns the card layouts this profile can fill, themed from the user's own logo, and renders the chosen one as self-contained HTML. ${CARDS_BUILT} of ${CARDS_PLANNED} designs built.`,
     tone: "emerald" as const,
-    status: "Soon",
+    status: "Live",
   },
   {
     who: "AnurCloud",
@@ -80,17 +85,17 @@ const MODULES = [
   },
   {
     href: "/template",
-    n: "02",
-    name: "Template Suggestion",
+    n: "04",
+    name: "Template",
     icon: "🎴",
     accent: "emerald",
-    borderTop: "border-t-slate-200",
+    borderTop: "border-t-emerald-500",
     iconGrad: "from-emerald-600 to-emerald-400",
     chip: "bg-emerald-50 text-emerald-700",
-    input: "Enhanced profile + designation + skills",
-    output: "3–5 ranked card templates with match scores",
-    desc: "Analyzes the profession behind the profile and returns the best-matching Insta VIZ card designs, ranked by fit.",
-    ready: false,
+    input: "Confirmed profile + brand (logo or website) · enhanced bio optional",
+    output: "Eligible card layouts + reasons · rendered card as self-contained HTML",
+    desc: `Suggests the three layouts that suit the profile — with reasons, not a made-up percentage — and renders the chosen one, themed automatically from the user's logo. All ${CARDS_BUILT} of ${CARDS_PLANNED} designs built.`,
+    ready: true,
   },
 ];
 
@@ -113,11 +118,11 @@ const CAPS_M3 = [
 ];
 
 const CAPS_M2 = [
-  { icon: "🎯", label: "Profession-aware matching" },
-  { icon: "🏆", label: "3–5 ranked templates" },
-  { icon: "📊", label: "Fit score per template" },
-  { icon: "🎨", label: "Student & professional layouts" },
-  { icon: "🔗", label: "Plugs in after Module 3" },
+  { icon: "🎨", label: "Colours from the user's logo" },
+  { icon: "🚦", label: "Only offers layouts that fit" },
+  { icon: "📉", label: "Holds up on sparse profiles" },
+  { icon: "🧩", label: "5 distinct student structures" },
+  { icon: "📦", label: "Self-contained HTML output" },
   { icon: "⚡", label: "Same API contract" },
 ];
 
@@ -179,9 +184,9 @@ export default function Home() {
               href="/template"
               className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
             >
-              <span>🎴</span> Module 2
+              <span>🎴</span> Module 4
               <span className="rounded-full bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-800">
-                Soon
+                Live
               </span>
             </Link>
           </div>
@@ -209,7 +214,7 @@ export default function Home() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-60" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
               </span>
-              2 modules live · AI plugins for Insta VIZ
+              3 modules live · AI plugins for Insta VIZ
             </div>
 
             <h1 className="max-w-2xl bg-gradient-to-br from-slate-900 via-blue-800 to-violet-700 bg-clip-text text-5xl font-black leading-[1.08] tracking-tight text-transparent sm:text-6xl">
@@ -254,9 +259,9 @@ export default function Home() {
               href="/template"
               className="group flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-7 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50"
             >
-              🎴 Template Selection
+              🎴 Card Templates
               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                Soon
+                {CARDS_BUILT}/{CARDS_PLANNED}
               </span>
             </Link>
           </div>
@@ -376,11 +381,7 @@ export default function Home() {
                   </div>
                 </div>
               );
-              return m.ready ? (
-                <Link key={m.n} href={m.href} className="block">
-                  {inner}
-                </Link>
-              ) : (
+              return (
                 <Link key={m.n} href={m.href} className="block">
                   {inner}
                 </Link>
@@ -394,7 +395,7 @@ export default function Home() {
           <SectionHead
             eyebrow="Capabilities"
             title="What PxlBrain handles"
-            sub="2 modules live · 1 coming soon"
+            sub={`3 modules live · ${CARDS_BUILT} of ${CARDS_PLANNED} card designs built`}
           />
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
             {/* M1 */}
@@ -459,32 +460,32 @@ export default function Home() {
               </div>
             </div>
 
-            {/* M2 — coming soon */}
-            <div className="relative overflow-hidden rounded-2xl border border-dashed border-emerald-200 bg-white/60 p-6 shadow-sm">
+            {/* M4 */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-400 text-base shadow-sm opacity-70">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-400 text-base shadow-sm">
                     🎴
                   </div>
                   <div>
                     <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">
-                      Module 02
+                      Module 04
                     </div>
-                    <div className="text-sm font-bold text-slate-600">Template Selection</div>
+                    <div className="text-sm font-bold text-slate-800">Template</div>
                   </div>
                 </div>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-400">
-                  Soon
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200">
+                  Live
                 </span>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 {CAPS_M2.map((c) => (
                   <div
                     key={c.label}
-                    className="flex items-center gap-2.5 rounded-xl border border-emerald-100 bg-emerald-50/40 px-3 py-2.5"
+                    className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2.5"
                   >
-                    <span className="text-sm opacity-60">{c.icon}</span>
-                    <span className="text-xs font-medium text-slate-400">{c.label}</span>
+                    <span className="text-sm">{c.icon}</span>
+                    <span className="text-xs font-medium text-slate-700">{c.label}</span>
                   </div>
                 ))}
               </div>
