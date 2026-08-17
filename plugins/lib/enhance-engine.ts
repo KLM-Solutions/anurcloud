@@ -8,7 +8,7 @@
  *   - enhanced experience highlights (professionals)
  */
 
-import OpenAI from "openai";
+import { runChatJSON, parseJSONLoose } from "@/lib/llm-chat";
 import type {
   EnhanceRequest,
   EnhanceSuccess,
@@ -16,16 +16,6 @@ import type {
   EnhancedInternship,
   EnhancedExperience,
 } from "@/lib/enhance-types";
-
-const MODEL = "gpt-4.1";
-
-let cached: OpenAI | null = null;
-function getClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error("OPENAI_API_KEY is not set.");
-  cached ??= new OpenAI({ apiKey });
-  return cached;
-}
 
 interface EnhanceResult {
   bio: string;
@@ -83,25 +73,17 @@ Respond with only a JSON object:
 }
 
 export async function enhanceProfile(req: EnhanceRequest): Promise<EnhanceSuccess> {
-  const client = getClient();
   const { profile, profile_type } = req;
 
-  const completion = await client.chat.completions.create({
-    model: MODEL,
-    max_tokens: 2048,
-    response_format: { type: "json_object" },
-    messages: [
-      { role: "system", content: buildSystemPrompt(profile_type) },
-      { role: "user", content: `Profile (${profile_type}):\n${JSON.stringify(profile, null, 2)}` },
-    ],
-  });
-
-  const text = completion.choices[0]?.message?.content ?? "";
-  if (!text) throw new Error("Enhancement model returned an empty response.");
+  const text = await runChatJSON(
+    buildSystemPrompt(profile_type),
+    `Profile (${profile_type}):\n${JSON.stringify(profile, null, 2)}`,
+    "enhance",
+  );
 
   let parsed: EnhanceResult;
   try {
-    parsed = JSON.parse(text) as EnhanceResult;
+    parsed = parseJSONLoose<EnhanceResult>(text);
   } catch {
     throw new Error("Enhancement model returned malformed JSON.");
   }
