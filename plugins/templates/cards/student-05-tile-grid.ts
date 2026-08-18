@@ -31,7 +31,7 @@
 import type { CardProfile } from "../types";
 import type { ResolvedTheme } from "../theme";
 import { NARROW } from "../limits";
-import { avatar, esc, logoSlot, nonEmpty } from "../helpers";
+import { avatar, esc, nonEmpty } from "../helpers";
 import {
   achievementList,
   bio,
@@ -53,9 +53,9 @@ function tile(label: string | null, body: string): Tile | null {
 }
 
 function build(p: CardProfile, theme: ResolvedTheme): string {
-  const identity = `<div class="iv-tg-id">${avatar(p, "iv-tg-av")}<div>${
+  const identity = `<div class="iv-tg-id">${avatar(p, "iv-tg-av", theme.logo?.url)}<div>${
     nonEmpty(p.fullName) ? `<div class="iv-name">${esc(p.fullName)}</div>` : ""
-  }${nonEmpty(p.designation) ? `<div class="iv-role">${esc(p.designation)}</div>` : ""}${logoSlot(theme.logo)}</div></div>`;
+  }${nonEmpty(p.designation) ? `<div class="iv-role">${esc(p.designation)}</div>` : ""}</div></div>`;
 
   /*
    * A tile is half the card wide, so the per-tile caps are NARROW rather than the
@@ -117,8 +117,6 @@ ${s} .iv-tg-tile .iv-cval{font-size:.95em}
 @container (max-width:330px){${s} .iv-tg-grid{grid-template-columns:1fr}${s} .iv-tg-wide{grid-column:auto}}
 
 
-/* The logo's dedicated row on this card. */
-${s} .iv-tg-id .iv-logo-slot{max-width:32%}
 </style>`;
 }
 

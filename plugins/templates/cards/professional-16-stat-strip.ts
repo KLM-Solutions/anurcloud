@@ -31,9 +31,8 @@
  */
 
 import type { CardProfile } from "../types";
-import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
-import { esc, logoSlot, nonEmpty } from "../helpers";
+import { esc, nonEmpty } from "../helpers";
 import { joinBlocks, meaningfulEducation, meaningfulExperience, section } from "../guards";
 import {
   achievementList,
@@ -91,7 +90,7 @@ function statCells(p: CardProfile): Stat[] {
   return out.slice(0, 3);
 }
 
-function build(p: CardProfile, theme: ResolvedTheme): string {
+function build(p: CardProfile): string {
   const strip = statCells(p)
     .map(
       (s) =>
@@ -120,9 +119,7 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
     <div class="iv-ss-strip">${strip}</div>
     <div class="iv-ss-main">
       <header class="iv-ss-id">
-        <div class="iv-ss-id-txt">${nameBlock(p)}</div>
-        ${logoSlot(theme.logo)}
-      </header>
+        <div class="iv-ss-id-txt">${nameBlock(p)}</div>      </header>
       ${contact ? `<div class="iv-ss-contact">${contact}</div>` : ""}
       ${site}
       ${body ? `<div class="iv-ss-body">${body}</div>` : ""}

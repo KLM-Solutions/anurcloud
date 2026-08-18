@@ -443,6 +443,24 @@ export const MINIMUMS: Record<TemplateKey, Minimum> = {
     reason: () =>
       "The whole layout is the person's own positioning line set large, and this profile has no summary. Running enhancement first unlocks it.",
   },
+
+  /* ── professional avatar cards ───────────────────────────────────────────────
+   * Both need a real body under the identity — a badge or a portrait over an
+   * empty card is a sticker, not a profile. Requiring 2 sections also keeps them
+   * out of the thin pool, where the sparse-by-design layouts belong.
+   */
+  badge: {
+    label: "Name and 2 fillable sections",
+    test: (p) => hasText(p.fullName) && countFilledSections(p) >= 2,
+    reason: (p) =>
+      `A badge over an empty body is a sticker; this profile fills ${countFilledSections(p)} sections.`,
+  },
+  spotlight: {
+    label: "Name and 2 fillable sections",
+    test: (p) => hasText(p.fullName) && countFilledSections(p) >= 2,
+    reason: (p) =>
+      `A portrait over an empty body is a stub; this profile fills ${countFilledSections(p)} sections.`,
+  },
 };
 
 /** Can this profile fill this template? */

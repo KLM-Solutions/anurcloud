@@ -24,7 +24,7 @@
 import type { CardProfile } from "../types";
 import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
-import { avatar, logoSlot } from "../helpers";
+import { avatar } from "../helpers";
 import { section, joinBlocks } from "../guards";
 import {
   achievementList,
@@ -50,14 +50,14 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
   const railHasContent = Boolean(contact || languages || socials);
 
   const rail = `<aside class="iv-sr-rail${railHasContent ? "" : " iv-sr-rail-bare"}">
-      ${avatar(p, "iv-sr-av")}
+      ${avatar(p, "iv-sr-av", theme.logo?.url)}
       ${contact ? `<div class="iv-sr-block">${contact}</div>` : ""}
       ${languages ? `<div class="iv-sr-block">${languages}</div>` : ""}
       ${socials ? `<div class="iv-sr-block">${socials}</div>` : ""}
     </aside>`;
 
   const body = joinBlocks([
-    nameBlock(p) + logoSlot(theme.logo),
+    nameBlock(p),
     bio(p, SHOW.bioChars),
     section("Education", () => educationList(p, SHOW.education)),
     section("Projects", () => projectList(p, SHOW.projects)),
@@ -97,11 +97,6 @@ ${s} .iv-sr-rail .iv-socials{justify-content:center}
 ${s} .iv-sr-main{flex:1 1 auto;min-width:0;padding:1.1em 1em;background:var(--iv-surface)}
 ${s} .iv-sr-main .iv-sec-h:first-child{margin-top:0}
 ${s} .iv-sr-main .iv-name{margin-top:.1em}
-
-${s}:has(.iv-logo-r) .iv-sr-main{padding-top:2.3em}
-
-/* The logo's dedicated row on this card. */
-${s} .iv-sr-rail .iv-logo-slot{align-self:center;margin:0 0 .2em}
 </style>`;
 }
 

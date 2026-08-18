@@ -44,32 +44,9 @@ ${s} .iv-av{width:4.5em;height:4.5em;border-radius:50%;overflow:hidden;flex:0 0 
 ${s} .iv-av img{width:100%;height:100%;object-fit:cover}
 ${s} .iv-av-fallback{display:flex;align-items:center;justify-content:center;background:var(--iv-grad);color:var(--iv-onp);font-family:var(--iv-font-h);font-weight:700;font-size:1em}
 ${s} .iv-av-fallback span{font-size:1.35em;letter-spacing:.02em}
-
-${s} .iv-logo-img{object-fit:contain}
-${s} .iv-logo-txt{font-family:var(--iv-font-h);font-weight:700;font-size:.75em;letter-spacing:.02em}
-/* In-flow, not absolute — see logoSlot() in helpers.ts for why. The margin-auto
-   pair is what makes the position option work in a flex row, and align-self does
-   the same job when a card places the logo in a column.
+/* A logo dropped into the circle fills it like a photo (owner's call: cover, not
+   contain) — the shared iv-av img cover rule above already does the cropping.
    (No backticks in this block — it is inside a template literal.) */
-${s} .iv-logo-slot{display:flex;align-items:center;flex:0 0 auto;line-height:1;max-width:45%}
-/* Both options are TOP-left / TOP-right, so both align to the top of their row.
-   align-self:flex-end read as "bottom-right" and dropped the logo to the foot of
-   the header. margin-auto is what moves it horizontally; align-self must not. */
-${s} .iv-logo-l{margin-right:auto;align-self:flex-start;justify-content:flex-start}
-${s} .iv-logo-r{margin-left:auto;align-self:flex-start;justify-content:flex-end}
-/* A logo is a BADGE beside the name, not an ornament in a corner.
-   History, because it took three passes: a corner overlay collided with text; a
-   dedicated row read as a floating sticker; a circle cropped the wordmark and,
-   with this artwork, just became a dark disc. What actually works for a brand
-   lockup is its natural aspect ratio at modest size, sitting on a light plate,
-   next to the person's name — the way an affiliation mark reads.
-   The plate is what makes it survive a dark band: a logo carrying its own dark
-   background otherwise sinks into the colour behind it. */
-/* No aspect-ratio and no crop: the mark keeps its own proportions, so a wordmark
-   stays readable and a square mark stays square. Height comes from the caller. */
-${s} .iv-logo-slot .iv-logo-img{width:auto;object-fit:contain;border-radius:.28em;background:var(--iv-surface);padding:.18em .28em;box-shadow:0 0 0 1px color-mix(in srgb,var(--iv-muted) 22%,transparent)}
-/* Beside the name: baseline-ish alignment and a little breathing room. */
-${s} .iv-name+.iv-logo-slot,${s} .iv-role+.iv-logo-slot{margin-top:.45em}
 
 ${s} .iv-crow{display:flex;gap:.5em;align-items:baseline;font-size:.75em;padding:.2em 0}
 ${s} .iv-clabel{flex:0 0 4.2em;color:var(--iv-muted);font-size:.85em;text-transform:uppercase;letter-spacing:.05em}

@@ -327,6 +327,22 @@ const RULES: Record<TemplateKey, FitRule> = {
           : [1, "A short summary — the quote will be brief."],
     ],
   },
+
+  /* ── professional avatar cards ───────────────────────────────────────────── */
+  badge: {
+    appetite: "moderate",
+    signals: (f) => [
+      f.contactFields >= 2 ? [2, `${n(f.contactFields, "contact detail")} to fill the badge line.`] : null,
+      f.roles >= 1 ? [1, `${n(f.roles, "role")} to carry the body under the badge.`] : null,
+    ],
+  },
+  spotlight: {
+    appetite: "moderate",
+    signals: (f) => [
+      f.bioChars > 0 ? [2, "A summary to sit beside the portrait."] : null,
+      f.nameChars > 0 && f.nameChars <= 24 ? [1, "A name short enough to sit beside the portrait."] : null,
+    ],
+  },
 };
 
 /* ── Tiers ────────────────────────────────────────────────────────────────── */

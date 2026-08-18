@@ -249,7 +249,10 @@ export type TemplateKey =
   | "role-ladder"
   | "letterhead"
   | "edge-spine"
-  | "pull-quote";
+  | "pull-quote"
+  /* professional avatar cards — the only two pro layouts with an identity circle */
+  | "badge"
+  | "spotlight";
 
 export interface TemplateInfo {
   /** The number the caller passes: renderCard(1, ...). */

@@ -25,13 +25,18 @@ server-side engines; AnurCloud owns the UI and the human **Review** step.
 | 1 · Extract | PxlBrain | **Live** | `/api/extract`, `/api/extract-url`, `lib/llama.ts`, `lib/schema.ts` |
 | 2 · Review | AnurCloud | n/a | user corrects fields in AnurCloud's UI |
 | 3 · Enhance | PxlBrain | **Live** | `/api/enhance`, `lib/enhance-engine.ts` |
-| 4 · Template | PxlBrain | **all 20 cards live** | `/api/template`, `templates/`, `lib/profile-to-card.ts`, `lib/brand-to-theme.ts` |
+| 4 · Template | PxlBrain | **all 22 cards live** | `/api/template`, `templates/`, `lib/profile-to-card.ts`, `lib/brand-to-theme.ts` |
 
 **Module 4 state:** foundation built and verified (DEV-3040), plus the **full
 20** (student DEV-3035…3039 + DEV-3041…3045, professional DEV-3046…3055): 10 student (Side Rail, Hero Split, Centre Portrait, Timeline, Tile Grid,
 Footer Anchor, Corner Wedge, Monogram Block, Index Ledger, Column Flow) and 10
 professional (Skill Meters, Split Halves, Overlap, Numbered, Folder Tab, Stat
-Strip, Role Ladder, Letterhead, Edge Spine, Pull Quote).
+Strip, Role Ladder, Letterhead, Edge Spine, Pull Quote). **Two more professional
+cards were added 18 Aug 2026 (DEV-3069/3070): Badge (21) and Spotlight (22)** —
+the set is now **22**. These two are the ONLY professional cards with an identity
+circle; they exist so a professional who uploads a logo has a home for it (the
+logo fills the circle), and each is structurally distinct from the other and from
+every student avatar card.
 
 **The professional order is the owner's, set 11 Aug 2026 (DEV-3056)** — ids 11–20 run in
 exactly the sequence above, and the filenames encode it. Two earlier cards
@@ -44,10 +49,11 @@ professional layouts gate on fields the student schema does not have —
 `total_years_experience` (Stat Strip) and `experience[].highlights` (Role Ladder,
 Skill Meters) — so they are unreachable from a student profile even if the
 audience filter were bypassed. `verify-foundation.mts` asserts both barriers
-independently. Not one professional card uses the initials circle or puts the
-identity inside a full-width top band; that is two of the client's four
-look-alike points failed at pool level, and there is a per-card assertion so no
-future card can quietly reintroduce the avatar.
+independently. No professional card puts the identity inside a full-width top
+band, and only **Badge (21) and Spotlight (22)** use the initials/logo circle —
+the two opt-in avatar cards. A per-card assertion still blocks the circle on
+every *other* professional card, so it cannot creep back into the ten that
+deliberately avoid it (`PRO_AVATAR_CARDS` is the allow-list in verify).
 
 **Skill Meters (14) must never become a proficiency chart.** Nothing in the
 extraction schema records proficiency — no levels, no years per skill, no
@@ -102,16 +108,27 @@ What it needs, so whoever picks it up is not starting from a blank page:
 Open question for the owner: the page height. A4 proportion at the card's width
 (380 × 537) gives a heavy CV four pages; a flat 1120px gives it two.
 
-**Logo placement is built but switched off.** Every card calls `logoSlot()` at a
-place designed for a logo, `.iv-logo-*` styling is in `styles.ts`, and
-`lib/brand.ts` inlines an uploaded logo as a data URI — but no logo is passed
-anywhere, so nothing renders. Owner's call, 11 Aug 2026: finish the templates
-first, then decide how a user-supplied logo (any aspect ratio, any colour,
-possibly with its own background) should sit on a card. Do not delete the code
-path — logo position/height is a commitment answered 22 Jul and accepted 3 Aug.
+**Logo goes in the identity circle, on the cards that have one (owner's call, 18
+Aug 2026 — DEV-3068).** The old `logoSlot()` system — a dedicated corner slot on all 20
+cards, with `.iv-logo-*` styling — was **removed**: the owner judged the corner
+placement not good enough and superseded the 22 Jul / 3 Aug position commitment.
+Instead, a user-uploaded logo now **replaces the initials inside the avatar
+circle**, filled and cropped like a photo (`avatar()` in `helpers.ts` takes the
+logo url as a 3rd arg; `student-08`'s square `monogram()` does the same). The
+logo still arrives as `theme.logo` from `lib/brand.ts` / the `/api/logo` upload —
+that plumbing is reused, not rebuilt.
+
+Consequence, and it is deliberate: a logo shows only on the cards with a circle —
+the **8 student cards** (`student-01`…`08`) and, since 18 Aug 2026, the **2
+professional avatar cards Badge (21) and Spotlight (22)**. The other 10
+professional cards and `student-09`/`10` have no circle, so they carry no logo.
+Building Badge and Spotlight was the owner's answer to "professionals want a logo
+too" — rather than reviving the corner slot, add two opt-in avatar layouts.
+`verify-foundation.mts` asserts the logo fills the circle when supplied (student
+and pro), and that no *other* professional card grows a circle.
 
 The four cards in the repo-root `insta-viz-templates/` folder are **throwaway
-prototypes** — they do not count toward the committed 20, and nothing here
+prototypes** — they do not count toward the committed 22, and nothing here
 imports from them.
 
 **Structure-first is the rule for every card.** Mithra Murugesan
@@ -327,8 +344,8 @@ Before committing: run `npm run verify`. It is green — keep it that way.
   *Why it matters concretely:* Pull Quote's minimum is a bio, so a profile that
   skipped Module 3 could never be suggested the layout built around one, and every
   card's bio block rendered empty. On the test professional profile, running
-  enhancement first takes eligibility from 9/10 to 10/10 and puts Pull Quote
-  second on the shortlist.
+  enhancement first unlocks Pull Quote (its bio minimum) and puts it high on the
+  shortlist — without it, that layout can never be offered.
   *It runs, but it does not block:* a missing `OPENAI_API_KEY` returns the
   engine's `status: "received"` stub, and the panel then continues to the cards
   and says enhancement did not run. Refusing to show anyone their card because

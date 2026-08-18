@@ -29,7 +29,7 @@
 import type { CardProfile } from "../types";
 import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
-import { avatar, esc, logoSlot, nonEmpty } from "../helpers";
+import { avatar, esc, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
 import {
   achievementList,
@@ -49,10 +49,9 @@ const RULE = '<div class="iv-cp-rule" aria-hidden="true"></div>';
 
 function build(p: CardProfile, theme: ResolvedTheme): string {
   const head = `<header class="iv-cp-head">
-      ${avatar(p, "iv-cp-av")}
+      ${avatar(p, "iv-cp-av", theme.logo?.url)}
       ${nonEmpty(p.fullName) ? `<h2 class="iv-cp-name">${esc(p.fullName)}</h2>` : ""}
       ${nonEmpty(p.designation) ? `<div class="iv-cp-role">${esc(p.designation)}</div>` : ""}
-      ${logoSlot(theme.logo)}
     </header>`;
 
   // Separator-joined, so a hidden section takes its rule with it.
@@ -103,8 +102,6 @@ ${s} .iv-cp-body .iv-item+.iv-item{border-top:none;margin-top:.5em}
 ${s} .iv-cp-body .iv-chip{background:transparent;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--iv-primary) 30%,transparent)}
 
 
-/* The logo's dedicated row on this card. */
-${s} .iv-cp-wrap>.iv-logo-slot{align-self:center;margin:0 auto .5em;justify-content:center}
 </style>`;
 }
 

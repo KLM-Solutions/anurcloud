@@ -23,7 +23,7 @@
 import type { CardProfile } from "../types";
 import type { ResolvedTheme } from "../theme";
 import { NARROW, SHOW } from "../limits";
-import { avatar, esc, logoSlot, nonEmpty } from "../helpers";
+import { avatar, esc, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
 import {
   achievementList,
@@ -40,11 +40,10 @@ import {
 
 function build(p: CardProfile, theme: ResolvedTheme): string {
   const hero = `<header class="iv-hs-hero">
-      ${avatar(p, "iv-hs-av")}
+      ${avatar(p, "iv-hs-av", theme.logo?.url)}
       <div class="iv-hs-id">
         ${nonEmpty(p.fullName) ? `<div class="iv-name">${esc(p.fullName)}</div>` : ""}
         ${nonEmpty(p.designation) ? `<div class="iv-hs-role">${esc(p.designation)}</div>` : ""}
-        ${logoSlot(theme.logo)}
       </div>
     </header>`;
 
