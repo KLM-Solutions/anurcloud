@@ -105,5 +105,10 @@ export function parseJSONLoose<T>(text: string): T {
   } else if (arrStart !== -1 && arrEnd > arrStart) {
     slice = trimmed.slice(arrStart, arrEnd + 1);
   }
-  return JSON.parse(slice) as T;
+  try {
+    return JSON.parse(slice) as T;
+  } catch {
+    // Small-model repair: strip trailing commas before a } or ] and retry once.
+    return JSON.parse(slice.replace(/,\s*([}\]])/g, "$1")) as T;
+  }
 }
