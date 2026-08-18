@@ -39,9 +39,8 @@
  */
 
 import type { CardProfile } from "../types";
-import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
-import { esc, logoSlot } from "../helpers";
+import { esc } from "../helpers";
 import { joinBlocks, measuredSkills, section } from "../guards";
 import {
   achievementList,
@@ -84,7 +83,7 @@ function unmeasured(p: CardProfile): string {
   return `<div class="iv-sm-also"><span class="iv-sm-also-k">Also</span> ${esc(rest.join(" · "))}</div>`;
 }
 
-function build(p: CardProfile, theme: ResolvedTheme): string {
+function build(p: CardProfile): string {
   const chart = meters(p);
   const contact = contactInline(p);
   const tail = joinBlocks([
@@ -100,9 +99,7 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
     <header class="iv-sm-head">
       <div class="iv-sm-head-txt">${nameBlock(p)}${
         contact ? `<div class="iv-sm-contact">${contact}</div>` : ""
-      }</div>
-      ${logoSlot(theme.logo)}
-    </header>
+      }</div>    </header>
     ${
       chart
         ? `<div class="iv-sm-chart">${chart}<p class="iv-sm-cap">Bars show how many times each skill appears in the role highlights below — not a proficiency rating.</p>${unmeasured(

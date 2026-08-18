@@ -76,8 +76,21 @@ export function initials(name?: string | null): string {
   return (first + last).toUpperCase() || "?";
 }
 
-/** Photo, or an initials circle when there is none. */
-export function avatar(profile: CardProfile, cls = ""): string {
+/**
+ * The identity circle: a supplied logo, a photo, or an initials fallback.
+ *
+ * When the user has uploaded a logo it takes the circle — filled and cropped to
+ * the round, the same as a photo (owner's call: a logo replaces the initials
+ * rather than sitting in its own corner). A logo is only ever placed here, on
+ * cards that actually have this circle; cards without one carry no logo.
+ */
+export function avatar(profile: CardProfile, cls = "", logoUrl?: string | null): string {
+  const logo = safeUrl(logoUrl, { allowDataImage: true });
+  if (logo) {
+    return `<div class="iv-av iv-av-logo ${esc(cls)}"><img src="${attr(logo)}" alt="${attr(
+      (nonEmpty(profile.fullName) ? profile.fullName + " " : "") + "logo",
+    )}" /></div>`;
+  }
   const src = safeUrl(profile.photoUrl, { allowDataImage: true });
   if (src) {
     return `<div class="iv-av ${esc(cls)}"><img src="${attr(src)}" alt="${attr(
@@ -87,44 +100,6 @@ export function avatar(profile: CardProfile, cls = ""): string {
   return `<div class="iv-av iv-av-fallback ${esc(cls)}"><span>${esc(
     initials(profile.fullName),
   )}</span></div>`;
-}
-
-/** Logo image, text logo, or nothing. Never renders an empty placeholder. */
-export function logoBlock(logo: { url?: string; text?: string; height?: number } | null): string {
-  const src = safeUrl(logo?.url, { allowDataImage: true });
-  if (src) {
-    const h = logo?.height ?? 22;
-    return `<img class="iv-logo-img" src="${attr(src)}" alt="" style="height:${Number(h) || 22}px" />`;
-  }
-  if (nonEmpty(logo?.text)) return `<span class="iv-logo-txt">${esc(logo!.text)}</span>`;
-  return "";
-}
-
-/**
- * The logo in its **dedicated place in the layout**.
- *
- * This was an absolutely-positioned corner overlay, and that was the wrong
- * model: an overlay has no relationship to the design underneath it, so it
- * printed on top of whatever happened to be there — one card rendered
- * "JCATION" over its EDUCATION heading, another overprinted the name.
- *
- * Now each card calls this at a spot it has actually designed for a logo, and
- * the element participates in layout. Two consequences, both wanted:
- *   - with a logo, the surrounding content moves to accommodate it
- *   - with no logo this returns "", so nothing reserves space and the card is
- *     not left with a hole where a logo would have been
- *
- * `position` still decides which end it sits at (top-left / top-right), which is
- * a standing commitment to the client — the classes below resolve to alignment
- * inside whatever row or column the card places it in.
- */
-export function logoSlot(
-  logo: { url?: string; text?: string; height?: number; position?: "top-left" | "top-right" } | null,
-): string {
-  const inner = logoBlock(logo);
-  if (!inner) return "";
-  const pos = logo?.position === "top-right" ? "iv-logo-r" : "iv-logo-l";
-  return `<div class="iv-logo-slot ${pos}">${inner}</div>`;
 }
 
 /** Join non-empty parts with a separator, skipping the blanks. */

@@ -28,7 +28,7 @@
 import type { CardProfile } from "../types";
 import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
-import { avatar, esc, logoSlot, nonEmpty } from "../helpers";
+import { avatar, esc, nonEmpty } from "../helpers";
 import { joinBlocks } from "../guards";
 import { chips, contactInline, socialIcons, timelineRows } from "../sections";
 
@@ -37,9 +37,8 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
       <div class="iv-tl-id">
         ${nonEmpty(p.fullName) ? `<div class="iv-name">${esc(p.fullName)}</div>` : ""}
         ${nonEmpty(p.designation) ? `<div class="iv-role">${esc(p.designation)}</div>` : ""}
-        ${logoSlot(theme.logo)}
       </div>
-      ${avatar(p, "iv-tl-av")}
+      ${avatar(p, "iv-tl-av", theme.logo?.url)}
     </header>`;
 
   const spine = timelineRows(p.timeline, SHOW.timeline);
@@ -74,8 +73,6 @@ ${s} .iv-tl-spine .iv-item-t{margin-top:.05em}
 ${s} .iv-tl-foot{margin-top:.4em;padding-top:.8em;border-top:1px solid color-mix(in srgb,var(--iv-muted) 20%,transparent);display:flex;flex-direction:column;gap:.45em}
 
 
-/* The logo's dedicated row on this card. */
-${s} .iv-tl-wrap>.iv-logo-slot{margin-bottom:.55em}
 </style>`;
 }
 

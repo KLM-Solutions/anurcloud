@@ -45,9 +45,8 @@
  */
 
 import type { CardProfile } from "../types";
-import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
-import { esc, logoSlot, nonEmpty } from "../helpers";
+import { esc, nonEmpty } from "../helpers";
 import {
   achievementList,
   bio,
@@ -83,7 +82,7 @@ function rows(p: CardProfile): Row[] {
   return candidates.filter((r) => r.body.trim().length > 0);
 }
 
-function build(p: CardProfile, theme: ResolvedTheme): string {
+function build(p: CardProfile): string {
   const contact = contactInline(p);
   const site = websiteLine(p);
   const socials = socialIcons(p.socialLinks, SHOW.socials);
@@ -99,9 +98,7 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
             )}</div>`
           : ""
       }
-      ${contact ? `<div class="iv-nb-contact">${contact}</div>` : ""}
-      ${logoSlot(theme.logo)}
-    </div>
+      ${contact ? `<div class="iv-nb-contact">${contact}</div>` : ""}    </div>
   </div>`;
 
   const numbered = rows(p)

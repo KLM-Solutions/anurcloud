@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { enhanceProfile } from "@/lib/enhance-engine";
+import { isLocalLLM } from "@/lib/llm-chat";
 import { fail, tokenMatches } from "@/lib/route-helpers";
 import type { EnhanceRequest, EnhanceSuccess } from "@/lib/enhance-types";
 
@@ -56,8 +57,10 @@ export async function POST(request: NextRequest) {
     return fail("INVALID_PROFILE", '"profile" must be a non-null object.', 400);
   }
 
-  // 5. Enhancement engine not configured → validation-only stub
-  if (!process.env.OPENAI_API_KEY) {
+  // 5. Enhancement engine not configured → validation-only stub.
+  //    A local LLM (Ollama/Qwen) counts as configured even with no OpenAI key,
+  //    so local-only deployments run the model instead of returning the stub.
+  if (!isLocalLLM() && !process.env.OPENAI_API_KEY) {
     return NextResponse.json({
       status: "received",
       message: "Profile validated. The enhancement engine is not configured.",

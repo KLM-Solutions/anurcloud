@@ -32,9 +32,8 @@
  */
 
 import type { CardProfile } from "../types";
-import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
-import { esc, logoSlot, nonEmpty, joinParts } from "../helpers";
+import { esc, nonEmpty, joinParts } from "../helpers";
 import {
   achievementList,
   bio,
@@ -54,7 +53,7 @@ function row(label: string, value: string): string {
   )}</div><div class="iv-il-v">${value}</div></div>`;
 }
 
-function build(p: CardProfile, theme: ResolvedTheme): string {
+function build(p: CardProfile): string {
   const identity = [
     row("Name", nonEmpty(p.fullName) ? `<span class="iv-name">${esc(p.fullName)}</span>` : ""),
     row("Course", nonEmpty(p.designation) ? esc(p.designation) : ""),
@@ -83,7 +82,7 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
     row("Languages", chips(p.languages, SHOW.languages)),
   ].join("");
 
-  return `<div class="iv-il-wrap"><div class="iv-il-head">${identity}${logoSlot(theme.logo)}</div><div class="iv-il-body">${detail}</div></div>`;
+  return `<div class="iv-il-wrap"><div class="iv-il-head">${identity}</div><div class="iv-il-body">${detail}</div></div>`;
 }
 
 function styles(scopeId: string): string {
@@ -121,8 +120,6 @@ ${s} .iv-il-v .iv-item-m,${s} .iv-il-v .iv-item-d{font-size:.85em}
 }
 
 
-/* The logo's dedicated row on this card. */
-${s} .iv-il-wrap>.iv-logo-slot{margin-bottom:.6em}
 </style>`;
 }
 

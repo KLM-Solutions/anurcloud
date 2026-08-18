@@ -38,7 +38,7 @@
 import type { CardProfile } from "../types";
 import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
-import { attr, esc, initials, logoSlot, nonEmpty, safeUrl } from "../helpers";
+import { attr, esc, initials, nonEmpty, safeUrl } from "../helpers";
 import { joinBlocks, section } from "../guards";
 import {
   achievementList,
@@ -54,10 +54,17 @@ import {
 } from "../sections";
 
 /**
- * Square monogram, or a square-cropped photo. Not the shared `avatar()` helper —
- * that one is a circle by definition, which is the thing being avoided here.
+ * Square monogram, or a square-cropped photo/logo. Not the shared `avatar()`
+ * helper — that one is a circle by definition, which is the thing being avoided
+ * here. A supplied logo fills the square in place of the initials.
  */
-function monogram(p: CardProfile): string {
+function monogram(p: CardProfile, logoUrl?: string | null): string {
+  const logo = safeUrl(logoUrl, { allowDataImage: true });
+  if (logo) {
+    return `<div class="iv-mb-block"><img src="${attr(logo)}" alt="${attr(
+      (nonEmpty(p.fullName) ? p.fullName + " " : "") + "logo",
+    )}" /></div>`;
+  }
   const src = safeUrl(p.photoUrl, { allowDataImage: true });
   if (src) {
     return `<div class="iv-mb-block"><img src="${attr(src)}" alt="${attr(
@@ -74,13 +81,12 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
   const socials = socialIcons(p.socialLinks, SHOW.socials);
 
   const head = `<header class="iv-mb-head">
-      ${monogram(p)}
+      ${monogram(p, theme.logo?.url)}
       <div class="iv-mb-who">
         ${nonEmpty(p.fullName) ? `<div class="iv-name">${esc(p.fullName)}</div>` : ""}
         ${nonEmpty(p.designation) ? `<div class="iv-role">${esc(p.designation)}</div>` : ""}
         ${contact ? `<div class="iv-cinline">${contact}</div>` : ""}
         ${socials ? `<div class="iv-mb-social">${socials}</div>` : ""}
-        ${logoSlot(theme.logo)}
       </div>
     </header>`;
 

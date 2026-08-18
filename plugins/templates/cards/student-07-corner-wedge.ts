@@ -32,7 +32,7 @@
 import type { CardProfile } from "../types";
 import type { ResolvedTheme } from "../theme";
 import { NARROW, SHOW } from "../limits";
-import { avatar, esc, logoSlot, nonEmpty } from "../helpers";
+import { avatar, esc, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
 import {
   achievementList,
@@ -59,11 +59,10 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
 
   const head = `<header class="iv-cw-head">
       <div class="iv-cw-id">
-        ${avatar(p, "iv-cw-av")}
+        ${avatar(p, "iv-cw-av", theme.logo?.url)}
         ${nonEmpty(p.fullName) ? `<div class="iv-name">${esc(p.fullName)}</div>` : ""}
         ${nonEmpty(p.designation) ? `<div class="iv-role">${esc(p.designation)}</div>` : ""}
         ${contact ? `<div class="iv-cinline">${contact}</div>` : ""}
-        ${logoSlot(theme.logo)}
       </div>
       ${aside ? `<aside class="iv-cw-aside">${aside}</aside>` : ""}
     </header>`;
@@ -115,8 +114,6 @@ ${s} .iv-cw-body{padding:.5em 1.1em 1.15em}
 @container (max-width:320px){${s} .iv-cw-aside{display:none}}
 
 
-/* The logo's dedicated row on this card. */
-${s} .iv-cw-id .iv-logo-slot{margin-bottom:.5em}
 </style>`;
 }
 

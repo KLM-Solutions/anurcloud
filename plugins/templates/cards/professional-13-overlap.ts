@@ -36,9 +36,8 @@
  */
 
 import type { CardProfile } from "../types";
-import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
-import { esc, joinParts, logoSlot, nonEmpty } from "../helpers";
+import { esc, joinParts, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
 import {
   achievementList,
@@ -54,7 +53,7 @@ import {
   websiteLine,
 } from "../sections";
 
-function build(p: CardProfile, theme: ResolvedTheme): string {
+function build(p: CardProfile): string {
   // The band carries the standing facts, never the name — that is the plate's job.
   const banner = joinParts(
     [p.totalYearsExperience ? `${p.totalYearsExperience} experience` : null, p.location],
@@ -89,9 +88,7 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
             : ""
         }
         ${contact ? `<div class="iv-ov-contact">${contact}</div>` : ""}
-      </div>
-      ${logoSlot(theme.logo)}
-    </div>
+      </div>    </div>
     ${body ? `<main class="iv-ov-body">${body}</main>` : ""}
     ${
       site || socials

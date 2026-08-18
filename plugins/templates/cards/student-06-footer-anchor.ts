@@ -30,7 +30,7 @@
 import type { CardProfile } from "../types";
 import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
-import { avatar, esc, logoSlot, nonEmpty } from "../helpers";
+import { avatar, esc, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
 import {
   achievementList,
@@ -62,12 +62,11 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
   const socials = socialIcons(p.socialLinks, SHOW.socials);
 
   const anchor = `<footer class="iv-fa-anchor">
-      ${avatar(p, "iv-fa-av")}
+      ${avatar(p, "iv-fa-av", theme.logo?.url)}
       <div class="iv-fa-who">
         ${nonEmpty(p.fullName) ? `<div class="iv-name">${esc(p.fullName)}</div>` : ""}
         ${nonEmpty(p.designation) ? `<div class="iv-role">${esc(p.designation)}</div>` : ""}
         ${contact ? `<div class="iv-cinline">${contact}</div>` : ""}
-        ${logoSlot(theme.logo)}
       </div>
       ${socials ? `<div class="iv-fa-social">${socials}</div>` : ""}
     </footer>`;
@@ -97,8 +96,6 @@ ${s} .iv-fa-social{flex:0 0 auto}
 ${s} .iv-fa-anchor .iv-si{background:color-mix(in srgb,var(--iv-onp) 22%,transparent)!important;color:var(--iv-onp)}
 
 
-/* The logo's dedicated row on this card. */
-${s} .iv-fa-body>.iv-logo-slot{margin-bottom:.6em}
 </style>`;
 }
 

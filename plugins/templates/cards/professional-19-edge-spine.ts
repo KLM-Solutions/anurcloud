@@ -42,9 +42,8 @@
  */
 
 import type { CardProfile } from "../types";
-import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
-import { esc, logoSlot, nonEmpty } from "../helpers";
+import { esc, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
 import {
   achievementList,
@@ -60,7 +59,7 @@ import {
   websiteLine,
 } from "../sections";
 
-function build(p: CardProfile, theme: ResolvedTheme): string {
+function build(p: CardProfile): string {
   const body = joinBlocks([
     section("Profile", () => bio(p, SHOW.bioChars)),
     section("Experience", () => experienceHighlights(p, SHOW.roles, SHOW.highlightsPerRole)),
@@ -89,9 +88,7 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
               : ""
           }
           ${contact ? `<div class="iv-es-contact">${contact}</div>` : ""}
-        </div>
-        ${logoSlot(theme.logo)}
-      </header>
+        </div>      </header>
       ${body ? `<main class="iv-es-main">${body}</main>` : ""}
       ${
         site || socials

@@ -91,7 +91,7 @@ export async function suggestTemplatesLLM(profile: CardProfile): Promise<Suggest
       const info = byId.get(p.id);
       if (!info || seen.has(info.id)) continue; // ignore invented/duplicate ids
       seen.add(info.id);
-      const reason = typeof p.reason === "string" ? p.reason.trim() : "";
+      const reason = cleanReason(p.reason);
       result.push({
         id: info.id,
         key: info.key,
@@ -121,6 +121,22 @@ export async function suggestTemplatesLLM(profile: CardProfile): Promise<Suggest
     console.warn("[suggest] LLM ranking failed, using rule-based fallback:", (err as Error).message);
     return ruleTop;
   }
+}
+
+/**
+ * Sanitise a model-written reason.
+ *  - single line, whitespace collapsed, capped length;
+ *  - drop it entirely if it smells like a fit score. The product NEVER shows a
+ *    percentage on a suggestion (verify asserts no `%` appears) — a small model
+ *    will sometimes write "92% match" anyway, so a reason carrying `%` is thrown
+ *    out and the caller falls back to the neutral default.
+ */
+function cleanReason(raw: unknown): string {
+  if (typeof raw !== "string") return "";
+  const text = raw.replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  if (text.includes("%")) return ""; // never surface a fabricated score
+  return text.length > 200 ? text.slice(0, 197).trimEnd() + "…" : text;
 }
 
 /** A compact, factual summary of what the profile actually contains. */

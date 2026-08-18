@@ -46,6 +46,8 @@ import { roleLadder } from "./cards/professional-17-role-ladder";
 import { letterhead } from "./cards/professional-18-letterhead";
 import { edgeSpine } from "./cards/professional-19-edge-spine";
 import { pullQuote } from "./cards/professional-20-pull-quote";
+import { badge } from "./cards/professional-21-badge";
+import { spotlight } from "./cards/professional-22-spotlight";
 
 export * from "./types";
 export { resolveTheme } from "./theme";
@@ -179,10 +181,11 @@ const PLANNED: PlannedTemplate[] = [
    * not the same cards with a different label — they differ in what they can
    * show as well as in how they arrange it.
    *
-   * Not one of the ten uses the initials circle, and not one puts the identity
-   * inside a full-width band at the top. Those are two of the four items on the
-   * client's 3 Aug list, failed at the level of the whole pool rather than card
-   * by card.
+   * The first ten use no initials circle and put no identity inside a full-width
+   * top band — two of the four items on the client's 3 Aug list, failed at pool
+   * level. The two avatar cards below (21/22) are the deliberate, opt-in
+   * exceptions to the circle rule so a professional's logo has a home; neither
+   * uses a full-width top band.
    */
   {
     id: 11,
@@ -274,6 +277,31 @@ const PLANNED: PlannedTemplate[] = [
     audience: "professional",
     rootClass: "iv-pull-quote",
   },
+
+  /* ── professional avatar cards (DEV-3069/3070) ─────────────────────────────
+   * The two deliberate exceptions to the pool's no-circle rule. They exist so a
+   * professional who uploads a logo has somewhere to put it — the logo fills the
+   * identity circle in place of the initials. Opt-in, not the default, and each
+   * is structurally distinct from the other and from every student avatar card.
+   */
+  {
+    id: 21,
+    key: "badge",
+    name: "Badge",
+    description:
+      "A corporate access badge: a small round photo and the name sit inside a bordered, lightly-tinted panel with a vertical accent bar between them, over a plain body. A boxed header, not a colour banner.",
+    audience: "professional",
+    rootClass: "iv-badge",
+  },
+  {
+    id: 22,
+    key: "spotlight",
+    name: "Spotlight",
+    description:
+      "An oversized ringed portrait anchored into the top-left corner as a graphic element, the name beside it at the foot of the circle, and a full-width single-column body below. Asymmetric, portrait-led.",
+    audience: "professional",
+    rootClass: "iv-spotlight",
+  },
 ];
 
 /**
@@ -304,6 +332,8 @@ const BUILDERS: Partial<Record<TemplateKey, CardModule>> = {
   letterhead,
   "edge-spine": edgeSpine,
   "pull-quote": pullQuote,
+  badge,
+  spotlight,
 };
 
 /* ── catalogue ────────────────────────────────────────────────────────────── */

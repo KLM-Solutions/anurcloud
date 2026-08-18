@@ -34,9 +34,8 @@
  */
 
 import type { CardProfile } from "../types";
-import type { ResolvedTheme } from "../theme";
 import { NARROW, SHOW } from "../limits";
-import { esc, logoSlot, nonEmpty } from "../helpers";
+import { esc, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
 import {
   achievementList,
@@ -67,7 +66,7 @@ function contactStack(p: CardProfile): string {
     .join("")}</div>`;
 }
 
-function build(p: CardProfile, theme: ResolvedTheme): string {
+function build(p: CardProfile): string {
   /*
    * NARROW throughout: each half is about 190px on a 380px card, so this is the
    * one layout where the full SHOW ceiling is actively wrong — six roles with four
@@ -105,9 +104,7 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
                 [p.designation, p.currentCompany].filter(nonEmpty).join(" · "),
               )}</div>`
             : ""
-        }
-        ${logoSlot(theme.logo)}
-      </header>
+        }      </header>
       ${left}
       ${site ? `<div class="iv-sh-site">${site}</div>` : ""}
     </div>

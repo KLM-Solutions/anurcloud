@@ -515,15 +515,15 @@ group("Registry");
  *
  * These were `=== 5` and broke the moment the second student batch landed, which
  * is noise: a passing suite should mean "the registry is coherent", not "there
- * are exactly five cards today". The one hard number left is the 20 committed
- * for v1, which is a promise to the client rather than an implementation detail.
+ * are exactly five cards today". The hard number is the committed set: 20 for v1,
+ * plus the two professional avatar cards added 18 Aug 2026 (Badge, Spotlight).
  */
 ok("every planned template is built", templates.length === plannedTemplates.length);
 ok("at least one card exists", templates.length > 0);
-ok("v1 is 20 cards or fewer", plannedTemplates.length <= 20);
-eq("the v1 set is complete at 20", templates.length, 20);
+ok("the committed set is 22 cards or fewer", plannedTemplates.length <= 22);
+eq("the set is complete at 22", templates.length, 22);
 eq("ten cards for students", templatesFor("student").length, 10);
-eq("ten cards for professionals", templatesFor("professional").length, 10);
+eq("twelve cards for professionals", templatesFor("professional").length, 12);
 ok(
   "the two pools do not overlap",
   templatesFor("student").length + templatesFor("professional").length === templates.length,
@@ -1160,12 +1160,51 @@ group("The professional pool fails the client's 3 Aug checklist by design");
 /*
  * Mithra Murugesan, 3 Aug 2026, on our first prototypes: "the overall layout,
  * vertical stack, banner on top, circular initials avatar, white body below,
- * stays the same". Two of those four are refused at pool level, so no future
- * card can quietly reintroduce them without this failing.
+ * stays the same". The circle is refused across the pool so no future card can
+ * quietly reintroduce it — EXCEPT the two opt-in avatar cards (Badge, Spotlight,
+ * added 18 Aug 2026), whose whole reason to exist is to give a professional's
+ * logo a home in that circle. Every other professional card still fails here.
  */
+const PRO_AVATAR_CARDS = new Set<string>(["badge", "spotlight"]);
 for (const info of templatesFor("professional")) {
+  if (PRO_AVATAR_CARDS.has(info.key)) continue;
   const html = markupOf(renderCard(info.id, MINIMUMS[info.key].test(proRich) ? proRich : proThin));
   ok(`${info.name} uses no circular initials avatar`, !html.includes("iv-av"));
+}
+
+group("The two professional avatar cards give a logo a home (DEV-3069/3070)");
+
+/*
+ * The opt-in exceptions. Each carries the identity circle, and a supplied logo
+ * takes it in place of the initials — the same behaviour as the student avatar
+ * cards, on the two professional layouts built for it.
+ */
+for (const key of ["badge", "spotlight"] as const) {
+  const info = templatesFor("professional").find((t) => t.key === key)!;
+  const plain = markupOf(renderCard(info.id, proRich));
+  ok(`${info.name} carries an identity circle`, plain.includes("iv-av"));
+  const withLogo = markupOf(renderCard(info.id, proRich, { logo: { url: "https://x.dev/l.png" } }));
+  ok(`${info.name} puts a supplied logo in the circle`, withLogo.includes("iv-av-logo"));
+  ok(`${info.name} keeps the name once`, (plain.match(/Priya Menon/g) ?? []).length === 1);
+}
+// Structurally distinct from each other: Badge boxes the photo in a bordered
+// panel; Spotlight lets an oversized ringed portrait bleed the corner.
+ok("Badge frames the identity in a bordered panel", markupOf(renderCard("badge", proRich)).includes("iv-bd-badge"));
+ok("Spotlight anchors an oversized portrait", markupOf(renderCard("spotlight", proRich)).includes("iv-sp-head"));
+
+group("A supplied logo takes the avatar circle (student cards that have one) — DEV-3068");
+
+/*
+ * Owner's call, 18 Aug 2026: instead of a photo, an uploaded logo drops into the
+ * identity circle on the cards that have one (students), replacing the initials.
+ * Cards without a circle (professionals, and the two column-flow students) carry
+ * no logo at all — the loop above already asserts no professional grows one.
+ */
+{
+  const withLogo = markupOf(renderCard("side-rail", rich, { logo: { url: "https://x.dev/l.png" } }));
+  ok("logo fills the circle when supplied", withLogo.includes("iv-av-logo"));
+  const noLogo = markupOf(renderCard("side-rail", rich));
+  ok("no logo → the circle keeps its initials/photo", !noLogo.includes("iv-av-logo"));
 }
 
 group("Theme parity across every card");
@@ -1184,7 +1223,6 @@ for (const info of templates) {
   ok(`${info.name} honours the fonts`, themed.includes("Fraunces") && themed.includes("Inter"));
   ok(`${info.name} honours the width + responsive`, themed.includes("max-width:440px"));
   ok(`${info.name} honours the radius`, themed.includes("--iv-radius:6px"));
-  ok(`${info.name} places the logo top-right`, themed.includes("iv-logo-r"));
   ok(`${info.name} scales the type`, themed.includes("font-size:17.60px"));
 }
 

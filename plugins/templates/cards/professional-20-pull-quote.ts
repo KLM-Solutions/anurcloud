@@ -41,9 +41,8 @@
  */
 
 import type { CardProfile } from "../types";
-import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
-import { esc, logoSlot, nonEmpty } from "../helpers";
+import { esc, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
 import {
   achievementList,
@@ -75,7 +74,7 @@ function quote(p: CardProfile, maxChars = 190): string {
   return esc((lastSpace > maxChars * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd()) + "…";
 }
 
-function build(p: CardProfile, theme: ResolvedTheme): string {
+function build(p: CardProfile): string {
   const body = joinBlocks([
     section("Experience", () => experienceHighlights(p, SHOW.roles, SHOW.highlightsPerRole)),
     section("Skills", () => chips(p.skills, SHOW.skills)),
@@ -107,9 +106,7 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
               : ""
           }
           ${contact ? `<div class="iv-pq-contact">${contact}</div>` : ""}
-        </div>
-        ${logoSlot(theme.logo)}
-      </figcaption>
+        </div>      </figcaption>
     </figure>
     ${body ? `<main class="iv-pq-body">${body}</main>` : ""}
     ${

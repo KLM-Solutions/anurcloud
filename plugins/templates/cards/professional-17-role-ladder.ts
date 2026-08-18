@@ -35,9 +35,8 @@
  */
 
 import type { CardProfile } from "../types";
-import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
-import { esc, joinParts, logoSlot, nonEmpty } from "../helpers";
+import { esc, joinParts, nonEmpty } from "../helpers";
 import { meaningfulExperience, joinBlocks, section } from "../guards";
 import {
   achievementList,
@@ -75,7 +74,7 @@ function rungs(p: CardProfile): string {
     .join("");
 }
 
-function build(p: CardProfile, theme: ResolvedTheme): string {
+function build(p: CardProfile): string {
   const contact = contactInline(p);
   const tail = joinBlocks([
     section("Skills", () => chips(p.skills, SHOW.skills)),
@@ -88,9 +87,7 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
 
   return `<div class="iv-rl-wrap">
     <header class="iv-rl-head">
-      <div class="iv-rl-head-txt">${nameBlock(p)}${bio(p, 120)}</div>
-      ${logoSlot(theme.logo)}
-    </header>
+      <div class="iv-rl-head-txt">${nameBlock(p)}${bio(p, 120)}</div>    </header>
     ${contact ? `<div class="iv-rl-contact">${contact}</div>` : ""}
     <div class="iv-rl-ladder">${rungs(p)}</div>
     ${tail ? `<div class="iv-rl-tail">${tail}</div>` : ""}

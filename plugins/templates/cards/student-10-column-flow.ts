@@ -41,9 +41,8 @@
  */
 
 import type { CardProfile } from "../types";
-import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
-import { esc, logoSlot, nonEmpty } from "../helpers";
+import { esc, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
 import {
   achievementList,
@@ -57,14 +56,12 @@ import {
   publicationList,
 } from "../sections";
 
-function build(p: CardProfile, theme: ResolvedTheme): string {
+function build(p: CardProfile): string {
   const contact = contactInline(p);
 
   const masthead = `<header class="iv-cf-mast">
       ${nonEmpty(p.fullName) ? `<div class="iv-name">${esc(p.fullName)}</div>` : ""}
-      ${nonEmpty(p.designation) ? `<div class="iv-role">${esc(p.designation)}</div>` : ""}
-      ${logoSlot(theme.logo)}
-    </header>`;
+      ${nonEmpty(p.designation) ? `<div class="iv-role">${esc(p.designation)}</div>` : ""}    </header>`;
 
   // Order matters here in a way it does not on a stacked card: this is the
   // sequence the flow will follow down column one and into column two.
@@ -119,8 +116,6 @@ ${s} .iv-cf-foot .iv-cinline{font-size:.68em}
 }
 
 
-/* The logo's dedicated row on this card. */
-${s} .iv-cf-wrap>.iv-logo-slot{margin-bottom:.55em}
 </style>`;
 }
 
