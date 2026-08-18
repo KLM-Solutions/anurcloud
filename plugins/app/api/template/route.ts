@@ -7,10 +7,10 @@ import {
   offerableTemplates,
   plannedTemplates,
   renderCard,
-  suggestTemplates,
   templates,
   templatesFor,
 } from "@/templates";
+import { suggestTemplatesLLM } from "@/lib/suggest-llm";
 import { dataLevel } from "@/templates/guards";
 import { resolveTheme } from "@/templates/theme";
 import type {
@@ -135,7 +135,9 @@ export async function POST(request: NextRequest) {
     // The count is fixed at three in templates/rank.ts and is deliberately not a
     // request parameter: a caller that could ask for twelve would turn the
     // recommendation back into the catalogue it replaces.
-    suggested: suggestTemplates(card),
+    // LLM-ranked shortlist (rules filter eligibility first, then the model ranks
+    // and explains the top 3). Falls back to rule-based ranking automatically.
+    suggested: await suggestTemplatesLLM(card),
     eligibility,
     offered,
     theme: themeReport,
