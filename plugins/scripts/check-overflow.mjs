@@ -66,6 +66,20 @@ const MEASURE = `(() => {
     el.getAttribute("aria-hidden") === "true" ||
     getComputedStyle(el).position === "absolute";
   const label = (el) => (el.textContent || "").trim().replace(/\\s+/g, " ").slice(0, 30);
+  // True when an INNER container (between el and the card root, exclusive) clips
+  // its content — a scroll/overflow area, as the dynamic A4 cards use. Content
+  // there is scrolled/clipped by design, not painted outside the card, so it must
+  // not be flagged as escaping. The card root's own overflow is NOT counted — that
+  // boundary is exactly what we still test against.
+  const inInnerClip = (el, card) => {
+    let a = el.parentElement;
+    while (a && a !== card) {
+      const o = getComputedStyle(a);
+      if (o.overflowY !== "visible" || o.overflowX !== "visible") return true;
+      a = a.parentElement;
+    }
+    return false;
+  };
 
   for (const cell of document.querySelectorAll(".cell")) {
     const card = cell.querySelector("[data-iv-template]");
@@ -87,11 +101,12 @@ const MEASURE = `(() => {
       if (r.width === 0 || r.height === 0) continue;
       const name = cls(el);
 
-      // 1. painted outside the card's own edges
+      // 1. painted outside the card's own edges — but not when an inner scroll
+      // container clips the element (dynamic A4 cards scroll their content).
       const outRight = r.right - cardBox.right;
       const outLeft = cardBox.left - r.left;
       const outBottom = r.bottom - cardBox.bottom;
-      if (outRight > SLACK || outLeft > SLACK || outBottom > SLACK) {
+      if ((outRight > SLACK || outLeft > SLACK || outBottom > SLACK) && !inInnerClip(el, card)) {
         findings.push({ ...meta, kind: "escapes-card", el: name, text: label(el),
           by: +Math.max(outRight, outLeft, outBottom).toFixed(1) });
       }

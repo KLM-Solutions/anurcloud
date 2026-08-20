@@ -1,151 +1,223 @@
 /**
- * Professional template 11 — "Skill Meters" (DEV-3046)
+ * Professional template 11 — "Skill Meters" · DYNAMIC A4 card (20 Aug 2026)
  *
- *   ┌──────────────────────────┐
- *   │ Priya Menon      (logo)  │
- *   │ VP Engineering · Zoho    │
- *   │ ──────────────────────── │
- *   │ Kubernetes ██████████ 4  │
- *   │ Go         ███████    3  │
- *   │ Terraform  ████       2  │
- *   │ Mentioned in the roles   │
- *   │ below · Also: SQL, Linux │
- *   │ ──────────────────────── │
- *   │ Role · Company           │
- *   └──────────────────────────┘
+ * The FIRST template converted to the dynamic model (owner's call, one at a time).
+ * The card is a set of A4-portrait SCREENS you navigate between — CSS-only, no JS:
  *
- * Structurally: the only chart in either pool. A left label column and a right
- * track column, one row per skill, read as a horizontal bar chart. Nothing else
- * in the 20 encodes anything as length.
+ *   • Overview screen: identity + bio + the skill-meters CHART (the signature),
+ *     then the content. A SMALL section is shown in FULL right here (no navigation
+ *     — a near-empty extra screen is worse than just showing it). A BIG section
+ *     shows a sample + a "view all" link that opens its own screen.
+ *   • Section screen: the full section, with a Back link. One A4 screen each.
  *
- * ── What the bars actually measure ────────────────────────────────────────
- * They count how many of the person's own highlight bullets mention that skill —
- * a fact about the document, stated on the card in words.
+ * A missing field shows nothing. Every screen is a fixed A4 portrait frame
+ * (210:297 → 380x537 on screen); on PRINT each screen becomes one real A4 page
+ * (everything shown, nav hidden) — the flatten-to-PDF path.
  *
- * They are NOT proficiency. Nothing in the extraction schema records proficiency:
- * no levels, no years per skill, no self-rating. Drawing an invented percentage
- * would look authoritative and be fabricated, which is the worst combination a
- * card can have — it is the candidate's own reputation on it. So a skill nobody
- * wrote about gets no bar at all, and lands in the "Also" line instead.
+ * Scroll cue: the home screen shows a "scroll" hint that flips to "scroll up"
+ * once you reach the bottom (CSS scroll-driven, degrades to the down hint).
  *
- * The caption under the chart is load-bearing, not decoration. A bar chart with
- * no legend will be read as proficiency by everyone who sees it, so the sentence
- * that says otherwise ships with the chart or the chart does not ship.
- * See `measuredSkills()` in guards.ts for the matching rules.
- *
- * Thin data: gated out. Fewer than two measurable skills and the chart says
- * nothing, so the layout is not offered.
- * Minimum: 3 skills, 2 of them mentioned in the role highlights.
+ * Self-contained: imports only from within templates/. The chart reuses
+ * measuredSkills — bars count how often a skill appears in the person's own role
+ * highlights (evidence), captioned as such, NEVER a proficiency rating.
  */
 
 import type { CardProfile } from "../types";
-import { SHOW } from "../limits";
+import type { ResolvedTheme } from "../theme";
+import { measuredSkills } from "../guards";
 import { esc } from "../helpers";
-import { joinBlocks, measuredSkills, section } from "../guards";
 import {
-  achievementList,
-  certificationList,
-  contactInline,
+  bio,
   experienceHighlights,
-  nameBlock,
+  projectList,
+  educationList,
+  certificationList,
+  achievementList,
   publicationList,
   registrationRows,
+  chips,
+  contactRows,
   socialIcons,
+  websiteList,
 } from "../sections";
 
-function meters(p: CardProfile): string {
-  const rows = measuredSkills(p, 5);
-  if (rows.length === 0) return "";
+const one = <T>(arr: T[]): T[] => (arr && arr.length ? [arr[0]!] : []);
 
-  // The strongest skill sets the full-width bar; the rest are read against it.
-  // Percentages against a fixed scale would imply a ceiling nobody declared.
+/* ── the signature chart (reuses measuredSkills — evidence, not proficiency) ── */
+function chart(p: CardProfile): string {
+  const rows = measuredSkills(p, 6);
+  if (!rows.length) return "";
   const top = Math.max(...rows.map((r) => r.count));
-
-  return rows
+  const bars = rows
     .map((r) => {
-      // Integer percent of the leader — derived from two counts we hold, so
-      // there is no caller value anywhere near this style attribute.
       const pct = Math.max(8, Math.round((r.count / top) * 100));
-      return `<div class="iv-sm-row">
-        <div class="iv-sm-k">${esc(r.skill)}</div>
-        <div class="iv-sm-track"><div class="iv-sm-fill" style="width:${pct}%"></div></div>
-        <div class="iv-sm-n">${esc(String(r.count))}</div>
-      </div>`;
+      return `<div class="iv-sm-row"><div class="iv-sm-k">${esc(r.skill)}</div><div class="iv-sm-track"><div class="iv-sm-fill" style="width:${pct}%"></div></div><div class="iv-sm-n">${esc(String(r.count))}</div></div>`;
     })
     .join("");
+  return `<div class="iv-sm-chart">${bars}<p class="iv-sm-cap">Bars count how often each skill appears in the role highlights — not a proficiency rating.</p></div>`;
 }
 
-/** Skills with no mention behind them. Listed, never charted. */
-function unmeasured(p: CardProfile): string {
-  const charted = new Set(measuredSkills(p, 5).map((r) => r.skill.toLowerCase()));
-  const rest = p.skills.filter((s) => !charted.has(s.toLowerCase())).slice(0, 6);
-  if (rest.length === 0) return "";
-  return `<div class="iv-sm-also"><span class="iv-sm-also-k">Also</span> ${esc(rest.join(" · "))}</div>`;
+/* ── content areas ──────────────────────────────────────────────────────────── */
+type Kind = "long" | "list" | "chips";
+interface Area {
+  key: string;
+  label: string;
+  html: string;
+  sample: string;
+  count: number;
+  kind: Kind;
 }
 
-function build(p: CardProfile): string {
-  const chart = meters(p);
-  const contact = contactInline(p);
-  const tail = joinBlocks([
-    section("Experience", () => experienceHighlights(p, SHOW.roles, SHOW.highlightsPerRole)),
-    section("Certifications", () => certificationList(p, SHOW.certifications)),
-    section("Awards", () => achievementList(p, SHOW.achievements)),
-    section("Publications", () => publicationList(p, SHOW.publications)),
-    section("Registrations", () => registrationRows(p, SHOW.registrations)),
-  ]);
-  const socials = socialIcons(p.socialLinks, SHOW.socials);
+function area(key: string, label: string, full: string, sample: string, count: number, kind: Kind): Area {
+  return { key, label, html: (full ?? "").trim(), sample: (sample ?? "").trim(), count: count ?? 0, kind };
+}
 
-  return `<div class="iv-sm-wrap">
-    <header class="iv-sm-head">
-      <div class="iv-sm-head-txt">${nameBlock(p)}${
-        contact ? `<div class="iv-sm-contact">${contact}</div>` : ""
-      }</div>    </header>
-    ${
-      chart
-        ? `<div class="iv-sm-chart">${chart}<p class="iv-sm-cap">Bars show how many times each skill appears in the role highlights below — not a proficiency rating.</p>${unmeasured(
-            p,
-          )}</div>`
-        : ""
-    }
-    ${tail ? `<div class="iv-sm-tail">${tail}</div>` : ""}
-    ${socials ? `<div class="iv-sm-social">${socials}</div>` : ""}
+/** Rough size of an area. A BIG area (>4) gets its own screen; small shows inline. */
+function isBig(a: Area): boolean {
+  if (a.kind === "long") return true;
+  if (a.kind === "chips") return Math.ceil(a.count / 4) > 4;
+  return a.count * 2 > 4; // list: 3+ items → its own screen
+}
+
+function areasFor(p: CardProfile): Area[] {
+  return [
+    area("experience", "Experience", experienceHighlights(p), experienceHighlights({ ...p, experience: one(p.experience) }), p.experience.length, "long"),
+    area("projects", "Projects", projectList(p), projectList({ ...p, projects: one(p.projects) }), p.projects.length, "list"),
+    area("skills", "Skills", chips(p.skills), chips(p.skills.slice(0, 5)), p.skills.length, "chips"),
+    area("education", "Education", educationList(p), educationList({ ...p, education: one(p.education) }), p.education.length, "list"),
+    area("certs", "Certifications", certificationList(p), certificationList({ ...p, certifications: one(p.certifications) }), p.certifications.length, "list"),
+    area("awards", "Awards", achievementList(p), achievementList({ ...p, achievements: one(p.achievements) }), p.achievements.length, "list"),
+    area("papers", "Publications", publicationList(p), publicationList({ ...p, publications: one(p.publications) }), p.publications.length, "list"),
+    area("registrations", "Registrations", registrationRows(p), registrationRows({ ...p, registrations: one(p.registrations) }), p.registrations.length, "chips"),
+    area("languages", "Languages", chips(p.languages), chips(p.languages), p.languages.length, "chips"),
+    area("links", "Links", [websiteList(p), socialIcons(p.socialLinks)].filter(Boolean).join(""), "", p.websites.length + p.socialLinks.length, "chips"),
+    area("contact", "Contact", contactRows(p), "", [p.email, p.phone, p.location].filter(Boolean).length, "chips"),
+  ].filter((a) => a.html.length > 0);
+}
+
+/* ── build ──────────────────────────────────────────────────────────────────── */
+function build(p: CardProfile, theme: ResolvedTheme): string {
+  const scope = theme.scopeId;
+  const areas = areasFor(p);
+  const big = areas.filter(isBig); // each → its own screen
+
+  const radios = [
+    `<input class="iv-r" type="radio" name="${scope}-nav" id="${scope}-overview" checked>`,
+    ...big.map((a) => `<input class="iv-r" type="radio" name="${scope}-nav" id="${scope}-${a.key}">`),
+  ].join("");
+
+  // Overview content, in order: big → sample + "view all" link; small → shown in full.
+  const blocks = areas
+    .map((a) => {
+      if (isBig(a)) {
+        const nav = a.count > 1 ? `View all ${a.count}` : "Open";
+        return `<label class="iv-ovsec" for="${scope}-${a.key}"><div class="iv-ovh">${esc(a.label)}</div><div class="iv-ovs">${a.sample}</div><div class="iv-ovnav">${nav} <span aria-hidden="true">›</span></div></label>`;
+      }
+      return `<div class="iv-ovinline"><div class="iv-ovh">${esc(a.label)}</div>${a.html}</div>`;
+    })
+    .join("");
+
+  const header = `<header class="iv-sm-head">
+    <div class="iv-name">${p.fullName ? esc(p.fullName) : ""}</div>
+    <div class="iv-role">${esc([p.designation, p.currentCompany].filter(Boolean).join(" · "))}</div>
+    ${p.totalYearsExperience ? `<div class="iv-sm-yrs">${esc(p.totalYearsExperience)} of experience</div>` : ""}
+  </header>`;
+
+  const overview = `<div class="iv-view iv-overview">
+    ${header}
+    <div class="iv-ovwrap">
+      <div class="iv-ovscroll">${bio(p) ? `<div class="iv-sm-about">${bio(p)}</div>` : ""}${chart(p)}<div class="iv-secs">${blocks}</div></div>
+      <div class="iv-ovfade" aria-hidden="true"></div>
+      <div class="iv-ovmore" aria-hidden="true">⌄ scroll</div>
+      <div class="iv-ovup" aria-hidden="true">⌃ scroll up</div>
+    </div>
   </div>`;
+
+  const views = big
+    .map(
+      (a) => `<div class="iv-view iv-page" data-view="${a.key}">
+      <div class="iv-bar"><label class="iv-back" for="${scope}-overview"><span aria-hidden="true">‹</span> Back</label><span class="iv-ptitle">${esc(a.label)}</span></div>
+      <div class="iv-pbody">${a.html}</div>
+    </div>`,
+    )
+    .join("");
+
+  // Per-screen show rules need the scope + this profile's section keys.
+  const show =
+    `#${scope}-overview:checked ~ .iv-stage .iv-overview{display:flex}` +
+    big.map((a) => `#${scope}-${a.key}:checked ~ .iv-stage [data-view="${a.key}"]{display:flex}`).join("");
+
+  return `${radios}<style>${show}</style><div class="iv-stage">${overview}${views}</div>`;
 }
 
+/* ── styles (generic; profile-independent) ──────────────────────────────────── */
 function styles(scopeId: string): string {
   const s = `.${scopeId}`;
   return `<style>
-${s}.iv-skill-meters{background:var(--iv-surface)}
-${s} .iv-sm-wrap{padding:1.15em 1.1em}
+/* A4 portrait frame (210:297). 380x537 on screen; real A4 on print. */
+${s}.iv-skill-meters{position:relative;height:537px;background:var(--iv-surface)}
+${s} .iv-r{position:absolute;opacity:0;pointer-events:none}
+${s} .iv-stage{position:absolute;inset:0}
+${s} .iv-view{position:absolute;inset:0;display:none;flex-direction:column}
 
-${s} .iv-sm-head{display:flex;align-items:flex-start;gap:.6em;padding-bottom:.7em;border-bottom:1px solid color-mix(in srgb,var(--iv-muted) 22%,transparent)}
-${s} .iv-sm-head-txt{min-width:0;flex:1 1 auto}
-${s} .iv-sm-contact{margin-top:.3em}
+/* Overview: identity header, then a scroll area with bio + chart + content. */
+${s} .iv-sm-head{padding:1.1em 1.2em;border-bottom:1px solid var(--iv-edge);flex:0 0 auto}
+${s} .iv-sm-head .iv-name{font-size:1.25em}
+${s} .iv-sm-head .iv-role{font-size:.82em;color:var(--iv-muted);margin-top:.15em}
+${s} .iv-sm-yrs{font-size:.72em;color:var(--iv-muted);margin-top:.2em}
 
-${s} .iv-sm-chart{margin-top:.8em}
-/* Three columns: a fixed label gutter, a track that takes the rest, and a count.
-   The label column is fixed so the bars share one baseline — bars that start at
-   different x-positions cannot be compared, which defeats the chart.
-   (No backticks in this block — it is inside a template literal.) */
-${s} .iv-sm-row{display:grid;grid-template-columns:6.2em 1fr 1.2em;align-items:center;gap:.5em}
+${s} .iv-ovwrap{position:relative;flex:1 1 auto;min-height:0;timeline-scope:--ivsc}
+${s} .iv-ovscroll{position:absolute;inset:0;overflow-y:auto;padding:1.1em 1.2em 2.8em;scrollbar-width:thin;scroll-timeline:--ivsc block}
+${s} .iv-sm-about .iv-bio{margin:0 0 1em}
+${s} .iv-ovfade{position:absolute;left:0;right:0;bottom:0;height:2.8em;background:linear-gradient(to top,var(--iv-surface),transparent);pointer-events:none}
+
+/* Scroll cues: "scroll" at the top, crossfading to "scroll up" at the bottom.
+   Default (no scroll-driven-animation support) keeps the down cue visible. */
+${s} .iv-ovmore,${s} .iv-ovup{position:absolute;left:50%;bottom:.5em;transform:translateX(-50%);font-size:.62em;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--iv-primary);pointer-events:none;white-space:nowrap}
+${s} .iv-ovup{opacity:0}
+@supports (animation-timeline:scroll()){
+  ${s} .iv-ovmore{animation:iv-fout both;animation-timeline:--ivsc;animation-range:75% 96%}
+  ${s} .iv-ovup{animation:iv-fin both;animation-timeline:--ivsc;animation-range:75% 96%}
+}
+@keyframes iv-fout{to{opacity:0}}
+@keyframes iv-fin{to{opacity:1}}
+
+/* The chart. */
+${s} .iv-sm-row{display:grid;grid-template-columns:6em 1fr 1.2em;align-items:center;gap:.5em}
 ${s} .iv-sm-row+.iv-sm-row{margin-top:.42em}
-${s} .iv-sm-k{font-size:.72em;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+${s} .iv-sm-k{font-size:.72em;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 ${s} .iv-sm-track{height:.5em;border-radius:999px;background:color-mix(in srgb,var(--iv-muted) 16%,transparent);overflow:hidden}
 ${s} .iv-sm-fill{height:100%;border-radius:999px;background:var(--iv-grad)}
 ${s} .iv-sm-n{font-family:var(--iv-font-h);font-size:.64em;font-weight:700;color:var(--iv-muted);text-align:right}
+${s} .iv-sm-cap{margin-top:.6em;font-size:.6em;line-height:1.5;color:var(--iv-muted)}
 
-/* The caption is part of the chart, not a footnote. Removing it turns an honest
-   count into an implied rating. */
-${s} .iv-sm-cap{margin-top:.6em;font-size:.6em;line-height:1.5;color:var(--iv-muted);opacity:.95}
-${s} .iv-sm-also{margin-top:.45em;font-size:.66em;color:var(--iv-muted);overflow-wrap:anywhere}
-${s} .iv-sm-also-k{font-family:var(--iv-font-h);font-size:.85em;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--iv-primary);margin-right:.35em}
+/* Overview content blocks: inline (shown in full) and link (sample + view all). */
+${s} .iv-secs{display:flex;flex-direction:column;margin-top:1em}
+${s} .iv-ovsec,${s} .iv-ovinline{display:block;padding:.85em 0;border-top:1px solid var(--iv-edge)}
+${s} .iv-ovsec{cursor:pointer;user-select:none}
+${s} .iv-ovsec:hover .iv-ovnav{color:var(--iv-primary)}
+${s} .iv-ovh{font-family:var(--iv-font-h);font-weight:700;font-size:.66em;letter-spacing:.08em;text-transform:uppercase;color:var(--iv-primary);margin-bottom:.5em}
+${s} .iv-ovs .iv-sec-h{display:none}
+${s} .iv-ovnav{margin-top:.5em;font-size:.72em;font-weight:700;color:var(--iv-muted)}
 
-${s} .iv-sm-tail{margin-top:.9em;border-top:1px solid color-mix(in srgb,var(--iv-muted) 22%,transparent)}
-${s} .iv-sm-tail .iv-sec-h:first-child{margin-top:.7em}
-${s} .iv-sm-social{margin-top:.8em}
+/* Section screen. */
+${s} .iv-bar{display:flex;align-items:center;gap:.6em;padding:.85em 1em;border-bottom:1px solid var(--iv-edge);flex:0 0 auto}
+${s} .iv-back{display:inline-flex;align-items:center;gap:.15em;font-size:.78em;font-weight:700;color:var(--iv-primary);cursor:pointer;user-select:none}
+${s} .iv-back span{font-size:1.3em;line-height:1}
+${s} .iv-ptitle{font-family:var(--iv-font-h);font-weight:700;font-size:.9em}
+${s} .iv-pbody{flex:1 1 auto;overflow-y:auto;padding:1.2em}
+${s} .iv-pbody .iv-sec-h{display:none}
 
-@container (max-width:320px){
-  ${s} .iv-sm-row{grid-template-columns:5em 1fr 1.1em}
+/* PRINT: real A4 pages, one per screen, all sections shown, nav hidden. */
+@media print{
+  @page{size:A4;margin:14mm}
+  ${s}.iv-skill-meters{height:auto;position:static}
+  ${s} .iv-r{display:none}
+  ${s} .iv-stage{position:static}
+  ${s} .iv-view{position:static;display:flex!important;break-after:page;height:auto}
+  ${s} .iv-ovwrap,${s} .iv-ovscroll,${s} .iv-pbody{position:static;overflow:visible}
+  ${s} .iv-back,${s} .iv-ovfade,${s} .iv-ovmore,${s} .iv-ovup{display:none!important}
+  ${s} .iv-ovsec .iv-ovnav{display:none}
 }
 </style>`;
 }

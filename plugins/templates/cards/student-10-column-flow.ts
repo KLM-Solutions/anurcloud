@@ -38,15 +38,25 @@
  * Thin data: with little content the flow collapses to one short column, which
  * still reads as a masthead document. Minimum: name + 2 fillable sections, below
  * which there is nothing to flow.
+ *
+ * ── Pagination (20 Aug 2026) ────────────────────────────────────────────────
+ * The masthead is fixed chrome and the sections are the flowing blocks, but the
+ * body is a genuine two-column FLOW (`.iv-cf-flow`), so the card renders page 1
+ * itself via `firstPage` — the columns container survives intact. Overflow
+ * sections flow to single-column continuation pages. `sections()` is the one
+ * ordered list both `build()` and `paged()` consume.
  */
 
 import type { CardProfile } from "../types";
+import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
 import { esc, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
+import { linesForItems, linesForText, type PageBlock, type PagedContent } from "../pagination";
 import {
   achievementList,
   bio,
+  certificationList,
   chips,
   contactInline,
   educationList,
@@ -56,30 +66,56 @@ import {
   publicationList,
 } from "../sections";
 
-function build(p: CardProfile): string {
-  const contact = contactInline(p);
+/**
+ * The body sections, in order — the one list both paths use. Order matters here
+ * in a way it does not on a stacked card: this is the sequence the flow follows
+ * down column one and into column two.
+ */
+function sections(p: CardProfile): PageBlock[] {
+  const out: PageBlock[] = [];
+  const add = (html: string, weight: number) => {
+    if (html.trim()) out.push({ html, weight });
+  };
+  add(section("About", () => bio(p, SHOW.bioChars)), linesForText(p.bio));
+  add(section("Education", () => educationList(p, SHOW.education)), linesForItems(p.education.length));
+  add(section("Certifications", () => certificationList(p, SHOW.certifications)), linesForItems(p.certifications.length));
+  add(section("Projects", () => projectList(p, SHOW.projects)), linesForItems(p.projects.length, 3));
+  add(section("Internships", () => internshipList(p, SHOW.internships)), linesForItems(p.internships.length));
+  add(section("Skills", () => chips(p.skills, SHOW.skills)), Math.ceil(p.skills.length / 3) + 1);
+  add(section("Languages", () => chips(p.languages, SHOW.languages)), Math.ceil(p.languages.length / 4) + 1);
+  add(section("Awards", () => achievementList(p, SHOW.achievements)), linesForItems(p.achievements.length));
+  add(section("Publications", () => publicationList(p, SHOW.publications)), linesForItems(p.publications.length));
+  add(section("Activities", () => extracurricularList(p, SHOW.extracurriculars)), linesForItems(p.extracurriculars.length));
+  return out;
+}
 
-  const masthead = `<header class="iv-cf-mast">
+function masthead(p: CardProfile): string {
+  return `<header class="iv-cf-mast">
       ${nonEmpty(p.fullName) ? `<div class="iv-name">${esc(p.fullName)}</div>` : ""}
       ${nonEmpty(p.designation) ? `<div class="iv-role">${esc(p.designation)}</div>` : ""}    </header>`;
+}
 
-  // Order matters here in a way it does not on a stacked card: this is the
-  // sequence the flow will follow down column one and into column two.
-  const body = joinBlocks([
-    section("About", () => bio(p, SHOW.bioChars)),
-    section("Education", () => educationList(p, SHOW.education)),
-    section("Projects", () => projectList(p, SHOW.projects)),
-    section("Internships", () => internshipList(p, SHOW.internships)),
-    section("Skills", () => chips(p.skills, SHOW.skills)),
-    section("Languages", () => chips(p.languages, SHOW.languages)),
-    section("Awards", () => achievementList(p, SHOW.achievements)),
-    section("Publications", () => publicationList(p, SHOW.publications)),
-    section("Activities", () => extracurricularList(p, SHOW.extracurriculars)),
-  ]);
-
+/** Page 1: the masthead, the two-column flow of the sections that fit, and the
+ *  contact footer. Reproduces the card's designed layout exactly. */
+function firstPage(p: CardProfile, fit: PageBlock[]): string {
+  const body = joinBlocks(fit.map((b) => b.html));
+  const contact = contactInline(p);
   const foot = contact ? `<footer class="iv-cf-foot">${contact}</footer>` : "";
+  return `<div class="iv-cf-wrap">${masthead(p)}<main class="iv-cf-flow">${body}</main>${foot}</div>`;
+}
 
-  return `<div class="iv-cf-wrap">${masthead}<main class="iv-cf-flow">${body}</main>${foot}</div>`;
+function build(p: CardProfile): string {
+  // Single-page fallback: the masthead and every section in the flow.
+  return firstPage(p, sections(p));
+}
+
+function paged(p: CardProfile, _theme: ResolvedTheme): PagedContent {
+  return {
+    firstPage: (fit) => firstPage(p, fit),
+    slim: nonEmpty(p.fullName) ? esc(p.fullName) : "",
+    blocks: sections(p),
+    chromeWeight: 3, // the masthead
+  };
 }
 
 function styles(scopeId: string): string {
@@ -115,8 +151,11 @@ ${s} .iv-cf-foot .iv-cinline{font-size:.68em}
   ${s} .iv-cf-flow{columns:1;column-rule:none}
 }
 
-
+/* Continuation pages (2+) hold overflow sections as a single-column stack — no
+   masthead, no flow — so they take the padding the iv-cf-wrap gives page 1. */
+${s} .iv-page-cont{padding:1.1em 1.05em}
+${s} .iv-page-cont .iv-sec-h:first-of-type{margin-top:0}
 </style>`;
 }
 
-export const columnFlow = { build, styles };
+export const columnFlow = { build, styles, paged };

@@ -680,11 +680,11 @@ ok(
 );
 
 const ladder = markupOf(renderCard("role-ladder", proRich));
-eq("Role Ladder renders one rung per role", (ladder.match(/class="iv-rl-rung"/g) ?? []).length, 3);
+eq("Role Ladder renders one rung per role", (ladder.match(/class="iv-rl-rung\b/g) ?? []).length, 3);
 ok("Role Ladder has no spine dots — that is the Timeline card", !ladder.includes("iv-tl-dot"));
-// The staircase comes from nth-child rules; a profile-derived indent in a style
-// attribute is the pattern that becomes an injection the day a validator moves.
-ok("Role Ladder writes no inline style on a rung", !/iv-rl-rung"[^>]*style=/.test(ladder));
+// The staircase depth is a class (iv-rl-d0..3), never a profile-derived inline
+// style — that is the pattern that becomes an injection when a validator moves.
+ok("Role Ladder writes no inline style on a rung", !/iv-rl-rung[^"]*"[^>]*style=/.test(ladder));
 
 const lhOwnCss = [...renderCard("letterhead", proRich).matchAll(/<style>([\s\S]*?)<\/style>/g)].at(-1)?.[1] ?? "";
 ok("Letterhead paints no fill at all", !lhOwnCss.includes("var(--iv-grad)"), lhOwnCss.slice(0, 120));
@@ -746,12 +746,12 @@ ok(
   eq("Pull Quote is offered once there is a bio", MINIMUMS["pull-quote"].test(proRich), true);
 }
 
+// Split Halves is a dynamic card: a persistent 50/50 split — white CONTENT on the
+// left, a coloured MENU on the right (the "colour on the right" signature). The
+// menu is the navigation; the left content swaps. Both halves present, no avatar.
 const halves = markupOf(renderCard("split-halves", proRich));
-ok("Split Halves fills both halves", halves.includes("iv-sh-left") && halves.includes("iv-sh-right"));
-ok(
-  "Split Halves puts real sections in the coloured half, not just contact",
-  /iv-sh-right[\s\S]*iv-chip/.test(halves),
-);
+ok("Split Halves keeps the 50/50 split (content + menu)", halves.includes("iv-hl-content") && halves.includes("iv-hl-menu"));
+ok("Split Halves navigation lives in the coloured menu", /iv-hl-menu[\s\S]*iv-hl-item/.test(halves));
 ok("Split Halves uses no avatar", !halves.includes("iv-av"));
 
 const ov = markupOf(renderCard("overlap", proRich));
@@ -760,17 +760,22 @@ ok("Overlap keeps the name off the filled zone", ov.indexOf("iv-ov-zone") < ov.i
 const ovCss = [...renderCard("overlap", proRich).matchAll(/<style>([\s\S]*?)<\/style>/g)].at(-1)?.[1] ?? "";
 ok("Overlap lifts the plate over the zone edge", /iv-ov-plate\{[^}]*margin:-/.test(ovCss));
 
+// A section that paginates re-shows its number on the continuation page (e.g.
+// "02 Experience (cont.)"), so collapse consecutive repeats before checking the
+// sequence is contiguous — the number repeating on a continued section is
+// correct, not a gap.
+const dedupe = (ns: number[]) => ns.filter((n, i) => i === 0 || n !== ns[i - 1]);
 const nb = markupOf(renderCard("numbered", proRich));
-const numerals = [...nb.matchAll(/class="iv-nb-n">(\d{2})</g)].map((m) => m[1]!);
+const numerals = dedupe([...nb.matchAll(/class="iv-nb-n">(\d{2})</g)].map((m) => Number(m[1])));
 ok(`Numbered numbers what actually rendered (${numerals.join(", ")})`, numerals.length >= 4);
 ok(
   "Numbered leaves no gap in the sequence",
-  numerals.every((n, i) => Number(n) === i),
+  numerals.every((n, i) => n === i),
   numerals.join(", "),
 );
 // A profile with no certifications must not produce 01, 03, 04.
 const nbTypical = markupOf(renderCard("numbered", proTypical));
-const numeralsTypical = [...nbTypical.matchAll(/class="iv-nb-n">(\d{2})</g)].map((m) => Number(m[1]));
+const numeralsTypical = dedupe([...nbTypical.matchAll(/class="iv-nb-n">(\d{2})</g)].map((m) => Number(m[1])));
 ok(
   "Numbered stays contiguous on a sparser profile",
   numeralsTypical.every((n, i) => n === i),
@@ -1056,12 +1061,14 @@ group("Heavy profiles are not truncated to a stub");
   const skillsShown = (nb.match(/Skill \d+/g) ?? []).length;
   ok(`and every skill it was given (${skillsShown} of 16)`, skillsShown >= 16, String(skillsShown));
 
-  // The narrow layouts still cap tighter, on purpose — half a card is not a card.
+  // No content is dropped: every role is present in the card. Split Halves is now
+  // a dynamic card, so the roles live on its Experience screen rather than a
+  // half-width column, but the guarantee is the same — all of them are there.
   const halves = markupOf(renderCard("split-halves", senior));
   const halfRoles = (halves.match(/Role Number \d/g) ?? []).length;
   ok(
-    `a half-width column still caps lower (${halfRoles} roles)`,
-    halfRoles > 0 && halfRoles < rolesShown,
+    `Split Halves shows every role (${halfRoles} of 5)`,
+    halfRoles >= 5,
     String(halfRoles),
   );
 
@@ -1185,7 +1192,11 @@ for (const key of ["badge", "spotlight"] as const) {
   ok(`${info.name} carries an identity circle`, plain.includes("iv-av"));
   const withLogo = markupOf(renderCard(info.id, proRich, { logo: { url: "https://x.dev/l.png" } }));
   ok(`${info.name} puts a supplied logo in the circle`, withLogo.includes("iv-av-logo"));
-  ok(`${info.name} keeps the name once`, (plain.match(/Priya Menon/g) ?? []).length === 1);
+  // The name appears once in the card's primary identity. Pagination may repeat
+  // it in the slim header on continuation pages (page 2+ of a long CV, like a
+  // document header) — that is expected, so this guard scopes to the first page.
+  const firstPage = plain.split(/class="iv-page[^"]*iv-page-cont/)[0];
+  ok(`${info.name} keeps the name once`, (firstPage.match(/Priya Menon/g) ?? []).length === 1);
 }
 // Structurally distinct from each other: Badge boxes the photo in a bordered
 // panel; Spotlight lets an oversized ringed portrait bleed the corner.

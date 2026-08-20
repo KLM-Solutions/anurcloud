@@ -16,7 +16,7 @@ function buildSystemPrompt(profile_type: "student" | "professional"): string {
   if (profile_type === "student") {
     return `You are a professional profile content editor. Given a verified student profile, enhance the following.
 
-STRICT RULE: Only use information explicitly present in the profile. Do not invent, guess, or add anything not stated.
+STRICT RULE: Only use information explicitly present in the profile. Do not invent, guess, or add anything not stated. Do NOT expand abbreviations or acronyms (e.g. keep "CKA" as "CKA", never write out what it stands for) and do NOT add qualifiers, adjectives, or achievements the profile does not contain.
 
 1. bio — 2-3 sentences, first person "I", for a digital business card.
    Draw only from present fields: designation, education, internships, projects, skills, extracurriculars.
@@ -40,7 +40,7 @@ Respond with only a JSON object:
 
   return `You are a professional profile content editor. Given a verified professional profile, enhance the following.
 
-STRICT RULE: Only use information explicitly present in the profile. Do not invent, guess, or add anything not stated.
+STRICT RULE: Only use information explicitly present in the profile. Do not invent, guess, or add anything not stated. Do NOT expand abbreviations or acronyms (e.g. keep "CKA" as "CKA", never write out what it stands for) and do NOT add qualifiers, adjectives, or achievements the profile does not contain.
 
 1. bio — 2-3 sentences, first person "I", for a digital business card.
    Draw only from present fields: designation, current_company, total_years_experience, experience, skills, achievements, registrations.

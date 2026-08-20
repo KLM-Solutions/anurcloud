@@ -24,6 +24,7 @@ import type {
 import { resolveTheme, type ResolvedTheme } from "./theme";
 import { attr } from "./helpers";
 import { cardStyles } from "./styles";
+import { renderPages, pageCount, type PagedContent } from "./pagination";
 import { eligibilityFor, minimumLabel, dataLevel } from "./guards";
 import { rankTemplates, topSuggestions, type Suggestion } from "./rank";
 import { sideRail } from "./cards/student-01-side-rail";
@@ -31,7 +32,7 @@ import { heroSplit } from "./cards/student-02-hero-split";
 import { centrePortrait } from "./cards/student-03-centre-portrait";
 import { timelineCard } from "./cards/student-04-timeline";
 import { tileGrid } from "./cards/student-05-tile-grid";
-import { footerAnchor } from "./cards/student-06-footer-anchor";
+import { ticketStub } from "./cards/student-06-ticket-stub";
 import { cornerWedge } from "./cards/student-07-corner-wedge";
 import { monogramBlock } from "./cards/student-08-monogram-block";
 import { indexLedger } from "./cards/student-09-index-ledger";
@@ -62,6 +63,12 @@ export interface CardModule {
   build: (profile: CardProfile, theme: ResolvedTheme) => string;
   /** Layout CSS for this card only, scoped to the render. */
   styles: (scopeId: string) => string;
+  /**
+   * Optional paginated content model. When a card exports this, renderCard flows
+   * its body across fixed-height pages instead of one growing box (see
+   * pagination.ts). Cards without it render as a single page, unchanged.
+   */
+  paged?: (profile: CardProfile, theme: ResolvedTheme) => PagedContent;
 }
 
 interface PlannedTemplate {
@@ -130,12 +137,12 @@ const PLANNED: PlannedTemplate[] = [
   },
   {
     id: 6,
-    key: "footer-anchor",
-    name: "Footer Anchor",
+    key: "ticket-stub",
+    name: "Ticket Stub",
     description:
-      "Content first, identity welded to a colour band at the bottom. The inverse of Hero Split — the card closes on the name instead of opening with it.",
+      "An event ticket: a coloured header carries the identity, a dashed perforation with a notch bitten out of each edge tears it off, and the content sits on the stub below. The tear-and-notch silhouette is unique in the set.",
     audience: "student",
-    rootClass: "iv-footer-anchor",
+    rootClass: "iv-ticket-stub",
   },
   {
     id: 7,
@@ -317,7 +324,7 @@ const BUILDERS: Partial<Record<TemplateKey, CardModule>> = {
   "centre-portrait": centrePortrait,
   timeline: timelineCard,
   "tile-grid": tileGrid,
-  "footer-anchor": footerAnchor,
+  "ticket-stub": ticketStub,
   "corner-wedge": cornerWedge,
   "monogram-block": monogramBlock,
   "index-ledger": indexLedger,
@@ -454,7 +461,8 @@ export function renderCard(
   const mod = BUILDERS[def.key]!;
   const theme = resolveTheme(options, profile.profileType);
   const aud = profile.profileType === "student" ? "iv-aud-stu" : "iv-aud-pro";
-  const inner = mod.build(profile, theme);
+  // Paginated cards flow their body across pages; the rest render as one page.
+  const inner = mod.paged ? renderPages(mod.paged(profile, theme)) : mod.build(profile, theme);
   // `resolveTheme` already validates every option it is given, so these two are
   // safe by construction. Escaped anyway: they are the only caller-influenced
   // values that land in an attribute, and one missed validator here turns every
@@ -464,4 +472,21 @@ export function renderCard(
   )}" data-iv-template="${def.key}">${cardStyles(
     theme.scopeId,
   )}${mod.styles(theme.scopeId)}${inner}</div>`;
+}
+
+/**
+ * How many pages a card will render for this profile (1 for cards that have not
+ * been migrated to pagination). `/api/template` returns this so a caller knows a
+ * tall CV produced multiple pages rather than one giant card.
+ */
+export function cardPageCount(
+  template: number | string,
+  profile: CardProfile,
+  options: ThemeOptions = {},
+): number {
+  const def = resolveDef(template);
+  const mod = BUILDERS[def.key]!;
+  if (!mod.paged) return 1;
+  const theme = resolveTheme(options, profile.profileType);
+  return pageCount(mod.paged(profile, theme));
 }

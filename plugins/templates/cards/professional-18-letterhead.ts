@@ -35,14 +35,17 @@
 import type { CardProfile } from "../types";
 import { SHOW } from "../limits";
 import { esc, nonEmpty } from "../helpers";
-import { joinBlocks, section } from "../guards";
+import { section } from "../guards";
+import { linesForItems, linesForText, type PageBlock, type PagedContent } from "../pagination";
 import {
   achievementList,
   bio,
   certificationList,
   chips,
   educationList,
-  experienceHighlights,
+  experienceGroup,
+  experienceYears,
+  projectList,
   publicationList,
   registrationRows,
   socialIcons,
@@ -58,25 +61,9 @@ function contactColumn(p: CardProfile): string {
     .join("")}</div>`;
 }
 
-function build(p: CardProfile): string {
-  const body = joinBlocks([
-    section("Profile", () => bio(p, SHOW.bioChars)),
-    section("Experience", () => experienceHighlights(p, SHOW.roles, SHOW.highlightsPerRole)),
-    section("Education", () => educationList(p, SHOW.education)),
-    section("Certifications", () => certificationList(p, SHOW.certifications)),
-    section("Skills", () => chips(p.skills, SHOW.skills)),
-    section("Languages", () => chips(p.languages, SHOW.languages)),
-    section("Awards", () => achievementList(p, SHOW.achievements)),
-    section("Publications", () => publicationList(p, SHOW.publications)),
-    section("Registrations", () => registrationRows(p, SHOW.registrations)),
-  ]);
-
-  const site = websiteLine(p);
-  const socials = socialIcons(p.socialLinks, SHOW.socials);
-  const foot = site || socials;
-
-  return `<div class="iv-lh-wrap">
-    <header class="iv-lh-head">
+/** The letterhead header — the fixed identity, always on page 1 (the chrome). */
+function head(p: CardProfile): string {
+  return `<header class="iv-lh-head">
       <div class="iv-lh-id">
         ${nonEmpty(p.fullName) ? `<div class="iv-lh-name">${esc(p.fullName)}</div>` : ""}
         ${
@@ -87,16 +74,62 @@ function build(p: CardProfile): string {
             : ""
         }      </div>
       ${contactColumn(p)}
-    </header>
-    ${body ? `<main class="iv-lh-body">${body}</main>` : ""}
-    ${
-      foot
-        ? `<footer class="iv-lh-foot">${site}${
-            socials ? `<div class="iv-lh-social">${socials}</div>` : ""
-          }</footer>`
-        : ""
-    }
-  </div>`;
+    </header>`;
+}
+
+/**
+ * The single measure of text below the header, as flow blocks — the one list
+ * both build() (single page) and paged() (across pages) consume. Each section is
+ * wrapped in `.iv-lh-sec` so the inter-section rhythm survives a page break.
+ */
+function contentBlocks(p: CardProfile): PageBlock[] {
+  const out: PageBlock[] = [];
+  // Not wrapped in a container: a bare `<h3>…` section block is what lets the
+  // pagination engine auto-split a long section across pages (a wrapper hides its
+  // shape). Inter-section rhythm is carried by the section headings' margins.
+  const add = (html: string, weight: number) => {
+    if (html.trim()) out.push({ html, weight });
+  };
+  add(experienceYears(p), 1);
+  add(section("Profile", () => bio(p, SHOW.bioChars)), linesForText(p.bio));
+  const exp = experienceGroup(p, SHOW.roles, SHOW.highlightsPerRole);
+  if (exp) out.push(exp);
+  add(section("Projects", () => projectList(p, SHOW.projects)), linesForItems(p.projects.length, 3));
+  add(section("Education", () => educationList(p, SHOW.education)), linesForItems(p.education.length));
+  add(section("Certifications", () => certificationList(p, SHOW.certifications)), linesForItems(p.certifications.length));
+  add(section("Skills", () => chips(p.skills, SHOW.skills)), Math.ceil(p.skills.length / 3) + 1);
+  add(section("Languages", () => chips(p.languages, SHOW.languages)), Math.ceil(p.languages.length / 4) + 1);
+  add(section("Awards", () => achievementList(p, SHOW.achievements)), linesForItems(p.achievements.length));
+  add(section("Publications", () => publicationList(p, SHOW.publications)), linesForItems(p.publications.length));
+  add(section("Registrations", () => registrationRows(p, SHOW.registrations)), linesForItems(p.registrations.length, 1));
+
+  const site = websiteLine(p);
+  const socials = socialIcons(p.socialLinks, SHOW.socials);
+  if (site || socials) {
+    out.push({
+      html: `<footer class="iv-lh-foot">${site}${
+        socials ? `<div class="iv-lh-social">${socials}</div>` : ""
+      }</footer>`,
+      weight: 1,
+    });
+  }
+  return out;
+}
+
+function build(p: CardProfile): string {
+  const body = contentBlocks(p)
+    .map((b) => b.html)
+    .join("");
+  return `<div class="iv-page">${head(p)}${body}</div>`;
+}
+
+function paged(p: CardProfile): PagedContent {
+  return {
+    chrome: head(p),
+    slim: nonEmpty(p.fullName) ? esc(p.fullName) : "",
+    blocks: contentBlocks(p),
+    chromeWeight: 4, // name + role + contact lines + the double rule
+  };
 }
 
 function styles(scopeId: string): string {
@@ -106,7 +139,8 @@ function styles(scopeId: string): string {
    horizontal division carried by a rule.
    (No backticks in this block — it is inside a template literal.) */
 ${s}.iv-letterhead{background:var(--iv-surface)}
-${s} .iv-lh-wrap{padding:1.5em 1.45em 1.2em}
+/* Padding lives on the page so page 1 and every continuation page share it. */
+${s} .iv-page{padding:1.5em 1.45em 1.2em}
 
 /* The double rule is the letterhead signature: a heavy one over the name and a
    hairline under the whole header block. */
@@ -119,23 +153,30 @@ ${s} .iv-lh-role{font-size:.72em;color:var(--iv-muted);margin-top:.3em;letter-sp
    every stacked identity in the set. */
 ${s} .iv-lh-contact{flex:0 1 auto;text-align:right;font-size:.66em;line-height:1.65;color:var(--iv-muted);overflow-wrap:anywhere;max-width:48%}
 
-${s} .iv-lh-body{padding-top:.2em}
 /* A narrow measure. Letterheads are read as documents, and a full-bleed line
-   length at this size is not. */
-${s} .iv-lh-body .iv-sec-h{margin:1.05em 0 .35em;letter-spacing:.14em;color:var(--iv-text);opacity:.55}
-${s} .iv-lh-body .iv-sec-h:first-child{margin-top:.9em}
-${s} .iv-lh-body .iv-bio{margin-top:0}
-${s} .iv-lh-body .iv-item+.iv-item{border-top:none;margin-top:.5em;padding-top:0}
+   length at this size is not. Each section is its own flow block so it can move
+   to the next page without stranding a heading. */
+/* Sections are bare (no wrapper) so they can auto-split; the heading carries the
+   inter-section gap. The years line and the section headings get the top margin;
+   the first block after the head and on a continuation page resets it. */
+${s} .iv-lh-head+*{margin-top:.9em}
+${s} .iv-sec-h{margin:1.05em 0 .35em;letter-spacing:.14em;color:var(--iv-text);opacity:.55}
+${s} .iv-years{margin-top:.9em}
+${s} .iv-bio{margin-top:0}
+${s} .iv-item+.iv-item{border-top:none;margin-top:.5em;padding-top:0}
+/* The first section on any page leads it — no extra top gap or stranded rule. */
+${s} .iv-page > .iv-sec-h:first-child,
+${s} .iv-page-cont > .iv-sec-h:first-of-type{margin-top:0}
 
 ${s} .iv-lh-foot{margin-top:1.1em;border-top:1px solid color-mix(in srgb,var(--iv-muted) 32%,transparent);padding-top:.6em;display:flex;align-items:center;justify-content:space-between;gap:.6em;flex-wrap:wrap}
 ${s} .iv-lh-foot .iv-cinline{font-size:.66em;color:var(--iv-primary)}
 
 @container (max-width:320px){
-  ${s} .iv-lh-wrap{padding:1.15em 1.05em 1em}
+  ${s} .iv-page{padding:1.15em 1.05em 1em}
   ${s} .iv-lh-head{flex-direction:column;gap:.5em}
   ${s} .iv-lh-contact{text-align:left;max-width:100%}
 }
 </style>`;
 }
 
-export const letterhead = { build, styles };
+export const letterhead = { build, styles, paged };

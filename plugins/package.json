@@ -12,7 +12,9 @@
     "verify": "npm run check:templates && npm run verify:foundation && npm run stress && npm run check:overflow && npm run lint && npm run build",
     "preview": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolver.mjs scripts/build-preview.mts",
     "stress": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolver.mjs scripts/build-stress.mts",
-    "check:overflow": "node scripts/check-overflow.mjs"
+    "check:overflow": "node scripts/check-overflow.mjs",
+    "eval": "node --env-file-if-exists=.env.local --experimental-strip-types --no-warnings --import ./scripts/ts-resolver.mjs scripts/eval-quality.mts",
+    "pdf": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolver.mjs scripts/build-pdf.mts"
   },
   "dependencies": {
     "@llamaindex/llama-cloud": "^2.8.0",

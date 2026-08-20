@@ -11,6 +11,7 @@
 
 import type { CardProfile, SocialLink, TimelineEntry } from "./types";
 import { attr, esc, joinParts, nonEmpty, safeUrl } from "./helpers";
+import { groupBlock, type PageBlock } from "./pagination";
 import {
   hasList,
   meaningfulEducation,
@@ -18,6 +19,14 @@ import {
   meaningfulInternship,
   meaningfulProject,
 } from "./guards";
+
+/**
+ * No display cap (owner decision, 20 Aug 2026). Every list renderer defaults to
+ * showing ALL items, and text is never truncated — nothing extracted may be
+ * dropped at render time. See templates/limits.ts for the rationale and the
+ * pagination follow-up.
+ */
+const ALL = Number.POSITIVE_INFINITY;
 
 /* ── identity ─────────────────────────────────────────────────────────────── */
 
@@ -29,7 +38,7 @@ export function nameBlock(p: CardProfile): string {
   }`;
 }
 
-export function bio(p: CardProfile, maxChars = 240): string {
+export function bio(p: CardProfile, maxChars = ALL): string {
   if (!nonEmpty(p.bio)) return "";
   const text = p.bio.trim();
   const short = text.length > maxChars ? text.slice(0, maxChars).trimEnd() + "…" : text;
@@ -63,7 +72,7 @@ export function contactInline(p: CardProfile): string {
 
 /* ── chips ────────────────────────────────────────────────────────────────── */
 
-export function chips(items: string[] | undefined, max = 8): string {
+export function chips(items: string[] | undefined, max = ALL): string {
   const list = (items ?? []).filter(nonEmpty).slice(0, max);
   if (list.length === 0) return "";
   return `<div class="iv-chips">${list
@@ -128,7 +137,7 @@ function socialKey(platform?: string | null): string {
   return "website";
 }
 
-export function socialIcons(links: SocialLink[] | undefined, max = 5): string {
+export function socialIcons(links: SocialLink[] | undefined, max = ALL): string {
   const list = (links ?? [])
     .map((l) => ({ platform: l.platform, href: safeUrl(l.url) }))
     .filter((l): l is { platform: string | null; href: string } => l.href !== null)
@@ -146,7 +155,7 @@ export function socialIcons(links: SocialLink[] | undefined, max = 5): string {
 
 /* ── lists ────────────────────────────────────────────────────────────────── */
 
-export function educationList(p: CardProfile, max = 3): string {
+export function educationList(p: CardProfile, max = ALL): string {
   if (!hasList(p.education, meaningfulEducation)) return "";
   return p.education
     .filter(meaningfulEducation)
@@ -161,7 +170,7 @@ export function educationList(p: CardProfile, max = 3): string {
     .join("");
 }
 
-export function projectList(p: CardProfile, max = 3, withDescription = true): string {
+export function projectList(p: CardProfile, max = ALL, withDescription = true): string {
   if (!hasList(p.projects, meaningfulProject)) return "";
   return p.projects
     .filter(meaningfulProject)
@@ -175,13 +184,13 @@ export function projectList(p: CardProfile, max = 3, withDescription = true): st
             )}</a>`
           : `<div class="iv-item-t">${esc(pr.title)}</div>`
         : "";
+      // Full description — no truncation (owner decision, 20 Aug 2026).
       const desc =
         withDescription && nonEmpty(pr.description)
-          ? `<div class="iv-item-d">${esc(
-              pr.description.length > 120 ? pr.description.slice(0, 120).trimEnd() + "…" : pr.description,
-            )}</div>`
+          ? `<div class="iv-item-d">${esc(pr.description)}</div>`
           : "";
-      const tech = (pr.technologies ?? []).filter(nonEmpty).slice(0, 4);
+      // All technologies, not just the first few.
+      const tech = (pr.technologies ?? []).filter(nonEmpty);
       const techRow = tech.length
         ? `<div class="iv-item-m">${esc(tech.join(" · "))}</div>`
         : "";
@@ -190,7 +199,7 @@ export function projectList(p: CardProfile, max = 3, withDescription = true): st
     .join("");
 }
 
-export function internshipList(p: CardProfile, max = 3): string {
+export function internshipList(p: CardProfile, max = ALL): string {
   if (!hasList(p.internships, meaningfulInternship)) return "";
   return p.internships
     .filter(meaningfulInternship)
@@ -204,7 +213,7 @@ export function internshipList(p: CardProfile, max = 3): string {
     .join("");
 }
 
-export function experienceList(p: CardProfile, max = 3): string {
+export function experienceList(p: CardProfile, max = ALL): string {
   if (!hasList(p.experience, meaningfulExperience)) return "";
   return p.experience
     .filter(meaningfulExperience)
@@ -229,27 +238,51 @@ export function experienceList(p: CardProfile, max = 3): string {
  * cannot be rendered by a student profile, which is the point — the two pools
  * differ in what they can show, not only in how they arrange it.
  */
-export function experienceHighlights(p: CardProfile, maxRoles = 3, maxHighlights = 2): string {
-  if (!hasList(p.experience, meaningfulExperience)) return "";
+/** One role's markup + an estimated line weight — the unit pagination splits on. */
+export function experienceHighlightItems(
+  p: CardProfile,
+  maxRoles = ALL,
+  maxHighlights = ALL,
+): PageBlock[] {
+  if (!hasList(p.experience, meaningfulExperience)) return [];
   return p.experience
     .filter(meaningfulExperience)
     .slice(0, maxRoles)
     .map((e) => {
       const head = joinParts([e.role, e.company], " · ");
       const meta = joinParts([e.duration, e.location]);
+      // All highlights, full text — no truncation (owner decision, 20 Aug 2026).
       const points = (e.highlights ?? []).filter(nonEmpty).slice(0, maxHighlights);
       const bullets = points.length
-        ? `<ul class="iv-hl">${points
-            .map(
-              (h) =>
-                `<li>${esc(h.length > 110 ? h.slice(0, 110).trimEnd() + "…" : h)}</li>`,
-            )
-            .join("")}</ul>`
+        ? `<ul class="iv-hl">${points.map((h) => `<li>${esc(h)}</li>`).join("")}</ul>`
         : "";
-      return `<div class="iv-item">${head ? `<div class="iv-item-t">${esc(head)}</div>` : ""}${
+      const html = `<div class="iv-item">${head ? `<div class="iv-item-t">${esc(head)}</div>` : ""}${
         meta ? `<div class="iv-item-m">${esc(meta)}</div>` : ""
       }${bullets}</div>`;
-    })
+      // Title + meta + wrapped highlights. Conservative (33 chars/line) so the
+      // estimate is an upper bound — see linesForText in pagination.ts.
+      const weight = 3 + points.reduce((n, h) => n + Math.max(1, Math.ceil(h.length / 33)), 0);
+      return { html, weight };
+    });
+}
+
+/**
+ * Experience as a SPLITTABLE section (heading + per-role items). A long career
+ * (7 roles for a senior profile) then flows across pages instead of being one
+ * atomic block that forces an early page break and leaves a gap. Returns null
+ * when there is no experience to show.
+ */
+export function experienceGroup(p: CardProfile, maxRoles = ALL, maxHighlights = ALL): PageBlock | null {
+  return groupBlock(
+    `<h3 class="iv-sec-h">Experience</h3>`,
+    "Experience",
+    experienceHighlightItems(p, maxRoles, maxHighlights),
+  );
+}
+
+export function experienceHighlights(p: CardProfile, maxRoles = ALL, maxHighlights = ALL): string {
+  return experienceHighlightItems(p, maxRoles, maxHighlights)
+    .map((b) => b.html)
     .join("");
 }
 
@@ -267,7 +300,19 @@ export function websiteLine(p: CardProfile): string {
   )}</a>`;
 }
 
-export function certificationList(p: CardProfile, max = 3): string {
+/**
+ * Total years of experience as a short line. There was no renderer for this
+ * field, so it never reached any card (owner decision 20 Aug 2026: every field
+ * must show). Cards may also surface it as a stat; this is the plain-text form.
+ */
+export function experienceYears(p: CardProfile): string {
+  if (!nonEmpty(p.totalYearsExperience)) return "";
+  const v = p.totalYearsExperience.trim();
+  const label = /experien/i.test(v) ? v : `${v} of experience`;
+  return `<div class="iv-cinline iv-years">${esc(label)}</div>`;
+}
+
+export function certificationList(p: CardProfile, max = ALL): string {
   if (!hasList(p.certifications, (c) => nonEmpty(c.name))) return "";
   return p.certifications
     .filter((c) => nonEmpty(c.name))
@@ -284,7 +329,7 @@ export function certificationList(p: CardProfile, max = 3): string {
 /* ── the four families that used to be dropped ────────────────────────────── */
 
 /** Awards and honours. Common to both audiences. */
-export function achievementList(p: CardProfile, max = 4): string {
+export function achievementList(p: CardProfile, max = ALL): string {
   const list = p.achievements.filter((a) => nonEmpty(a.title)).slice(0, max);
   if (list.length === 0) return "";
   return list
@@ -302,7 +347,7 @@ export function achievementList(p: CardProfile, max = 4): string {
  * the title is the part that matters — so it is not truncated the way a project
  * description is.
  */
-export function publicationList(p: CardProfile, max = 4): string {
+export function publicationList(p: CardProfile, max = ALL): string {
   const list = p.publications.filter((pub) => nonEmpty(pub.title)).slice(0, max);
   if (list.length === 0) return "";
   return list
@@ -318,7 +363,7 @@ export function publicationList(p: CardProfile, max = 4): string {
 }
 
 /** Clubs, sport, volunteering. Student-side. */
-export function extracurricularList(p: CardProfile, max = 4): string {
+export function extracurricularList(p: CardProfile, max = ALL): string {
   const list = p.extracurriculars.filter((e) => nonEmpty(e.activity)).slice(0, max);
   if (list.length === 0) return "";
   return list
@@ -338,7 +383,7 @@ export function extracurricularList(p: CardProfile, max = 4): string {
  * the content — a lawyer's enrolment number is the single most checkable fact on
  * their card, and burying it in a bullet list hides it.
  */
-export function registrationRows(p: CardProfile, max = 3): string {
+export function registrationRows(p: CardProfile, max = ALL): string {
   const list = p.registrations.filter((r) => nonEmpty(r.type) || nonEmpty(r.id)).slice(0, max);
   if (list.length === 0) return "";
   return list
@@ -352,7 +397,7 @@ export function registrationRows(p: CardProfile, max = 3): string {
 }
 
 /** Every portfolio link, not just the first. */
-export function websiteList(p: CardProfile, max = 3): string {
+export function websiteList(p: CardProfile, max = ALL): string {
   const list = p.websites
     .map((u) => safeUrl(u))
     .filter((u): u is string => u !== null)
@@ -376,7 +421,7 @@ export function websiteList(p: CardProfile, max = 3): string {
  *
  * `dateText` is shown verbatim; the derived sort year never reaches the user.
  */
-export function timelineRows(entries: TimelineEntry[], max = 8): string {
+export function timelineRows(entries: TimelineEntry[], max = ALL): string {
   const list = entries.slice(0, max);
   if (list.length === 0) return "";
   return list

@@ -211,13 +211,13 @@ const RULES: Record<TemplateKey, FitRule> = {
       f.tiles % 2 === 0 ? [1, "An even number of tiles, so the rows close cleanly."] : null,
     ],
   },
-  "footer-anchor": {
+  "ticket-stub": {
     appetite: "moderate",
     signals: (f) => [
       f.sections >= 2 && f.sections <= 5
-        ? [2, "Enough above the anchor to read as content, without crowding it."]
+        ? [2, "Enough on the stub to read as content, without crowding the tear."]
         : null,
-      f.contactFields >= 1 ? [1, "Contact details for the anchor to carry."] : null,
+      f.contactFields >= 1 ? [1, "Contact details for the ticket top to carry."] : null,
     ],
   },
   "corner-wedge": {

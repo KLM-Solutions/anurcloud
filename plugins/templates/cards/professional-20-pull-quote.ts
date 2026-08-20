@@ -1,90 +1,55 @@
-/**
- * Professional template 20 — "Pull Quote" (DEV-3055)
- *
- *   ┌──────────────────────────┐
- *   │ ❝                        │
- *   │ Platform engineering     │
- *   │ leader with a bias for   │
- *   │ boring infrastructure.   │
- *   │ ───                      │
- *   │ PRIYA MENON              │
- *   │ VP Engineering · Zoho    │
- *   │ ──────────────────────── │
- *   │ EXPERIENCE               │
- *   │ Role · Company           │
- *   └──────────────────────────┘
- *
- * Structurally: the identity is the CAPTION, not the headline. The card opens on
- * the person's positioning line set as display type, and the name follows
- * underneath at a fraction of the size, attributed the way a pull quote is. Every
- * other card in the 20 — all nineteen — makes the name the largest or the first
- * thing on it. This one demotes it on purpose.
- *
- * ── Not Letterhead ────────────────────────────────────────────────────────
- * Letterhead (18) is the other card with no fill, and it is the inverse: the name
- * is the biggest thing on it, at the top, framed by rules, with contact set
- * beside it. Here the top third is a block of large sentence text and the name is
- * small type below a short rule. In grayscale one reads as stationery and the
- * other as an editorial page.
- *
- * ── Why this is the only card that requires a bio ──────────────────────────
- * There is no card without the quote — the quote IS the card. So the minimum is a
- * name and a bio, and this is the one layout whose availability depends on
- * Module 3 having run (or on the CV carrying a real summary). That is a feature
- * worth knowing about when it is offered: an enhanced profile unlocks a layout a
- * raw extraction often cannot.
- *
- * The quote is the profile's own words — the enhanced bio if Module 3 ran, else
- * the extracted summary. Nothing is written for the person here.
- *
- * Minimum: name + a bio or summary.
- */
-
 import type { CardProfile } from "../types";
 import { SHOW } from "../limits";
 import { esc, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
+import { linesForItems, linesForText, type PageBlock, type PagedContent } from "../pagination";
 import {
   achievementList,
+  bio,
   certificationList,
   chips,
   contactInline,
   educationList,
-  experienceHighlights,
+  experienceGroup,
+  experienceYears,
+  projectList,
   publicationList,
   registrationRows,
   socialIcons,
   websiteLine,
 } from "../sections";
 
-/**
- * The quote itself — the bio at display size, so it needs its own truncation.
- *
- * The shared `bio()` block wraps the text in `.iv-bio`, which is body-size muted
- * paragraph styling; that is the opposite of what this card wants. Cutting at a
- * word boundary rather than mid-word matters more here than elsewhere: at this
- * size a chopped word is the first thing the eye lands on.
- */
-function quote(p: CardProfile, maxChars = 190): string {
-  if (!nonEmpty(p.bio)) return "";
-  const text = p.bio.trim();
-  if (text.length <= maxChars) return esc(text);
-  const cut = text.slice(0, maxChars);
-  const lastSpace = cut.lastIndexOf(" ");
-  return esc((lastSpace > maxChars * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd()) + "…";
+/** The bio as the display quote — full text, no truncation (owner decision, 20 Aug 2026). */
+function quote(p: CardProfile): string {
+  return nonEmpty(p.bio) ? esc(p.bio.trim()) : "";
 }
 
-function build(p: CardProfile): string {
-  const body = joinBlocks([
-    section("Experience", () => experienceHighlights(p, SHOW.roles, SHOW.highlightsPerRole)),
-    section("Skills", () => chips(p.skills, SHOW.skills)),
-    section("Certifications", () => certificationList(p, SHOW.certifications)),
-    section("Education", () => educationList(p, SHOW.education)),
-    section("Languages", () => chips(p.languages, SHOW.languages)),
-    section("Awards", () => achievementList(p, SHOW.achievements)),
-    section("Publications", () => publicationList(p, SHOW.publications)),
-    section("Registrations", () => registrationRows(p, SHOW.registrations)),
-  ]);
+/**
+ * The body sections beneath the quote, in order — the ONE list both render paths
+ * use. The quote hero (the card's whole identity) is chrome and stays on page 1;
+ * only these flow onto continuation pages.
+ */
+function bodyBlocks(p: CardProfile): PageBlock[] {
+  const out: PageBlock[] = [];
+  const add = (html: string, weight: number) => {
+    if (html.trim()) out.push({ html, weight });
+  };
+  const exp = experienceGroup(p, SHOW.roles, SHOW.highlightsPerRole);
+  if (exp) out.push(exp);
+  add(section("Skills", () => chips(p.skills, SHOW.skills)), Math.ceil(p.skills.length / 3) + 1);
+  add(section("Projects", () => projectList(p, SHOW.projects)), linesForItems(p.projects.length, 3));
+  add(section("Certifications", () => certificationList(p, SHOW.certifications)), linesForItems(p.certifications.length));
+  add(section("Education", () => educationList(p, SHOW.education)), linesForItems(p.education.length));
+  add(section("Languages", () => chips(p.languages, SHOW.languages)), Math.ceil(p.languages.length / 4) + 1);
+  add(section("Awards", () => achievementList(p, SHOW.achievements)), linesForItems(p.achievements.length));
+  add(section("Publications", () => publicationList(p, SHOW.publications)), linesForItems(p.publications.length));
+  add(section("Registrations", () => registrationRows(p, SHOW.registrations)), linesForItems(p.registrations.length));
+  return out;
+}
+
+/** Page 1: the display quote + attribution, then the body sections that fit. */
+function renderFirst(p: CardProfile, fit: PageBlock[]): string {
+  const body = joinBlocks(fit.map((b) => b.html));
 
   const contact = contactInline(p);
   const site = websiteLine(p);
@@ -106,6 +71,7 @@ function build(p: CardProfile): string {
               : ""
           }
           ${contact ? `<div class="iv-pq-contact">${contact}</div>` : ""}
+          ${experienceYears(p)}
         </div>      </figcaption>
     </figure>
     ${body ? `<main class="iv-pq-body">${body}</main>` : ""}
@@ -115,6 +81,21 @@ function build(p: CardProfile): string {
         : ""
     }
   </div>`;
+}
+
+function build(p: CardProfile): string {
+  return renderFirst(p, bodyBlocks(p));
+}
+
+function paged(p: CardProfile): PagedContent {
+  return {
+    firstPage: (fit) => renderFirst(p, fit),
+    slim: nonEmpty(p.fullName) ? esc(p.fullName) : "",
+    blocks: bodyBlocks(p),
+    // The quote is display type, so it is taller than a line of body text — weight
+    // it at ~30 chars/line, plus the attribution caption.
+    chromeWeight: linesForText(p.bio, 30) + 4,
+  };
 }
 
 function styles(scopeId: string): string {
@@ -148,6 +129,10 @@ ${s} .iv-pq-body .iv-sec-h:first-child{margin-top:.8em}
 ${s} .iv-pq-foot{margin-top:.95em;display:flex;align-items:center;justify-content:space-between;gap:.5em;flex-wrap:wrap}
 ${s} .iv-pq-foot .iv-cinline{color:var(--iv-primary)}
 
+/* Continuation pages (2+) carry no quote — just the overflow sections in a single
+   column — so they need their own page padding to match the wrap inset. */
+${s} .iv-page-cont{padding:1.1em 1.2em}
+
 /* Display type at a narrow measure turns into three words a line, so it steps
    down rather than shredding the quote. */
 @container (max-width:320px){
@@ -158,4 +143,4 @@ ${s} .iv-pq-foot .iv-cinline{color:var(--iv-primary)}
 </style>`;
 }
 
-export const pullQuote = { build, styles };
+export const pullQuote = { build, styles, paged };

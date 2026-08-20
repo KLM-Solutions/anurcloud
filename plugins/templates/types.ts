@@ -234,7 +234,7 @@ export type TemplateKey =
   | "centre-portrait"
   | "timeline"
   | "tile-grid"
-  | "footer-anchor"
+  | "ticket-stub"
   | "corner-wedge"
   | "monogram-block"
   | "index-ledger"

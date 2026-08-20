@@ -47,6 +47,7 @@
 import type { CardProfile } from "../types";
 import { SHOW } from "../limits";
 import { esc, nonEmpty } from "../helpers";
+import { groupBlock, linesForItems, linesForText, type PageBlock, type PagedContent } from "../pagination";
 import {
   achievementList,
   bio,
@@ -54,40 +55,43 @@ import {
   chips,
   contactInline,
   educationList,
-  experienceHighlights,
+  experienceHighlightItems,
+  experienceYears,
+  projectList,
   publicationList,
   registrationRows,
   socialIcons,
   websiteLine,
 } from "../sections";
 
-/** A numbered row. Built as a pair so numbering can happen after the filtering. */
+/** A numbered row. Built as a triple so numbering can happen after filtering. */
 interface Row {
   title: string;
   body: string;
+  weight: number;
 }
 
 function rows(p: CardProfile): Row[] {
   const candidates: Row[] = [
-    { title: "Profile", body: bio(p, SHOW.bioChars) },
-    { title: "Experience", body: experienceHighlights(p, SHOW.roles, SHOW.highlightsPerRole) },
-    { title: "Skills", body: chips(p.skills, SHOW.skills) },
-    { title: "Certifications", body: certificationList(p, SHOW.certifications) },
-    { title: "Awards", body: achievementList(p, SHOW.achievements) },
-    { title: "Publications", body: publicationList(p, SHOW.publications) },
-    { title: "Registrations", body: registrationRows(p, SHOW.registrations) },
-    { title: "Education", body: educationList(p, SHOW.education) },
-    { title: "Languages", body: chips(p.languages, SHOW.languages) },
+    { title: "Profile", body: bio(p, SHOW.bioChars), weight: linesForText(p.bio) + 1 },
+    // Experience is handled separately as a splittable group (see contentBlocks).
+    { title: "__EXPERIENCE__", body: p.experience.length ? "x" : "", weight: 0 },
+    { title: "Projects", body: projectList(p, SHOW.projects), weight: linesForItems(p.projects.length, 3) },
+    { title: "Skills", body: chips(p.skills, SHOW.skills), weight: Math.ceil(p.skills.length / 3) + 1 },
+    { title: "Certifications", body: certificationList(p, SHOW.certifications), weight: linesForItems(p.certifications.length) },
+    { title: "Awards", body: achievementList(p, SHOW.achievements), weight: linesForItems(p.achievements.length) },
+    { title: "Publications", body: publicationList(p, SHOW.publications), weight: linesForItems(p.publications.length) },
+    { title: "Registrations", body: registrationRows(p, SHOW.registrations), weight: linesForItems(p.registrations.length) },
+    { title: "Education", body: educationList(p, SHOW.education), weight: linesForItems(p.education.length) },
+    { title: "Languages", body: chips(p.languages, SHOW.languages), weight: Math.ceil(p.languages.length / 4) + 1 },
   ];
   return candidates.filter((r) => r.body.trim().length > 0);
 }
 
-function build(p: CardProfile): string {
+/** Section 00 — the identity, the card's fixed head, always on page 1. */
+function identity(p: CardProfile): string {
   const contact = contactInline(p);
-  const site = websiteLine(p);
-  const socials = socialIcons(p.socialLinks, SHOW.socials);
-
-  const identity = `<div class="iv-nb-row">
+  return `<div class="iv-nb-row">
     <div class="iv-nb-n">00</div>
     <div class="iv-nb-c">
       ${nonEmpty(p.fullName) ? `<div class="iv-nb-name">${esc(p.fullName)}</div>` : ""}
@@ -98,21 +102,63 @@ function build(p: CardProfile): string {
             )}</div>`
           : ""
       }
+      ${experienceYears(p)}
       ${contact ? `<div class="iv-nb-contact">${contact}</div>` : ""}    </div>
   </div>`;
+}
 
-  const numbered = rows(p)
-    .map(
-      (r, i) => `<div class="iv-nb-row">
-        <div class="iv-nb-n">${String(i + 1).padStart(2, "0")}</div>
+/**
+ * The numbered sections + footer as page blocks. Numbers are BAKED IN here (01,
+ * 02, …) so the sequence stays correct even when the sections flow across pages.
+ */
+function contentBlocks(p: CardProfile): PageBlock[] {
+  const out: PageBlock[] = [];
+  rows(p).forEach((r, i) => {
+    const num = String(i + 1).padStart(2, "0");
+    if (r.title === "__EXPERIENCE__") {
+      // Experience as a numbered, SPLITTABLE section: the number + title is the
+      // group heading; each role is an item under an empty number gutter, so a
+      // long career flows across pages instead of forming one giant page.
+      const items = experienceHighlightItems(p, SHOW.roles, SHOW.highlightsPerRole).map((it) => ({
+        html: `<div class="iv-nb-row"><div class="iv-nb-n"></div><div class="iv-nb-c">${it.html}</div></div>`,
+        weight: it.weight,
+      }));
+      const heading = `<div class="iv-nb-row"><div class="iv-nb-n">${num}</div><div class="iv-nb-c"><h3 class="iv-nb-t">Experience</h3></div></div>`;
+      const group = groupBlock(heading, "Experience", items);
+      if (group) out.push(group);
+      return;
+    }
+    out.push({
+      html: `<div class="iv-nb-row">
+        <div class="iv-nb-n">${num}</div>
         <div class="iv-nb-c"><h3 class="iv-nb-t">${esc(r.title)}</h3>${r.body}</div>
       </div>`,
-    )
-    .join("");
+      weight: r.weight + 1,
+    });
+  });
 
-  return `<div class="iv-nb-wrap">${identity}${numbered}${
-    site || socials ? `<footer class="iv-nb-foot">${site}${socials}</footer>` : ""
-  }</div>`;
+  const site = websiteLine(p);
+  const socials = socialIcons(p.socialLinks, SHOW.socials);
+  if (site || socials) {
+    out.push({ html: `<footer class="iv-nb-foot">${site}${socials}</footer>`, weight: 2 });
+  }
+  return out;
+}
+
+function build(p: CardProfile): string {
+  const body = contentBlocks(p)
+    .map((b) => b.html)
+    .join("");
+  return `<div class="iv-page">${identity(p)}${body}</div>`;
+}
+
+function paged(p: CardProfile): PagedContent {
+  return {
+    chrome: identity(p),
+    slim: nonEmpty(p.fullName) ? esc(p.fullName) : "",
+    blocks: contentBlocks(p),
+    chromeWeight: 5, // the 00 identity row
+  };
 }
 
 function styles(scopeId: string): string {
@@ -122,10 +168,12 @@ function styles(scopeId: string): string {
    which is what keeps this readable as an editorial page rather than a form.
    (No backticks in this block — it is inside a template literal.) */
 ${s}.iv-numbered{background:var(--iv-surface)}
-${s} .iv-nb-wrap{padding:1.25em 1.15em 1.1em}
+${s} .iv-page{padding:1.25em 1.15em 1.1em}
 
 ${s} .iv-nb-row{display:grid;grid-template-columns:2.5em 1fr;gap:.65em;align-items:start}
 ${s} .iv-nb-row+.iv-nb-row{margin-top:1.05em}
+/* On a continuation page the first row leads — no extra top gap needed. */
+${s} .iv-page-cont .iv-nb-row:first-child{margin-top:0}
 
 /* Tinted rather than outlined so the numerals survive a print path that drops
    text strokes. Mixed toward the surface, not toward transparent, for the same
@@ -150,4 +198,4 @@ ${s} .iv-nb-foot .iv-cinline{color:var(--iv-primary)}
 </style>`;
 }
 
-export const numbered = { build, styles };
+export const numbered = { build, styles, paged };

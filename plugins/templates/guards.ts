@@ -335,10 +335,10 @@ export const MINIMUMS: Record<TemplateKey, Minimum> = {
     test: (p) => hasText(p.fullName),
     reason: () => "Needs at least a name.",
   },
-  "footer-anchor": {
+  "ticket-stub": {
     label: "Name and 1 fillable section",
     test: (p) => hasText(p.fullName) && countFilledSections(p) >= 1,
-    reason: () => "Needs a name and at least one section to sit above the anchor.",
+    reason: () => "Needs a name and at least one section to fill the stub.",
   },
   "corner-wedge": {
     label: "Name and 1 fillable section",

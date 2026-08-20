@@ -1,44 +1,8 @@
-/**
- * Professional template 13 — "Overlap" (DEV-3048)
- *
- *   ┌───────────────────────┐
- *   │░░░░░░░░░░░░░░░ 12 YRS░│  ← filled zone, no name on it
- *   │░░░░░░░░░░░░░░░░░░░░░░░│
- *   │  ┌─────────────────┐  │
- *   │  │ Priya Menon     │  │  ← white plate STRADDLES the edge
- *   │  │ VP Eng · Zoho   │  │
- *   │  └─────────────────┘  │
- *   │  Experience           │
- *   │  Role · Company       │
- *   └───────────────────────┘
- *
- * Structurally: layered. A filled zone runs across the top carrying no identity
- * at all, and a raised white plate is pulled up over its bottom edge so it sits
- * half on the colour and half on the page. The silhouette is a rectangle
- * interrupting a horizontal edge — nothing else in the 20 has depth.
- *
- * ── Not Hero Split ────────────────────────────────────────────────────────
- * Hero Split (student 2) puts the name *inside* a top band, so the band and the
- * identity are one object and the top of the card is a solid ruled rectangle.
- * Here the band is empty of identity, the name sits on a separate white surface
- * with its own shadow, and the top edge of the card is broken rather than solid.
- * Cover the colour and the two are still different: one has a plain header, the
- * other has a floating plate.
- *
- * ── The negative margin is bounded ────────────────────────────────────────
- * The plate is lifted with a fixed em offset that is always smaller than the
- * zone above it, so it can never escape the card. The root clips anyway
- * (`overflow:hidden` in the shared styles), but relying on the clip would mean
- * the plate silently loses its top edge at a large fontScale instead of the
- * layout simply holding.
- *
- * Minimum: name + 2 fillable sections.
- */
-
 import type { CardProfile } from "../types";
 import { SHOW } from "../limits";
 import { esc, joinParts, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
+import { linesForItems, linesForText, type PageBlock, type PagedContent } from "../pagination";
 import {
   achievementList,
   bio,
@@ -46,30 +10,48 @@ import {
   chips,
   contactInline,
   educationList,
-  experienceHighlights,
+  experienceGroup,
+  projectList,
   publicationList,
   registrationRows,
   socialIcons,
   websiteLine,
 } from "../sections";
 
-function build(p: CardProfile): string {
+
+/**
+ * The body sections, in order — the ONE list both render paths consume, each
+ * carrying an estimated weight for pagination. The zone + plate are chrome and
+ * stay on page 1; only these flow onto continuation pages.
+ */
+function bodyBlocks(p: CardProfile): PageBlock[] {
+  const out: PageBlock[] = [];
+  const add = (html: string, weight: number) => {
+    if (html.trim()) out.push({ html, weight });
+  };
+  add(section("Profile", () => bio(p, SHOW.bioChars)), linesForText(p.bio));
+  const exp = experienceGroup(p, SHOW.roles, SHOW.highlightsPerRole);
+  if (exp) out.push(exp);
+  add(section("Projects", () => projectList(p, SHOW.projects)), linesForItems(p.projects.length, 3));
+  add(section("Skills", () => chips(p.skills, SHOW.skills)), Math.ceil(p.skills.length / 3) + 1);
+  add(section("Certifications", () => certificationList(p, SHOW.certifications)), linesForItems(p.certifications.length));
+  add(section("Education", () => educationList(p, SHOW.education)), linesForItems(p.education.length));
+  add(section("Languages", () => chips(p.languages, SHOW.languages)), Math.ceil(p.languages.length / 4) + 1);
+  add(section("Awards", () => achievementList(p, SHOW.achievements)), linesForItems(p.achievements.length));
+  add(section("Publications", () => publicationList(p, SHOW.publications)), linesForItems(p.publications.length));
+  add(section("Registrations", () => registrationRows(p, SHOW.registrations)), linesForItems(p.registrations.length));
+  return out;
+}
+
+/** The layered chrome (zone + raised plate) plus the body blocks that fit page 1. */
+function renderFirst(p: CardProfile, fit: PageBlock[]): string {
   // The band carries the standing facts, never the name — that is the plate's job.
   const banner = joinParts(
     [p.totalYearsExperience ? `${p.totalYearsExperience} experience` : null, p.location],
     " · ",
   );
 
-  const body = joinBlocks([
-    section("Profile", () => bio(p, SHOW.bioChars)),
-    section("Experience", () => experienceHighlights(p, SHOW.roles, SHOW.highlightsPerRole)),
-    section("Skills", () => chips(p.skills, SHOW.skills)),
-    section("Certifications", () => certificationList(p, SHOW.certifications)),
-    section("Education", () => educationList(p, SHOW.education)),
-    section("Awards", () => achievementList(p, SHOW.achievements)),
-    section("Publications", () => publicationList(p, SHOW.publications)),
-    section("Registrations", () => registrationRows(p, SHOW.registrations)),
-  ]);
+  const body = joinBlocks(fit.map((b) => b.html));
 
   const contact = contactInline(p);
   const site = websiteLine(p);
@@ -96,6 +78,19 @@ function build(p: CardProfile): string {
         : ""
     }
   </div>`;
+}
+
+function build(p: CardProfile): string {
+  return renderFirst(p, bodyBlocks(p));
+}
+
+function paged(p: CardProfile): PagedContent {
+  return {
+    firstPage: (fit) => renderFirst(p, fit),
+    slim: nonEmpty(p.fullName) ? esc(p.fullName) : "",
+    blocks: bodyBlocks(p),
+    chromeWeight: 6, // banner + plate (name, role, contact)
+  };
 }
 
 function styles(scopeId: string): string {
@@ -132,10 +127,14 @@ ${s} .iv-ov-body .iv-sec-h:first-child{margin-top:.2em}
 ${s} .iv-ov-foot{padding:.9em 1.05em 1.05em;display:flex;align-items:center;justify-content:space-between;gap:.5em;flex-wrap:wrap}
 ${s} .iv-ov-foot .iv-cinline{color:var(--iv-primary)}
 
+/* Continuation pages (2+) carry no zone or plate — just the overflow sections in
+   a single column — so they need their own page padding. */
+${s} .iv-page-cont{padding:.9em 1.05em}
+
 @container (max-width:320px){
   ${s} .iv-ov-plate{margin-left:.65em;margin-right:.65em;padding:.7em .75em}
 }
 </style>`;
 }
 
-export const overlap = { build, styles };
+export const overlap = { build, styles, paged };
