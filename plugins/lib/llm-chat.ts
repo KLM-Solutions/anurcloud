@@ -21,6 +21,16 @@ import OpenAI from "openai";
 /** Model id — env-overridable so we can point at a local LLM (Ollama/Qwen). */
 export const MODEL = process.env.LOCAL_LLM_MODEL ?? "gpt-4.1";
 
+/**
+ * Both jobs (enhancement, card-picking) are GROUNDED, not creative — the model
+ * rewrites or ranks facts already in the profile, it must not invent. Left at the
+ * SDK defaults (Ollama 0.8, OpenAI 1.0) a small model embellishes: on a bio it
+ * expanded "CKA" into "Certified Kubernetes Administrator", words that were not
+ * in the profile. A low temperature cuts that and makes output more consistent,
+ * with no quality cost for a fact-bound task. Env-overridable for experiments.
+ */
+const TEMPERATURE = Number(process.env.LLM_TEMPERATURE ?? "0.2");
+
 /** True when a local LLM endpoint is configured. */
 export const isLocalLLM = (): boolean => !!process.env.LOCAL_LLM_BASE_URL;
 
@@ -55,7 +65,7 @@ export async function runChatJSON(system: string, user: string, tag = "llm"): Pr
         think: false,
         stream: false,
         format: "json",
-        options: { num_predict: 2048 },
+        options: { num_predict: 2048, temperature: TEMPERATURE },
         messages: [
           { role: "system", content: system },
           { role: "user", content: user },
@@ -77,6 +87,7 @@ export async function runChatJSON(system: string, user: string, tag = "llm"): Pr
   const completion = await getClient().chat.completions.create({
     model: MODEL,
     max_tokens: 2048,
+    temperature: TEMPERATURE,
     response_format: { type: "json_object" },
     messages: [
       { role: "system", content: system },

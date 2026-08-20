@@ -3,6 +3,7 @@ import { fail, tokenMatches } from "@/lib/route-helpers";
 import { profileToCard } from "@/lib/profile-to-card";
 import { brandToTheme } from "@/lib/brand-to-theme";
 import {
+  cardPageCount,
   eligibleTemplates,
   offerableTemplates,
   plannedTemplates,
@@ -182,6 +183,9 @@ export async function POST(request: NextRequest) {
 
     try {
       result.html = renderCard(info.id, card, outcome.theme);
+      // How many pages the card flowed into — 1 for a normal profile, more when
+      // a heavy CV paginates rather than growing into one tall card.
+      result.pages = cardPageCount(info.id, card, outcome.theme);
       result.rendered = { id: info.id, key: info.key, name: info.name };
     } catch (err) {
       console.error("[template] render error:", err);

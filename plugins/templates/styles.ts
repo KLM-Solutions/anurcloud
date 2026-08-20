@@ -35,6 +35,28 @@ ${s} a{color:inherit;text-decoration:none}
 ${s} a:hover{text-decoration:underline}
 ${s} img{max-width:100%;display:block}
 
+/* Pagination (pagination.ts). A page is a MIN-height frame, never a hard clip:
+   if a line estimate is slightly off the page just runs a touch longer, so
+   content is never hidden. Pages 2+ are marked with a hairline and carry a slim
+   repeated header instead of the full identity chrome.
+   (No backticks in this block — it is inside a template literal.) */
+${s}{--iv-page-h:537px}
+${s} .iv-page{position:relative;display:flow-root}
+${s} .iv-page--filled{min-height:var(--iv-page-h)}
+/* Continuation pages (2+) carry no page-1 chrome/wrapper, so cards that put their
+   padding on an inner wrapper would leave these pages unpadded — content touching
+   the card edge. This default pads every continuation page; a card may override it
+   for a tighter layout (e.g. Tile Grid). */
+${s} .iv-page-cont{border-top:1px dashed var(--iv-edge);padding:1.1em}
+${s} .iv-page-slim{font-family:var(--iv-font-h);font-weight:700;font-size:.8em;color:var(--iv-muted);padding-bottom:.5em;margin-bottom:.5em;border-bottom:1px solid var(--iv-edge)}
+/* Page number sits in normal flow, right-aligned, AFTER the content — never
+   absolutely over it, or a short final page paints the number on top of the last
+   line (contact row). A small muted caption that always clears the text. The
+   right/bottom padding insets it on page 1, where it is a sibling of the card's
+   own padded wrapper rather than inside a padded continuation page. */
+${s} .iv-page-num{display:block;text-align:right;font-size:.6em;color:var(--iv-muted);opacity:.7;margin-top:.7em;padding:0 1.1em .5em 0}
+${s} .iv-page-cont .iv-page-num{padding-right:0}
+
 ${s} .iv-name{font-family:var(--iv-font-h);font-weight:700;font-size:1.25em;line-height:1.2;letter-spacing:-.01em}
 ${s} .iv-role{font-size:.8em;color:var(--iv-muted);margin-top:.15em}
 ${s} .iv-bio{font-size:.8em;color:var(--iv-text);opacity:.85;margin-top:.5em}

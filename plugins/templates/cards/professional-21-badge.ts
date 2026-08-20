@@ -40,7 +40,8 @@ import type { CardProfile } from "../types";
 import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
 import { avatar, esc, nonEmpty } from "../helpers";
-import { section, joinBlocks } from "../guards";
+import { section } from "../guards";
+import { linesForItems, linesForText, type PageBlock, type PagedContent } from "../pagination";
 import {
   achievementList,
   bio,
@@ -48,7 +49,8 @@ import {
   chips,
   contactInline,
   educationList,
-  experienceHighlights,
+  experienceGroup,
+  experienceYears,
   projectList,
   publicationList,
   registrationRows,
@@ -56,38 +58,62 @@ import {
   websiteLine,
 } from "../sections";
 
-function build(p: CardProfile, theme: ResolvedTheme): string {
+/** The laminated badge panel — the card's signature, always on page 1. */
+function badgePanel(p: CardProfile, theme: ResolvedTheme): string {
   const contact = contactInline(p);
-  const site = websiteLine(p);
-  const socials = socialIcons(p.socialLinks, SHOW.socials);
   const sub = [p.designation, p.currentCompany].filter(nonEmpty).join(" · ");
-
-  const badge = `<header class="iv-bd-badge">
+  return `<header class="iv-bd-badge">
       ${avatar(p, "iv-bd-av", theme.logo?.url)}
       <div class="iv-bd-who">
         ${nonEmpty(p.fullName) ? `<div class="iv-name">${esc(p.fullName)}</div>` : ""}
         ${sub ? `<div class="iv-role">${esc(sub)}</div>` : ""}
         ${contact ? `<div class="iv-bd-contact">${contact}</div>` : ""}
+        ${experienceYears(p)}
       </div>
     </header>`;
+}
 
-  const body = joinBlocks([
-    section("Profile", () => bio(p, SHOW.bioChars)),
-    section("Experience", () => experienceHighlights(p, SHOW.roles, SHOW.highlightsPerRole)),
-    section("Skills", () => chips(p.skills, SHOW.skills)),
-    section("Projects", () => projectList(p, SHOW.projects)),
-    section("Certifications", () => certificationList(p, SHOW.certifications)),
-    section("Awards", () => achievementList(p, SHOW.achievements)),
-    section("Publications", () => publicationList(p, SHOW.publications)),
-    section("Registrations", () => registrationRows(p, SHOW.registrations)),
-    section("Education", () => educationList(p, SHOW.education)),
-    section("Languages", () => chips(p.languages, SHOW.languages)),
-  ]);
+/** The body sections + footer, in order — one list both render paths consume. */
+function contentBlocks(p: CardProfile): PageBlock[] {
+  const out: PageBlock[] = [];
+  const add = (html: string, weight: number) => {
+    if (html.trim()) out.push({ html, weight });
+  };
+  add(section("Profile", () => bio(p, SHOW.bioChars)), linesForText(p.bio) + 1);
+  const exp = experienceGroup(p, SHOW.roles, SHOW.highlightsPerRole);
+  if (exp) out.push(exp);
+  add(section("Skills", () => chips(p.skills, SHOW.skills)), Math.ceil(p.skills.length / 3) + 1);
+  add(section("Projects", () => projectList(p, SHOW.projects)), linesForItems(p.projects.length, 3));
+  add(section("Certifications", () => certificationList(p, SHOW.certifications)), linesForItems(p.certifications.length));
+  add(section("Awards", () => achievementList(p, SHOW.achievements)), linesForItems(p.achievements.length));
+  add(section("Publications", () => publicationList(p, SHOW.publications)), linesForItems(p.publications.length));
+  add(section("Registrations", () => registrationRows(p, SHOW.registrations)), linesForItems(p.registrations.length));
+  add(section("Education", () => educationList(p, SHOW.education)), linesForItems(p.education.length));
+  add(section("Languages", () => chips(p.languages, SHOW.languages)), Math.ceil(p.languages.length / 4) + 1);
 
-  const foot =
-    site || socials ? `<footer class="iv-bd-foot">${site}${socials}</footer>` : "";
+  const site = websiteLine(p);
+  const socials = socialIcons(p.socialLinks, SHOW.socials);
+  add(site || socials ? `<footer class="iv-bd-foot">${site}${socials}</footer>` : "", 2);
+  return out;
+}
 
-  return `<div class="iv-bd-wrap">${badge}<main class="iv-bd-body">${body}</main>${foot}</div>`;
+/** Page 1: the badge panel above the body sections that fit. */
+function firstPage(p: CardProfile, theme: ResolvedTheme, fit: PageBlock[]): string {
+  const body = fit.map((b) => b.html).join("");
+  return `<div class="iv-bd-wrap">${badgePanel(p, theme)}<main class="iv-bd-body">${body}</main></div>`;
+}
+
+function build(p: CardProfile, theme: ResolvedTheme): string {
+  return firstPage(p, theme, contentBlocks(p));
+}
+
+function paged(p: CardProfile, theme: ResolvedTheme): PagedContent {
+  return {
+    firstPage: (fit) => firstPage(p, theme, fit),
+    slim: nonEmpty(p.fullName) ? esc(p.fullName) : "",
+    blocks: contentBlocks(p),
+    chromeWeight: 5, // the badge panel
+  };
 }
 
 function styles(scopeId: string): string {
@@ -95,6 +121,10 @@ function styles(scopeId: string): string {
   return `<style>
 ${s}.iv-badge{background:var(--iv-surface)}
 ${s} .iv-bd-wrap{padding:1.1em 1.05em 1.05em}
+/* Continuation pages have no badge panel — the overflow sections sit in a plain
+   column with the same padding. */
+${s} .iv-page-cont{padding:1.1em 1.05em 1.05em}
+${s} .iv-page-cont .iv-sec-h:first-of-type{margin-top:0}
 
 /* The laminated panel: a real border plus a faint brand tint, so it reads as a
    card-within-a-card rather than a coloured banner. Border and tint both survive
@@ -122,4 +152,4 @@ ${s} .iv-bd-foot .iv-cinline{color:var(--iv-primary)}
 </style>`;
 }
 
-export const badge = { build, styles };
+export const badge = { build, styles, paged };

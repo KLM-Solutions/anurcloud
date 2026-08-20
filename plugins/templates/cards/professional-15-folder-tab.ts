@@ -1,46 +1,8 @@
-/**
- * Professional template 15 — "Folder Tab" (DEV-3050)
- *
- *   ┌──────────────────┐
- *   │░░░░░░░░░░░░░┐    │  ← the tab stops short of the right edge
- *   │░Priya Menon ░│    │
- *   │░VP Eng·Zoho ░│    │
- *   ├══════════════════┤  ← the tab's base continues as a full rule
- *   │ EXPERIENCE       │
- *   │ Role · Company   │
- *   │ SKILLS           │
- *   └──────────────────┘
- *
- * Structurally: a file folder. The identity sits on a part-width tab that stops
- * short of the right edge, and the tab's bottom edge continues across the whole
- * card as a heavy rule. The top edge of the card is therefore asymmetric — filled
- * on the left, bare on the right — which is a silhouette nothing else in the 20
- * has.
- *
- * ── Not Monogram Block ────────────────────────────────────────────────────
- * Monogram Block (student 8) is the other part-width colour block, and the two
- * differ in every dimension that reads at a glance: that one is roughly square,
- * holds oversized *initials* and nothing else, and the name sits beside it on
- * white. This one is wide and shallow, holds the *name and title itself*, and has
- * nothing beside it — the space to its right is empty page. It also has the rule,
- * which is the part that makes it read as a tab rather than as a block.
- *
- * ── Why the tab is inline-block and not a width ───────────────────────────
- * The tab sizes to its content up to a cap, so a short name gets a short tab and
- * a long one gets a long tab that still stops before the edge. A fixed
- * percentage would leave "Raj K" floating on a half-empty tab, which reads as a
- * layout bug rather than as a design.
- *
- * Thin data: a tab with a name on it and an empty sheet below is a coherent
- * object — a folder that happens to be empty. That is why it accepts a name
- * alone, which only three other cards in the 20 do.
- * Minimum: name only.
- */
-
 import type { CardProfile } from "../types";
 import { SHOW } from "../limits";
 import { esc, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
+import { linesForItems, linesForText, type PageBlock, type PagedContent } from "../pagination";
 import {
   achievementList,
   bio,
@@ -48,25 +10,45 @@ import {
   chips,
   contactRows,
   educationList,
-  experienceHighlights,
+  experienceGroup,
+  experienceYears,
+  projectList,
   publicationList,
   registrationRows,
   socialIcons,
   websiteLine,
 } from "../sections";
 
-function build(p: CardProfile): string {
-  const body = joinBlocks([
-    section("Profile", () => bio(p, SHOW.bioChars)),
-    section("Experience", () => experienceHighlights(p, SHOW.roles, SHOW.highlightsPerRole)),
-    section("Skills", () => chips(p.skills, SHOW.skills)),
-    section("Certifications", () => certificationList(p, SHOW.certifications)),
-    section("Education", () => educationList(p, SHOW.education)),
-    section("Contact", () => contactRows(p)),
-    section("Awards", () => achievementList(p, SHOW.achievements)),
-    section("Publications", () => publicationList(p, SHOW.publications)),
-    section("Registrations", () => registrationRows(p, SHOW.registrations)),
-  ]);
+
+/**
+ * The sheet's content sections, in order — the ONE list both render paths use.
+ * The tab (identity) is chrome and stays on page 1; these flow onto continuation
+ * pages when a career runs long.
+ */
+function bodyBlocks(p: CardProfile): PageBlock[] {
+  const out: PageBlock[] = [];
+  const add = (html: string, weight: number) => {
+    if (html.trim()) out.push({ html, weight });
+  };
+  add(experienceYears(p), 1);
+  add(section("Profile", () => bio(p, SHOW.bioChars)), linesForText(p.bio));
+  const exp = experienceGroup(p, SHOW.roles, SHOW.highlightsPerRole);
+  if (exp) out.push(exp);
+  add(section("Projects", () => projectList(p, SHOW.projects)), linesForItems(p.projects.length, 3));
+  add(section("Skills", () => chips(p.skills, SHOW.skills)), Math.ceil(p.skills.length / 3) + 1);
+  add(section("Certifications", () => certificationList(p, SHOW.certifications)), linesForItems(p.certifications.length));
+  add(section("Education", () => educationList(p, SHOW.education)), linesForItems(p.education.length));
+  add(section("Languages", () => chips(p.languages, SHOW.languages)), Math.ceil(p.languages.length / 4) + 1);
+  add(section("Contact", () => contactRows(p)), 3);
+  add(section("Awards", () => achievementList(p, SHOW.achievements)), linesForItems(p.achievements.length));
+  add(section("Publications", () => publicationList(p, SHOW.publications)), linesForItems(p.publications.length));
+  add(section("Registrations", () => registrationRows(p, SHOW.registrations)), linesForItems(p.registrations.length));
+  return out;
+}
+
+/** Page 1: the folder tab + rule, then the body sections that fit beneath it. */
+function renderFirst(p: CardProfile, fit: PageBlock[]): string {
+  const body = joinBlocks(fit.map((b) => b.html));
 
   const site = websiteLine(p);
   const socials = socialIcons(p.socialLinks, SHOW.socials);
@@ -90,6 +72,19 @@ function build(p: CardProfile): string {
         : ""
     }
   </div>`;
+}
+
+function build(p: CardProfile): string {
+  return renderFirst(p, bodyBlocks(p));
+}
+
+function paged(p: CardProfile): PagedContent {
+  return {
+    firstPage: (fit) => renderFirst(p, fit),
+    slim: nonEmpty(p.fullName) ? esc(p.fullName) : "",
+    blocks: bodyBlocks(p),
+    chromeWeight: 3, // tab: name + role
+  };
 }
 
 function styles(scopeId: string): string {
@@ -116,6 +111,10 @@ ${s} .iv-ft-body .iv-sec-h:first-child{margin-top:.7em}
 ${s} .iv-ft-foot{padding:.9em 1.1em 1.05em;display:flex;align-items:center;justify-content:space-between;gap:.5em;flex-wrap:wrap}
 ${s} .iv-ft-foot .iv-cinline{color:var(--iv-primary)}
 
+/* Continuation pages (2+) carry no tab — just the overflow sections — so they
+   need their own page padding to match the body inset. */
+${s} .iv-page-cont{padding:.7em 1.1em 1.05em}
+
 /* On a narrow card an 80% cap leaves a sliver of page, which reads as a mistake
    rather than as a tab. Widen the tab and let the rule do more of the work. */
 @container (max-width:320px){
@@ -124,4 +123,4 @@ ${s} .iv-ft-foot .iv-cinline{color:var(--iv-primary)}
 </style>`;
 }
 
-export const folderTab = { build, styles };
+export const folderTab = { build, styles, paged };

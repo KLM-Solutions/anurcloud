@@ -1,50 +1,8 @@
-/**
- * Professional template 19 — "Edge Spine" (DEV-3054)
- *
- *   ┌────────────────────────┬──┐
- *   │ VP Engineering · Zoho  │░P│
- *   │ priya@… · +91… ·Chennai│░R│
- *   │ ────────────────────── │░I│
- *   │ EXPERIENCE             │░Y│
- *   │  Role · Company        │░A│
- *   │   • highlight          │░ │
- *   │ SKILLS                 │░M│
- *   │ Go · Kubernetes        │░…│
- *   └────────────────────────┴──┘
- *        ^ the name runs UP the right edge
- *
- * Structurally: the name is set vertically in a narrow filled strip on the right
- * edge, like the spine of a book, and the body takes the rest of the width. It is
- * the only card in the 20 that rotates anything, so it is identified before a
- * word of it is read — including in grayscale, where the vertical strip is the
- * whole silhouette.
- *
- * ── Not Side Rail, not Split Halves ───────────────────────────────────────
- * Side Rail (student 1) is a *left* rail at about a third of the width holding an
- * avatar and contact rows. Split Halves (12) is an equal *right* half holding
- * whole sections. This is a strip barely two characters wide, on the right, that
- * holds exactly one thing: the name. Proportion and rotation both differ, which
- * is two structural axes rather than one.
- *
- * ── The name lives ONLY on the spine ──────────────────────────────────────
- * That is what makes the strip load-bearing instead of decorative — remove it and
- * the card has no name. Two consequences the CSS has to handle rather than hope
- * about:
- *   - the strip stretches to the full card height so long names have room, and
- *     `min-height` on the wrap guarantees some height even on a short card
- *   - the vertical text is allowed to WRAP to a second vertical line, which is
- *     why the spine is sized to its content up to a cap rather than to a fixed
- *     width. "Venkataraghavan Subramanian" turns into two lines, not into a
- *     clipped name.
- *
- * Minimum: name + 2 fillable sections — a spine beside an empty body is a strip,
- * not a card.
- */
-
 import type { CardProfile } from "../types";
 import { SHOW } from "../limits";
 import { esc, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
+import { linesForItems, linesForText, type PageBlock, type PagedContent } from "../pagination";
 import {
   achievementList,
   bio,
@@ -52,25 +10,43 @@ import {
   chips,
   contactInline,
   educationList,
-  experienceHighlights,
+  experienceGroup,
+  experienceYears,
+  projectList,
   publicationList,
   registrationRows,
   socialIcons,
   websiteLine,
 } from "../sections";
 
-function build(p: CardProfile): string {
-  const body = joinBlocks([
-    section("Profile", () => bio(p, SHOW.bioChars)),
-    section("Experience", () => experienceHighlights(p, SHOW.roles, SHOW.highlightsPerRole)),
-    section("Skills", () => chips(p.skills, SHOW.skills)),
-    section("Certifications", () => certificationList(p, SHOW.certifications)),
-    section("Education", () => educationList(p, SHOW.education)),
-    section("Languages", () => chips(p.languages, SHOW.languages)),
-    section("Awards", () => achievementList(p, SHOW.achievements)),
-    section("Publications", () => publicationList(p, SHOW.publications)),
-    section("Registrations", () => registrationRows(p, SHOW.registrations)),
-  ]);
+
+/**
+ * The body sections, in order — the ONE list both render paths use. The vertical
+ * spine (the name) is chrome that stays on page 1; only these flow onto
+ * continuation pages, so the name is never repeated below page 1.
+ */
+function bodyBlocks(p: CardProfile): PageBlock[] {
+  const out: PageBlock[] = [];
+  const add = (html: string, weight: number) => {
+    if (html.trim()) out.push({ html, weight });
+  };
+  add(section("Profile", () => bio(p, SHOW.bioChars)), linesForText(p.bio));
+  const exp = experienceGroup(p, SHOW.roles, SHOW.highlightsPerRole);
+  if (exp) out.push(exp);
+  add(section("Skills", () => chips(p.skills, SHOW.skills)), Math.ceil(p.skills.length / 3) + 1);
+  add(section("Projects", () => projectList(p, SHOW.projects)), linesForItems(p.projects.length, 3));
+  add(section("Certifications", () => certificationList(p, SHOW.certifications)), linesForItems(p.certifications.length));
+  add(section("Education", () => educationList(p, SHOW.education)), linesForItems(p.education.length));
+  add(section("Languages", () => chips(p.languages, SHOW.languages)), Math.ceil(p.languages.length / 4) + 1);
+  add(section("Awards", () => achievementList(p, SHOW.achievements)), linesForItems(p.achievements.length));
+  add(section("Publications", () => publicationList(p, SHOW.publications)), linesForItems(p.publications.length));
+  add(section("Registrations", () => registrationRows(p, SHOW.registrations)), linesForItems(p.registrations.length));
+  return out;
+}
+
+/** Page 1: the body (header + fitting sections) beside the vertical name spine. */
+function renderFirst(p: CardProfile, fit: PageBlock[]): string {
+  const body = joinBlocks(fit.map((b) => b.html));
 
   const contact = contactInline(p);
   const site = websiteLine(p);
@@ -88,6 +64,7 @@ function build(p: CardProfile): string {
               : ""
           }
           ${contact ? `<div class="iv-es-contact">${contact}</div>` : ""}
+          ${experienceYears(p)}
         </div>      </header>
       ${body ? `<main class="iv-es-main">${body}</main>` : ""}
       ${
@@ -102,6 +79,24 @@ function build(p: CardProfile): string {
         : ""
     }
   </div>`;
+}
+
+function build(p: CardProfile): string {
+  return renderFirst(p, bodyBlocks(p));
+}
+
+function paged(p: CardProfile): PagedContent {
+  return {
+    firstPage: (fit) => renderFirst(p, fit),
+    // NOT the name: the name lives only on the spine (page 1), and repeating it in
+    // a continuation header would both duplicate it and defeat the layout.
+    slim:
+      nonEmpty(p.designation) || nonEmpty(p.currentCompany)
+        ? esc([p.designation, p.currentCompany].filter(nonEmpty).join(" · "))
+        : "",
+    blocks: bodyBlocks(p),
+    chromeWeight: 4, // role + contact + years
+  };
 }
 
 function styles(scopeId: string): string {
@@ -136,6 +131,10 @@ ${s} .iv-es-main .iv-sec-h:first-child{margin-top:.75em}
 ${s} .iv-es-foot{margin-top:.9em;display:flex;align-items:center;justify-content:space-between;gap:.5em;flex-wrap:wrap}
 ${s} .iv-es-foot .iv-cinline{color:var(--iv-primary)}
 
+/* Continuation pages (2+) carry no spine — just the overflow sections in a single
+   column — so they need their own page padding. */
+${s} .iv-page-cont{padding:1.15em 1.1em 1.05em}
+
 /* A narrow card cannot spare 5.5em for a strip and still hold a line of text. */
 @container (max-width:320px){
   ${s} .iv-es-spine{max-width:3.6em;padding:.85em .45em}
@@ -144,4 +143,4 @@ ${s} .iv-es-foot .iv-cinline{color:var(--iv-primary)}
 </style>`;
 }
 
-export const edgeSpine = { build, styles };
+export const edgeSpine = { build, styles, paged };

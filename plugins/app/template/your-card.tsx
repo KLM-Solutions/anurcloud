@@ -70,6 +70,8 @@ export default function YourCard() {
   /** Rendered HTML per template id — a card already fetched is never refetched. */
   const cardCache = useRef<Map<number, string>>(new Map());
   const [html, setHtml] = useState<string | null>(null);
+  /** The card stage, read on Download so the PDF matches the shown card exactly. */
+  const printRef = useRef<HTMLDivElement>(null);
 
   const call = useCallback(
     async (payload: TemplateHandoff, template?: number): Promise<TemplateResponse> => {
@@ -275,6 +277,45 @@ export default function YourCard() {
     },
     [handoff, render],
   );
+
+  /**
+   * Download the SHOWN card as a PDF, entirely in the browser — no server, no
+   * library. Opens a print window containing only the card (self-contained: its
+   * scoped styles and theme vars travel with the markup), sizes each sheet to the
+   * card so one card-page prints per sheet, and triggers the browser's native
+   * "Save as PDF". The output matches the on-screen card exactly.
+   */
+  const downloadPdf = useCallback(() => {
+    if (!html) return;
+    const cardEl = printRef.current?.querySelector<HTMLElement>("[data-iv-template]");
+    const width = cardEl?.offsetWidth || 380;
+    const pageH =
+      (cardEl && parseFloat(getComputedStyle(cardEl).getPropertyValue("--iv-page-h"))) || 537;
+    const name = cardEl?.getAttribute("data-iv-template") ?? "card";
+    const title = `insta-viz-${name}`;
+
+    const win = window.open("", "_blank", "width=520,height=780");
+    if (!win) {
+      window.alert("Please allow pop-ups for this site to download the PDF.");
+      return;
+    }
+    // Each .iv-page becomes one sheet; the card's screen border/shadow is dropped
+    // because each sheet IS the page. Mirrors scripts/build-pdf.mts.
+    win.document.write(
+      `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>` +
+        `@page{size:${width}px ${pageH}px;margin:0}` +
+        `html,body{margin:0;padding:0;background:#fff}` +
+        `.iv-pdf{width:${width}px}` +
+        `.iv-pdf>[data-iv-template]{border:none!important;box-shadow:none!important;border-radius:0!important}` +
+        `.iv-pdf .iv-page{break-after:page}` +
+        `.iv-pdf .iv-page:last-child{break-after:auto}` +
+        `</style></head><body><div class="iv-pdf">${html}</div></body></html>`,
+    );
+    win.document.close();
+    win.focus();
+    // Let fonts, gradients and container queries settle before the print dialog.
+    win.setTimeout(() => win.print(), 400);
+  }, [html]);
 
   if (phase === "boot") return null;
 
@@ -554,13 +595,27 @@ export default function YourCard() {
                     as the card — all the surrounding gap looked like card padding
                     (client feedback, 11 Aug 2026).
                   */}
-                  <div className="w-fit rounded-2xl bg-slate-100/80 p-5 ring-1 ring-slate-200/70">
-                    {rendering && (
-                      <div className="w-[380px] py-16 text-center text-xs font-semibold text-slate-400">
-                        Rendering…
-                      </div>
+                  <div className="flex w-fit flex-col items-center gap-3">
+                    <div
+                      ref={printRef}
+                      className="w-fit rounded-2xl bg-slate-100/80 p-5 ring-1 ring-slate-200/70"
+                    >
+                      {rendering && (
+                        <div className="w-[380px] py-16 text-center text-xs font-semibold text-slate-400">
+                          Rendering…
+                        </div>
+                      )}
+                      {!rendering && html && <RenderedCard html={html} />}
+                    </div>
+                    {!rendering && html && (
+                      <button
+                        type="button"
+                        onClick={downloadPdf}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500 bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700"
+                      >
+                        <span aria-hidden="true">⬇</span> Download PDF
+                      </button>
                     )}
-                    {!rendering && html && <RenderedCard html={html} />}
                   </div>
 
                   {/*

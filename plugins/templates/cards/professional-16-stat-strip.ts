@@ -34,6 +34,7 @@ import type { CardProfile } from "../types";
 import { SHOW } from "../limits";
 import { esc, nonEmpty } from "../helpers";
 import { joinBlocks, meaningfulEducation, meaningfulExperience, section } from "../guards";
+import { linesForItems, linesForText, type PageBlock, type PagedContent } from "../pagination";
 import {
   achievementList,
   bio,
@@ -41,8 +42,10 @@ import {
   chips,
   contactInline,
   educationList,
-  experienceHighlights,
+  experienceGroup,
+  experienceYears,
   nameBlock,
+  projectList,
   publicationList,
   registrationRows,
   socialIcons,
@@ -70,7 +73,7 @@ function statCells(p: CardProfile): Stat[] {
     out.push(
       digits
         ? { value: digits, label: digits === "1" ? "Year" : "Years" }
-        : { value: p.totalYearsExperience.slice(0, 8), label: "Experience" },
+        : { value: p.totalYearsExperience, label: "Experience" },
     );
   }
 
@@ -90,7 +93,13 @@ function statCells(p: CardProfile): Stat[] {
   return out.slice(0, 3);
 }
 
-function build(p: CardProfile): string {
+/**
+ * The card's fixed signature, always on page 1: the divided figure strip (the
+ * opening element the layout is named for) plus the identity that follows it on
+ * white. The strip must stay first — this is the one card that leads with data,
+ * not a name.
+ */
+function signature(p: CardProfile, main: string): string {
   const strip = statCells(p)
     .map(
       (s) =>
@@ -99,33 +108,64 @@ function build(p: CardProfile): string {
         )}</div></div>`,
     )
     .join("");
-
-  const body = joinBlocks([
-    section("About", () => bio(p, SHOW.bioChars)),
-    section("Experience", () => experienceHighlights(p, SHOW.roles, SHOW.highlightsPerRole)),
-    section("Skills", () => chips(p.skills, SHOW.skills)),
-    section("Certifications", () => certificationList(p, SHOW.certifications)),
-    section("Education", () => educationList(p, SHOW.education)),
-    section("Awards", () => achievementList(p, SHOW.achievements)),
-    section("Publications", () => publicationList(p, SHOW.publications)),
-    section("Registrations", () => registrationRows(p, SHOW.registrations)),
-  ]);
-
   const contact = contactInline(p);
   const site = websiteLine(p);
-  const socials = socialIcons(p.socialLinks, SHOW.socials);
-
-  return `<div class="iv-ss-wrap">
-    <div class="iv-ss-strip">${strip}</div>
+  return `<div class="iv-ss-strip">${strip}</div>
     <div class="iv-ss-main">
       <header class="iv-ss-id">
         <div class="iv-ss-id-txt">${nameBlock(p)}</div>      </header>
       ${contact ? `<div class="iv-ss-contact">${contact}</div>` : ""}
+      ${experienceYears(p)}
       ${site}
-      ${body ? `<div class="iv-ss-body">${body}</div>` : ""}
-      ${socials ? `<div class="iv-ss-social">${socials}</div>` : ""}
-    </div>
+      ${main}
+    </div>`;
+}
+
+/**
+ * The body sections, in order — the single list both render paths consume. Each
+ * block carries an estimated weight in "lines" for pagination.
+ */
+function contentBlocks(p: CardProfile): PageBlock[] {
+  const out: PageBlock[] = [];
+  const add = (html: string, weight: number) => {
+    if (html.trim()) out.push({ html, weight });
+  };
+  add(section("About", () => bio(p, SHOW.bioChars)), linesForText(p.bio) + 1);
+  const exp = experienceGroup(p, SHOW.roles, SHOW.highlightsPerRole);
+  if (exp) out.push(exp);
+  add(section("Projects", () => projectList(p, SHOW.projects)), linesForItems(p.projects.length, 3));
+  add(section("Skills", () => chips(p.skills, SHOW.skills)), Math.ceil(p.skills.length / 3) + 1);
+  add(section("Certifications", () => certificationList(p, SHOW.certifications)), linesForItems(p.certifications.length));
+  add(section("Education", () => educationList(p, SHOW.education)), linesForItems(p.education.length));
+  add(section("Awards", () => achievementList(p, SHOW.achievements)), linesForItems(p.achievements.length));
+  add(section("Publications", () => publicationList(p, SHOW.publications)), linesForItems(p.publications.length));
+  add(section("Registrations", () => registrationRows(p, SHOW.registrations)), linesForItems(p.registrations.length));
+  add(section("Languages", () => chips(p.languages, SHOW.languages)), Math.ceil(p.languages.length / 4) + 1);
+  const socials = socialIcons(p.socialLinks, SHOW.socials);
+  add(socials ? `<div class="iv-ss-social">${socials}</div>` : "", 2);
+  return out;
+}
+
+/** Page 1: the strip + identity above the body sections that fit. */
+function firstPage(p: CardProfile, fit: PageBlock[]): string {
+  const body = fit.map((b) => b.html).join("");
+  return `<div class="iv-ss-wrap">
+    ${signature(p, body ? `<div class="iv-ss-body">${body}</div>` : "")}
   </div>`;
+}
+
+function build(p: CardProfile): string {
+  // Single-page fallback: strip + identity + every body section.
+  return firstPage(p, contentBlocks(p));
+}
+
+function paged(p: CardProfile): PagedContent {
+  return {
+    firstPage: (fit) => firstPage(p, fit),
+    slim: nameBlock(p),
+    blocks: contentBlocks(p),
+    chromeWeight: 7, // strip + name + contact + years + site
+  };
 }
 
 function styles(scopeId: string): string {
@@ -151,6 +191,13 @@ ${s} .iv-ss-body{margin-top:.5em;border-top:1px solid color-mix(in srgb,var(--iv
 ${s} .iv-ss-body .iv-sec-h:first-child{margin-top:.7em}
 ${s} .iv-ss-social{margin-top:.8em}
 
+/* Continuation pages (2+) carry only overflow body sections — no strip, no
+   identity — so they need their own padding (the strip is full-bleed and the
+   page-1 padding lives on .iv-ss-main). */
+${s} .iv-page-cont{padding:1em 1.05em 1.1em}
+${s} .iv-page-cont .iv-sec-h:first-of-type{margin-top:0}
+${s} .iv-page-cont .iv-ss-social{margin-top:0}
+
 /* Two figures still divide the strip evenly; the cells simply get wider. */
 @container (max-width:300px){
   ${s} .iv-ss-n{font-size:1.45em}
@@ -159,4 +206,4 @@ ${s} .iv-ss-social{margin-top:.8em}
 </style>`;
 }
 
-export const statStrip = { build, styles };
+export const statStrip = { build, styles, paged };

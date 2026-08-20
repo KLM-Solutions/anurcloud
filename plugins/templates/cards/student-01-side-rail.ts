@@ -19,6 +19,12 @@
  * Thin data: with no contact and no languages the rail would be an empty
  * column, so it collapses to a plain colour band carrying just the avatar.
  * Minimum: name only — the most forgiving layout in the set.
+ *
+ * ── Completeness + pagination (20 Aug 2026) ─────────────────────────────────
+ * Every field is shown, uncapped. This is a MULTI-COLUMN card, so it renders
+ * page 1 itself (`firstPage`) — the rail stays intact beside the body — and only
+ * the overflow sections flow to single-column continuation pages. `sections()`
+ * is the single ordered list both `build()` and `paged()` consume.
  */
 
 import type { CardProfile } from "../types";
@@ -26,9 +32,11 @@ import type { ResolvedTheme } from "../theme";
 import { SHOW } from "../limits";
 import { avatar } from "../helpers";
 import { section, joinBlocks } from "../guards";
+import { linesForItems, linesForText, type PageBlock, type PagedContent } from "../pagination";
 import {
   achievementList,
   bio,
+  certificationList,
   chips,
   contactRows,
   educationList,
@@ -40,35 +48,57 @@ import {
   socialIcons,
 } from "../sections";
 
-function build(p: CardProfile, theme: ResolvedTheme): string {
+/** The main-column content sections, in order — the one list both paths use. */
+function sections(p: CardProfile): PageBlock[] {
+  const out: PageBlock[] = [];
+  const add = (html: string, weight: number) => {
+    if (html.trim()) out.push({ html, weight });
+  };
+  add(bio(p, SHOW.bioChars), linesForText(p.bio));
+  add(section("Education", () => educationList(p, SHOW.education)), linesForItems(p.education.length));
+  add(section("Projects", () => projectList(p, SHOW.projects)), linesForItems(p.projects.length, 3));
+  add(section("Internships", () => internshipList(p, SHOW.internships)), linesForItems(p.internships.length));
+  add(section("Certifications", () => certificationList(p, SHOW.certifications)), linesForItems(p.certifications.length));
+  add(section("Skills", () => chips(p.skills, SHOW.skills)), Math.ceil(p.skills.length / 3) + 1);
+  add(section("Awards", () => achievementList(p, SHOW.achievements)), linesForItems(p.achievements.length));
+  add(section("Publications", () => publicationList(p, SHOW.publications)), linesForItems(p.publications.length));
+  add(section("Activities", () => extracurricularList(p, SHOW.extracurriculars)), linesForItems(p.extracurriculars.length));
+  return out;
+}
+
+function rail(p: CardProfile, theme: ResolvedTheme): string {
   const contact = contactRows(p);
   const languages = chips(p.languages, SHOW.languages);
   const socials = socialIcons(p.socialLinks, SHOW.socials);
-
   // An empty rail is the one way this layout looks broken — detect it and
   // switch to a bare band instead of rendering a blank column.
   const railHasContent = Boolean(contact || languages || socials);
-
-  const rail = `<aside class="iv-sr-rail${railHasContent ? "" : " iv-sr-rail-bare"}">
+  return `<aside class="iv-sr-rail${railHasContent ? "" : " iv-sr-rail-bare"}">
       ${avatar(p, "iv-sr-av", theme.logo?.url)}
       ${contact ? `<div class="iv-sr-block">${contact}</div>` : ""}
       ${languages ? `<div class="iv-sr-block">${languages}</div>` : ""}
       ${socials ? `<div class="iv-sr-block">${socials}</div>` : ""}
     </aside>`;
+}
 
-  const body = joinBlocks([
-    nameBlock(p),
-    bio(p, SHOW.bioChars),
-    section("Education", () => educationList(p, SHOW.education)),
-    section("Projects", () => projectList(p, SHOW.projects)),
-    section("Internships", () => internshipList(p, SHOW.internships)),
-    section("Skills", () => chips(p.skills, SHOW.skills)),
-    section("Awards", () => achievementList(p, SHOW.achievements)),
-    section("Publications", () => publicationList(p, SHOW.publications)),
-    section("Activities", () => extracurricularList(p, SHOW.extracurriculars)),
-  ]);
+/** Page 1: rail beside the main column carrying the name + the blocks that fit. */
+function firstPage(p: CardProfile, theme: ResolvedTheme, fit: PageBlock[]): string {
+  const body = joinBlocks([nameBlock(p), ...fit.map((b) => b.html)]);
+  return `<div class="iv-sr-wrap">${rail(p, theme)}<main class="iv-sr-main">${body}</main></div>`;
+}
 
-  return `<div class="iv-sr-wrap">${rail}<main class="iv-sr-main">${body}</main></div>`;
+function build(p: CardProfile, theme: ResolvedTheme): string {
+  // Single-page fallback: rail + every section in the main column.
+  return firstPage(p, theme, sections(p));
+}
+
+function paged(p: CardProfile, theme: ResolvedTheme): PagedContent {
+  return {
+    firstPage: (fit) => firstPage(p, theme, fit),
+    slim: nameBlock(p),
+    blocks: sections(p),
+    chromeWeight: 3, // name + a little rail overhead
+  };
 }
 
 function styles(scopeId: string): string {
@@ -97,7 +127,12 @@ ${s} .iv-sr-rail .iv-socials{justify-content:center}
 ${s} .iv-sr-main{flex:1 1 auto;min-width:0;padding:1.1em 1em;background:var(--iv-surface)}
 ${s} .iv-sr-main .iv-sec-h:first-child{margin-top:0}
 ${s} .iv-sr-main .iv-name{margin-top:.1em}
+
+/* Continuation pages (2+) are single-column — no rail — so they need their own
+   padding and a readable leading section. */
+${s} .iv-page-cont{padding:1.1em 1em}
+${s} .iv-page-cont .iv-sec-h:first-of-type{margin-top:0}
 </style>`;
 }
 
-export const sideRail = { build, styles };
+export const sideRail = { build, styles, paged };

@@ -27,6 +27,12 @@
  * identity simply occupies the full wedge — no gap opens, because the wedge is
  * painted, not laid out.
  * Minimum: name + 1 fillable section.
+ *
+ * ── Pagination (20 Aug 2026) ────────────────────────────────────────────────
+ * The diagonal wedge header (identity + the Skills aside tucked into it) is the
+ * card's fixed chrome and must stay whole on page 1, so the card renders page 1
+ * itself via `firstPage`. Overflow body sections flow to single-column
+ * continuation pages. `sections()` is the one ordered list both paths consume.
  */
 
 import type { CardProfile } from "../types";
@@ -34,9 +40,11 @@ import type { ResolvedTheme } from "../theme";
 import { NARROW, SHOW } from "../limits";
 import { avatar, esc, nonEmpty } from "../helpers";
 import { joinBlocks, section } from "../guards";
+import { linesForItems, linesForText, type PageBlock, type PagedContent } from "../pagination";
 import {
   achievementList,
   bio,
+  certificationList,
   chips,
   contactInline,
   educationList,
@@ -46,7 +54,25 @@ import {
   publicationList,
 } from "../sections";
 
-function build(p: CardProfile, theme: ResolvedTheme): string {
+/** The body sections below the wedge, in order — the one list both paths use. */
+function sections(p: CardProfile): PageBlock[] {
+  const out: PageBlock[] = [];
+  const add = (html: string, weight: number) => {
+    if (html.trim()) out.push({ html, weight });
+  };
+  add(section("Education", () => educationList(p, SHOW.education)), linesForItems(p.education.length));
+  add(section("Certifications", () => certificationList(p, SHOW.certifications)), linesForItems(p.certifications.length));
+  add(section("Projects", () => projectList(p, SHOW.projects)), linesForItems(p.projects.length, 3));
+  add(section("Internships", () => internshipList(p, SHOW.internships)), linesForItems(p.internships.length));
+  add(section("Awards", () => achievementList(p, SHOW.achievements)), linesForItems(p.achievements.length));
+  add(section("Publications", () => publicationList(p, SHOW.publications)), linesForItems(p.publications.length));
+  add(section("Activities", () => extracurricularList(p, SHOW.extracurriculars)), linesForItems(p.extracurriculars.length));
+  add(section("Languages", () => chips(p.languages, SHOW.languages)), Math.ceil(p.languages.length / 4) + 1);
+  add(section("About", () => bio(p, SHOW.bioChars)), linesForText(p.bio));
+  return out;
+}
+
+function wedgeHead(p: CardProfile, theme: ResolvedTheme): string {
   // Skills only, and on the NARROW cap. The wedge is at its thinnest on the right,
   // so this column has the least vertical room on the card — a second section here
   // pushed "Languages" onto the diagonal, half on colour and half off it, and a
@@ -54,10 +80,8 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
   const aside = joinBlocks([
     section("Skills", () => chips(p.skills, NARROW.skills), "iv-sec-h iv-cw-h"),
   ]);
-
   const contact = contactInline(p);
-
-  const head = `<header class="iv-cw-head">
+  return `<header class="iv-cw-head">
       <div class="iv-cw-id">
         ${avatar(p, "iv-cw-av", theme.logo?.url)}
         ${nonEmpty(p.fullName) ? `<div class="iv-name">${esc(p.fullName)}</div>` : ""}
@@ -66,19 +90,26 @@ function build(p: CardProfile, theme: ResolvedTheme): string {
       </div>
       ${aside ? `<aside class="iv-cw-aside">${aside}</aside>` : ""}
     </header>`;
+}
 
-  const body = joinBlocks([
-    section("Education", () => educationList(p, SHOW.education)),
-    section("Projects", () => projectList(p, SHOW.projects)),
-    section("Internships", () => internshipList(p, SHOW.internships)),
-    section("Awards", () => achievementList(p, SHOW.achievements)),
-    section("Publications", () => publicationList(p, SHOW.publications)),
-    section("Activities", () => extracurricularList(p, SHOW.extracurriculars)),
-    section("Languages", () => chips(p.languages, SHOW.languages)),
-    section("About", () => bio(p, SHOW.bioChars)),
-  ]);
+/** Page 1: the wedge header, then the body sections that fit beneath it. */
+function firstPage(p: CardProfile, theme: ResolvedTheme, fit: PageBlock[]): string {
+  const body = joinBlocks(fit.map((b) => b.html));
+  return `<div class="iv-cw-wrap">${wedgeHead(p, theme)}<main class="iv-cw-body">${body}</main></div>`;
+}
 
-  return `<div class="iv-cw-wrap">${head}<main class="iv-cw-body">${body}</main></div>`;
+function build(p: CardProfile, theme: ResolvedTheme): string {
+  // Single-page fallback: the wedge and every body section.
+  return firstPage(p, theme, sections(p));
+}
+
+function paged(p: CardProfile, theme: ResolvedTheme): PagedContent {
+  return {
+    firstPage: (fit) => firstPage(p, theme, fit),
+    slim: nonEmpty(p.fullName) ? esc(p.fullName) : "",
+    blocks: sections(p),
+    chromeWeight: 5, // the wedge header (avatar + name + role + contact + aside)
+  };
 }
 
 function styles(scopeId: string): string {
@@ -113,8 +144,11 @@ ${s} .iv-cw-aside .iv-chip{background:color-mix(in srgb,var(--iv-onp) 20%,transp
 ${s} .iv-cw-body{padding:.5em 1.1em 1.15em}
 @container (max-width:320px){${s} .iv-cw-aside{display:none}}
 
-
+/* Continuation pages (2+) hold overflow body sections only — no wedge above —
+   so they take a full padding box in place of the header that framed page 1. */
+${s} .iv-page-cont{padding:1.1em 1.1em 1.15em}
+${s} .iv-page-cont .iv-sec-h:first-of-type{margin-top:0}
 </style>`;
 }
 
-export const cornerWedge = { build, styles };
+export const cornerWedge = { build, styles, paged };

@@ -68,6 +68,12 @@ export interface TemplateSuccess {
   html?: string;
   /** Which template produced `html`. */
   rendered?: { id: number; key: string; name: string };
+  /**
+   * How many pages `html` contains. 1 for a normal profile; more when a heavy CV
+   * paginates (each page is an `.iv-page` element in the returned HTML) instead of
+   * growing into one tall card. Present only when `template` was requested.
+   */
+  pages?: number;
 }
 
 export interface TemplateError {
