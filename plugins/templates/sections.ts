@@ -11,6 +11,7 @@
 
 import type { CardProfile, SocialLink, TimelineEntry } from "./types";
 import { attr, esc, joinParts, nonEmpty, safeUrl } from "./helpers";
+import { BRAND_ICONS } from "./icons";
 import { groupBlock, type PageBlock } from "./pagination";
 import {
   hasList,
@@ -83,34 +84,20 @@ export function chips(items: string[] | undefined, max = ALL): string {
 /* ── social ───────────────────────────────────────────────────────────────── */
 
 /**
- * The icon circles.
+ * The icon circles. Icon geometry + brand colours live in `./icons.ts`
+ * (`BRAND_ICONS`) so the same marks render on the string cards and the React
+ * cards. A platform with a stored `path` draws the real SVG glyph (white on the
+ * brand fill); one without falls back to a ≤2-char text label.
  *
- * ⚠️ **Labels must be one or two characters.** The circle is a fixed 1.7em and the
- * label is centred in it with no room to spare: `"www"` measured 25.6px of text
- * inside a 16.9px circle and painted 8.7px of itself outside the disc, which is
- * what a user saw and reported on 11 Aug 2026. `.iv-si` now also clips, so a wide
- * label can no longer escape — but clipping is the backstop, not the design.
- * Keep new labels short.
+ * ⚠️ **Text labels must be one or two characters.** The circle is a fixed 1.7em
+ * and the label is centred with no room to spare: `"www"` measured 25.6px of text
+ * inside a 16.9px circle and painted 8.7px of itself outside the disc, reported
+ * 11 Aug 2026. `.iv-si` clips as a backstop, but keep labels short.
  *
  * The generic mark is an arrow rather than lettering because it is the fallback
- * for *every* platform not listed here, so it has to mean "a link" rather than
- * name a specific service — and one glyph always fits.
+ * for *every* platform not listed, so it has to mean "a link" rather than name a
+ * specific service — and one glyph always fits.
  */
-const SOCIAL: Record<string, { label: string; bg: string }> = {
-  linkedin: { label: "in", bg: "#0A66C2" },
-  instagram: { label: "ig", bg: "#E1306C" },
-  facebook: { label: "f", bg: "#1877F2" },
-  x: { label: "X", bg: "#111111" },
-  github: { label: "gh", bg: "#181717" },
-  youtube: { label: "yt", bg: "#FF0000" },
-  behance: { label: "Be", bg: "#1769FF" },
-  dribbble: { label: "dr", bg: "#EA4C89" },
-  medium: { label: "M", bg: "#000000" },
-  stackoverflow: { label: "so", bg: "#F48024" },
-  telegram: { label: "tg", bg: "#26A5E4" },
-  whatsapp: { label: "wa", bg: "#25D366" },
-  website: { label: "↗", bg: "#334155" },
-};
 
 /**
  * Map a free-text platform name onto an icon.
@@ -120,7 +107,7 @@ const SOCIAL: Record<string, { label: string; bg: string }> = {
  * design ones matter in practice: designers and photographers are a real slice of
  * the audience, and before this they all collapsed into the generic mark.
  */
-function socialKey(platform?: string | null): string {
+export function socialKey(platform?: string | null): string {
   const p = (platform ?? "").toLowerCase();
   if (p.includes("linked")) return "linkedin";
   if (p.includes("insta")) return "instagram";
@@ -145,10 +132,13 @@ export function socialIcons(links: SocialLink[] | undefined, max = ALL): string 
   if (list.length === 0) return "";
   return `<div class="iv-socials">${list
     .map((l) => {
-      const meta = SOCIAL[socialKey(l.platform)] ?? SOCIAL.website!;
+      const meta = BRAND_ICONS[socialKey(l.platform)] ?? BRAND_ICONS.website!;
+      const glyph = meta.path
+        ? `<svg class="iv-si-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="${meta.path}"/></svg>`
+        : esc(meta.label);
       return `<a class="iv-si" href="${attr(l.href)}" target="_blank" rel="noopener noreferrer" style="background:${
         meta.bg
-      }" aria-label="${attr(l.platform ?? "link")}">${esc(meta.label)}</a>`;
+      }" aria-label="${attr(l.platform ?? "link")}">${glyph}</a>`;
     })
     .join("")}</div>`;
 }

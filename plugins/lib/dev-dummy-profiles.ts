@@ -26,6 +26,9 @@ export const DUMMY_STUDENT: Record<string, unknown> = {
   social_links: [
     { platform: "GitHub", url: "https://github.com/meeranair" },
     { platform: "LinkedIn", url: "https://linkedin.com/in/meeranair" },
+    { platform: "X", url: "https://x.com/meeranair" },
+    { platform: "WhatsApp", url: "https://wa.me/919000012345" },
+    { platform: "Instagram", url: "https://instagram.com/meeranair" },
     { platform: "Portfolio", url: "https://meeranair.dev" },
     { platform: "LeetCode", url: "https://leetcode.com/meeranair" },
   ],
@@ -93,6 +96,9 @@ export const DUMMY_PROFESSIONAL: Record<string, unknown> = {
     { platform: "LinkedIn", url: "https://linkedin.com/in/priyamenon" },
     { platform: "GitHub", url: "https://github.com/priyamenon" },
     { platform: "X", url: "https://x.com/priyamenon" },
+    { platform: "WhatsApp", url: "https://wa.me/919000000000" },
+    { platform: "Facebook", url: "https://facebook.com/priyamenon" },
+    { platform: "Instagram", url: "https://instagram.com/priyamenon" },
     { platform: "Portfolio", url: "https://priyamenon.dev" },
   ],
   education: [

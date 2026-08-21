@@ -1104,27 +1104,39 @@ group("Social marks fit inside their circles");
     platforms.map((platform) => ({ platform, url: "example.com/x" })),
     platforms.length,
   );
-  const labels = [...html.matchAll(/aria-label="[^"]*">([^<]*)<\/a>/g)].map((m) => m[1]!);
+  // A mark is either an SVG glyph or a text label. Count the anchors for coverage;
+  // measure only the TEXT ones for the label-length invariant (an SVG cannot
+  // overflow the circle the way a wide text label can).
+  const marks = [...html.matchAll(/aria-label="[^"]*">(.*?)<\/a>/g)].map((m) => m[1]!);
+  const textLabels = marks.filter((m) => !m.includes("<svg"));
 
-  eq("every platform renders a mark", labels.length, platforms.length);
+  eq("every platform renders a mark", marks.length, platforms.length);
   ok(
-    "every label is at most two characters",
+    "every text label is at most two characters",
     // Code points, not UTF-16 units — the fallback is a single arrow glyph.
-    labels.every((l) => [...l].length <= 2),
-    labels.map((l) => `"${l}"`).join(" "),
+    textLabels.every((l) => [...l].length <= 2),
+    textLabels.map((l) => `"${l}"`).join(" "),
   );
 
-  // The design platforms are a real slice of the audience and used to collapse
-  // into the generic mark.
+  // The five brands asked for (21 Aug 2026) render a real SVG glyph, not letters.
+  for (const platform of ["GitHub", "WhatsApp", "X", "Facebook", "Instagram"]) {
+    ok(
+      `${platform} renders an SVG icon`,
+      socialIcons([{ platform, url: "example.com/x" }]).includes('<svg class="iv-si-svg"'),
+    );
+  }
+
+  // A design platform with no stored icon still renders its own text mark.
   ok("Behance gets its own mark", socialIcons([{ platform: "Behance", url: "behance.net/x" }]).includes(">Be<"));
   ok("Dribbble gets its own mark", socialIcons([{ platform: "Dribbble", url: "dribbble.com/x" }]).includes(">dr<"));
   ok(
-    "an unknown platform falls back to a single glyph",
+    "an unknown platform falls back to the generic globe icon",
     (() => {
-      const l = socialIcons([{ platform: "Nobody Knows", url: "example.dev" }]).match(
-        /aria-label="[^"]*">([^<]*)<\/a>/,
-      )?.[1];
-      return typeof l === "string" && [...l].length === 1;
+      const html = socialIcons([{ platform: "Nobody Knows", url: "example.dev" }]);
+      // The generic mark is now a real SVG globe (not a text arrow), so nothing
+      // reads as missing next to the branded icons.
+      const mark = html.match(/aria-label="[^"]*">([\s\S]*?)<\/a>/)?.[1] ?? "";
+      return mark.includes('<svg class="iv-si-svg"');
     })(),
   );
 

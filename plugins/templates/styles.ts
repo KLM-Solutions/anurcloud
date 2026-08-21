@@ -98,6 +98,21 @@ ${s} .iv-socials{display:flex;gap:.35em;flex-wrap:wrap;min-width:0;max-width:100
    (No backticks in this block — it is inside a template literal.) */
 ${s} .iv-si{width:1.7em;height:1.7em;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:.62em;font-weight:700;line-height:1;text-decoration:none;overflow:hidden;flex:0 0 auto}
 ${s} .iv-si:hover{text-decoration:none;opacity:.88}
+${s} .iv-si-svg{width:58%;height:58%;display:block}
+/* Hero variant — a bit bigger, for the identity/header area. */
+${s} .iv-social-lg{gap:.45em}
+${s} .iv-social-lg .iv-si{width:2.1em;height:2.1em;font-size:.72em}
+
+/* Accordion — tap-to-expand section rows (used by the React cards' body). */
+${s} .iv-acc-row{border-top:1px solid var(--iv-edge)}
+${s} .iv-acc-row:first-child{border-top:0}
+${s} .iv-acc-head{display:flex;align-items:center;justify-content:space-between;gap:.6em;width:100%;padding:.85em 0;border:0;background:none;font:inherit;color:inherit;cursor:pointer;text-align:left}
+${s} .iv-acc-label{font-family:var(--iv-font-h);font-weight:700;font-size:.7em;letter-spacing:.1em;text-transform:uppercase;color:var(--iv-text)}
+${s} .iv-acc-open .iv-acc-label{color:var(--iv-primary)}
+${s} .iv-acc-chev{font-size:.7em;color:var(--iv-muted);flex:0 0 auto;transition:transform .15s}
+${s} .iv-acc-open .iv-acc-chev{color:var(--iv-primary)}
+${s} .iv-acc-body{padding:0 0 .95em}
+${s} .iv-acc-body .iv-item:first-child{padding-top:0}
 
 ${s} .iv-item{padding:.3em 0}
 ${s} .iv-item+.iv-item{border-top:1px solid color-mix(in srgb,var(--iv-muted) 18%,transparent)}
