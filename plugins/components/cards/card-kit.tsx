@@ -126,6 +126,20 @@ export function Chips({ items }: { items: string[] }) {
   );
 }
 
+/** Contact values (email / phone / address) as plain stacked lines — NOT chips.
+ *  Long values like an email or a multi-line address read badly in a pill. */
+export function ContactList({ items }: { items: string[] }) {
+  const list = (items ?? []).filter(nonEmpty);
+  if (!list.length) return null;
+  return (
+    <div className="iv-clist">
+      {list.map((c, i) => (
+        <div key={i}>{c}</div>
+      ))}
+    </div>
+  );
+}
+
 /**
  * Brand-icon circles for social links (React path). Same geometry + colours as the
  * string cards (`BRAND_ICONS` / `socialKey`): a stored `path` draws the SVG glyph
@@ -368,7 +382,7 @@ export function professionalSections(p: CardProfile): Section[] {
   );
 
   const contact = [p.email, p.phone, p.location].filter(nonEmpty);
-  add({ key: "contact", label: "Contact", count: contact.length, kind: "chips", node: <Chips items={contact} /> }, contact.length > 0);
+  add({ key: "contact", label: "Contact", count: contact.length, kind: "chips", node: <ContactList items={contact} /> }, contact.length > 0);
 
   return s;
 }
@@ -474,7 +488,7 @@ export function studentSections(p: CardProfile): Section[] {
   );
 
   const contact = [p.email, p.phone, p.location].filter(nonEmpty);
-  add({ key: "contact", label: "Contact", count: contact.length, kind: "chips", node: <Chips items={contact} /> }, contact.length > 0);
+  add({ key: "contact", label: "Contact", count: contact.length, kind: "chips", node: <ContactList items={contact} /> }, contact.length > 0);
 
   return s;
 }

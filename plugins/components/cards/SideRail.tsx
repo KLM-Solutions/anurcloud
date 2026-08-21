@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * Side Rail — React (TSX) card component. Student pool.
+ * Side Rail â React (TSX) card component. Student pool.
  *
  * Signature (kept from the string card): two columns read left-to-right, no top
  * banner. A full-height coloured RAIL on the left carries the avatar, contact,
  * languages and social icons; the white main column on the right carries the name,
- * the about text and the sections. Contact lives in the rail, not the body — the
+ * the about text and the sections. Contact lives in the rail, not the body â the
  * point of the student batch is that the skeletons differ, not the paint.
  *
  * Digital behaviour: the rail is persistent chrome (identity + icons, always
@@ -19,7 +19,7 @@ import { useMemo, useState } from "react";
 import type { CardProfile, ProfileType, ThemeOptions } from "@/templates/types";
 import { resolveTheme } from "@/templates/theme";
 import { cardStyles } from "@/templates/styles";
-import { studentSections, isBig, nonEmpty, joinParts, styleObject, SocialIcons, Avatar, Chips, cardTheme } from "./card-kit";
+import { studentSections, nonEmpty, joinParts, styleObject, SocialIcons, Avatar, Chips, cardTheme } from "./card-kit";
 
 export interface SideRailProps {
   profile: CardProfile;
@@ -36,7 +36,7 @@ export function SideRail({ profile: p, theme }: SideRailProps) {
     () => studentSections(p).filter((s) => !["contact", "languages", "links"].includes(s.key)),
     [p],
   );
-  const big = sections.filter(isBig);
+  const big = sections.slice(2);
 
   const [view, setView] = useState<string>("overview");
   const [atBottom, setAtBottom] = useState(false);
@@ -50,7 +50,7 @@ export function SideRail({ profile: p, theme }: SideRailProps) {
       <div dangerouslySetInnerHTML={{ __html: css }} />
 
       <div className="iv-sr-wrap">
-        {/* LEFT — the coloured rail (persistent). */}
+        {/* LEFT â the coloured rail (persistent). */}
         <aside className="iv-sr-rail">
           <Avatar profile={p} cls="iv-sr-av" logoUrl={resolved.logo?.url} />
           {contactLines.length > 0 && (
@@ -70,7 +70,7 @@ export function SideRail({ profile: p, theme }: SideRailProps) {
           </div>
         </aside>
 
-        {/* RIGHT — the main column. */}
+        {/* RIGHT â the main column. */}
         <main className="iv-sr-main">
           <header className="iv-sr-head">
             {nonEmpty(p.fullName) && <div className="iv-name">{p.fullName}</div>}
@@ -86,17 +86,17 @@ export function SideRail({ profile: p, theme }: SideRailProps) {
                 >
                   {nonEmpty(p.bio) && <p className="iv-bio iv-sr-about">{p.bio}</p>}
                   <div className="iv-secs">
-                    {sections.map((sec) =>
-                      isBig(sec) ? (
+                    {sections.map((sec, i) =>
+                      i >= 2 ? (
                         <button key={sec.key} type="button" className="iv-ovsec" onClick={() => setView(sec.key)}>
                           <div className="iv-ovh">{sec.label}</div>
-                          <div className="iv-ovs">{sec.node}</div>
+                          <div className="iv-ovs iv-preview">{sec.node}</div>
                           <div className="iv-ovnav">{sec.count > 1 ? `View all ${sec.count}` : "Open"} ›</div>
                         </button>
                       ) : (
                         <div key={sec.key} className="iv-ovinline">
                           <div className="iv-ovh">{sec.label}</div>
-                          {sec.node}
+                          <div className="iv-preview">{sec.node}</div>{sec.count > 2 && (<button type="button" className="iv-ovmore-link" onClick={() => setView(sec.key)}>View all {sec.count} ›</button>)}
                         </div>
                       ),
                     )}
@@ -114,7 +114,7 @@ export function SideRail({ profile: p, theme }: SideRailProps) {
                   <>
                     <div className="iv-bar">
                       <button type="button" className="iv-back" onClick={() => setView("overview")}>
-                        ‹ Back
+                        â¹ Back
                       </button>
                       <span className="iv-ptitle">{sec.label}</span>
                     </div>
@@ -136,7 +136,7 @@ function componentCss(scopeId: string): string {
 ${s}.iv-side-rail{position:relative;height:537px;background:var(--iv-surface)}
 ${s} .iv-sr-wrap{position:absolute;inset:0;display:flex;align-items:stretch}
 
-/* LEFT — coloured rail. 38%, wide enough that an email does not break mid-word. */
+/* LEFT â coloured rail. 38%, wide enough that an email does not break mid-word. */
 ${s} .iv-sr-rail{flex:0 0 38%;max-width:38%;background:var(--iv-grad);color:var(--iv-onp);padding:1.1em .6em;display:flex;flex-direction:column;align-items:center;gap:.8em;text-align:center;overflow-y:auto;scrollbar-width:thin}
 ${s} .iv-sr-av{width:3.6em;height:3.6em;flex:0 0 auto;box-shadow:0 0 0 2px color-mix(in srgb,var(--iv-onp) 45%,transparent)}
 ${s} .iv-sr-rail .iv-av-fallback{background:color-mix(in srgb,var(--iv-onp) 18%,transparent);color:var(--iv-onp)}
@@ -147,7 +147,7 @@ ${s} .iv-sr-rail .iv-chip{background:color-mix(in srgb,var(--iv-onp) 20%,transpa
 ${s} .iv-sr-social{display:flex;justify-content:center}
 ${s} .iv-sr-rail .iv-socials{justify-content:center}
 
-/* RIGHT — main column. */
+/* RIGHT â main column. */
 ${s} .iv-sr-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;background:var(--iv-surface)}
 ${s} .iv-sr-head{flex:0 0 auto;padding:1.1em 1em .75em;border-bottom:1px solid var(--iv-edge)}
 ${s} .iv-sr-head .iv-name{font-size:1.2em}

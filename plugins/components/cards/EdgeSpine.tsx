@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * Edge Spine — React (TSX) card component.
+ * Edge Spine â React (TSX) card component.
  *
  * Signature (kept from the string card): the name is set VERTICALLY on the right
  * edge as a coloured spine, like the spine of a book. The body sits beside it on
- * the left, and the role — not the name — is the largest type in the body. The
+ * the left, and the role â not the name â is the largest type in the body. The
  * spine is narrow (a strip, not a half), which is what tells it apart from Split
  * Halves' 50/50 coloured menu.
  *
@@ -19,7 +19,7 @@ import { useMemo, useState } from "react";
 import type { CardProfile, ProfileType, ThemeOptions } from "@/templates/types";
 import { resolveTheme } from "@/templates/theme";
 import { cardStyles } from "@/templates/styles";
-import { professionalSections, isBig, nonEmpty, joinParts, styleObject, SocialIcons, cardTheme } from "./card-kit";
+import { professionalSections, nonEmpty, joinParts, styleObject, SocialIcons, cardTheme } from "./card-kit";
 
 export interface EdgeSpineProps {
   profile: CardProfile;
@@ -32,7 +32,7 @@ export function EdgeSpine({ profile: p, theme }: EdgeSpineProps) {
   const scope = resolved.scopeId;
 
   const sections = useMemo(() => professionalSections(p), [p]);
-  const big = sections.filter(isBig);
+  const big = sections.slice(2);
 
   const [view, setView] = useState<string>("overview");
   const [atBottom, setAtBottom] = useState(false);
@@ -46,7 +46,7 @@ export function EdgeSpine({ profile: p, theme }: EdgeSpineProps) {
       <div dangerouslySetInnerHTML={{ __html: css }} />
 
       <div className="iv-es-wrap">
-        {/* LEFT — body */}
+        {/* LEFT â body */}
         <div className="iv-es-body">
           <header className="iv-es-head">
             <div className="iv-es-role">{joinParts([p.designation, p.currentCompany]) || (nonEmpty(p.fullName) ? p.fullName : "")}</div>
@@ -64,17 +64,17 @@ export function EdgeSpine({ profile: p, theme }: EdgeSpineProps) {
                 >
                   {nonEmpty(p.bio) && <p className="iv-bio iv-es-about">{p.bio}</p>}
                   <div className="iv-secs">
-                    {sections.map((sec) =>
-                      isBig(sec) ? (
+                    {sections.map((sec, i) =>
+                      i >= 2 ? (
                         <button key={sec.key} type="button" className="iv-ovsec" onClick={() => setView(sec.key)}>
                           <div className="iv-ovh">{sec.label}</div>
-                          <div className="iv-ovs">{sec.node}</div>
+                          <div className="iv-ovs iv-preview">{sec.node}</div>
                           <div className="iv-ovnav">{sec.count > 1 ? `View all ${sec.count}` : "Open"} ›</div>
                         </button>
                       ) : (
                         <div key={sec.key} className="iv-ovinline">
                           <div className="iv-ovh">{sec.label}</div>
-                          {sec.node}
+                          <div className="iv-preview">{sec.node}</div>{sec.count > 2 && (<button type="button" className="iv-ovmore-link" onClick={() => setView(sec.key)}>View all {sec.count} ›</button>)}
                         </div>
                       ),
                     )}
@@ -92,7 +92,7 @@ export function EdgeSpine({ profile: p, theme }: EdgeSpineProps) {
                   <>
                     <div className="iv-bar">
                       <button type="button" className="iv-back" onClick={() => setView("overview")}>
-                        ‹ Back
+                        â¹ Back
                       </button>
                       <span className="iv-ptitle">{sec.label}</span>
                     </div>
@@ -104,7 +104,7 @@ export function EdgeSpine({ profile: p, theme }: EdgeSpineProps) {
           </div>
         </div>
 
-        {/* RIGHT — the vertical name spine (the signature). */}
+        {/* RIGHT â the vertical name spine (the signature). */}
         {nonEmpty(p.fullName) && (
           <div className="iv-es-spine">
             <span className="iv-es-name">{p.fullName}</span>
@@ -121,10 +121,10 @@ function componentCss(scopeId: string): string {
 ${s}.iv-edge-spine{position:relative;height:537px;background:var(--iv-surface)}
 ${s} .iv-es-wrap{position:absolute;inset:0;display:flex;align-items:stretch}
 
-/* LEFT — body. */
+/* LEFT â body. */
 ${s} .iv-es-body{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
 ${s} .iv-es-head{flex:0 0 auto;padding:1.15em 1em .75em 1.15em;border-bottom:1px solid var(--iv-edge)}
-/* The role is the largest type in the body — the name lives on the spine. */
+/* The role is the largest type in the body â the name lives on the spine. */
 ${s} .iv-es-role{font-family:var(--iv-font-h);font-weight:700;font-size:1.05em;line-height:1.2}
 ${s} .iv-es-yrs{font-size:.72em;color:var(--iv-muted);margin-top:.25em}
 ${s} .iv-es-contact{font-size:.72em;color:var(--iv-muted);margin-top:.3em}
@@ -150,7 +150,7 @@ ${s} .iv-back{display:inline-flex;align-items:center;gap:.15em;font-size:.78em;f
 ${s} .iv-ptitle{font-family:var(--iv-font-h);font-weight:700;font-size:.9em}
 ${s} .iv-pbody{position:absolute;inset:0;overflow-y:auto;padding:3.2em 1em 1.2em 1.15em}
 
-/* RIGHT — the vertical name spine. Narrow strip, sized to content up to a cap. */
+/* RIGHT â the vertical name spine. Narrow strip, sized to content up to a cap. */
 ${s} .iv-es-spine{flex:0 0 auto;max-width:5.5em;background:var(--iv-grad);color:var(--iv-onp);display:flex;padding:1.05em .55em}
 ${s} .iv-es-name{writing-mode:vertical-rl;text-orientation:mixed;text-align:center;font-family:var(--iv-font-h);font-weight:700;font-size:1.05em;line-height:1.3;letter-spacing:.07em;text-transform:uppercase}
 

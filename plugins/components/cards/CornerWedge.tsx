@@ -18,7 +18,7 @@ import { useMemo, useState } from "react";
 import type { CardProfile, ProfileType, ThemeOptions } from "@/templates/types";
 import { resolveTheme } from "@/templates/theme";
 import { cardStyles } from "@/templates/styles";
-import { studentSections, nonEmpty, joinParts, styleObject, SocialIcons, Avatar, Chips, cardTheme } from "./card-kit";
+import { studentSections, nonEmpty, joinParts, styleObject, SocialIcons, Avatar, cardTheme } from "./card-kit";
 
 export interface CornerWedgeProps {
   profile: CardProfile;
@@ -33,7 +33,13 @@ export function CornerWedge({ profile: p, theme }: CornerWedgeProps) {
   // Skills sit in the wedge aside; contact in the wedge id — keep both out of body.
   // Split the remaining sections across two clean columns (About spans the top).
   const { colA, colB } = useMemo(() => {
-    const secs = studentSections(p).filter((s) => !["skills", "contact"].includes(s.key));
+    const secs = studentSections(p).filter((s) => {
+      if (s.key === "contact") return false;
+      // Skills sit in the wedge aside; when there are too many to fit there, the
+      // full list also appears in the body so none are lost.
+      if (s.key === "skills") return p.skills.length > 6;
+      return true;
+    });
     const a: typeof secs = [];
     const b: typeof secs = [];
     secs.forEach((s, i) => (i % 2 === 0 ? a : b).push(s));
@@ -61,7 +67,16 @@ export function CornerWedge({ profile: p, theme }: CornerWedgeProps) {
         {p.skills.length > 0 && (
           <aside className="iv-cw-aside">
             <div className="iv-cw-h">Skills</div>
-            <Chips items={p.skills} />
+            {/* Capped so a long skill list can't grow the wedge header; a "+N more"
+                chip flows with the rest (full list is a Skills section in the body). */}
+            <div className="iv-chips">
+              {p.skills.slice(0, 6).map((s, i) => (
+                <span key={i} className="iv-chip">
+                  {s}
+                </span>
+              ))}
+              {p.skills.length > 6 && <span className="iv-cw-morechip">+{p.skills.length - 6} more ↓</span>}
+            </div>
           </aside>
         )}
       </header>
@@ -112,18 +127,21 @@ ${s}.iv-corner-wedge{position:relative;height:537px;background:var(--iv-surface)
 
 /* The wedge is the header's own background layer (a clipped ::before behind the
    content), so text is never sliced. The diagonal lives in the bottom padding. */
-${s} .iv-cw-head{position:relative;isolation:isolate;flex:0 0 auto;display:flex;gap:.7em;padding:1.15em 1.1em 2.5em;color:var(--iv-onp)}
-${s} .iv-cw-head::before{content:"";position:absolute;inset:0;background:var(--iv-grad);clip-path:polygon(0 0,100% 0,100% calc(100% - 2.1em),0 100%);z-index:-1}
+${s} .iv-cw-head{position:relative;isolation:isolate;flex:0 0 auto;display:flex;gap:.6em;padding:.85em 1.1em 1.9em;color:var(--iv-onp)}
+${s} .iv-cw-head::before{content:"";position:absolute;inset:0;background:var(--iv-grad);clip-path:polygon(0 0,100% 0,100% calc(100% - 1.6em),0 100%);z-index:-1}
 ${s} .iv-cw-id{min-width:0;flex:1 1 auto}
-${s} .iv-cw-av{width:3.1em;height:3.1em;flex:0 0 auto;margin-bottom:.45em;box-shadow:0 0 0 2px color-mix(in srgb,var(--iv-onp) 40%,transparent)}
+${s} .iv-cw-av{width:2.5em;height:2.5em;flex:0 0 auto;margin-bottom:.35em;box-shadow:0 0 0 2px color-mix(in srgb,var(--iv-onp) 40%,transparent)}
 ${s} .iv-cw-head .iv-av-fallback{background:color-mix(in srgb,var(--iv-onp) 18%,transparent);color:var(--iv-onp)}
-${s} .iv-cw-head .iv-name{color:var(--iv-onp);font-size:1.15em}
+${s} .iv-cw-head .iv-name{color:var(--iv-onp);font-size:1.02em}
 ${s} .iv-cw-head .iv-role,${s} .iv-cw-head .iv-cinline{color:color-mix(in srgb,var(--iv-onp) 82%,transparent)}
-${s} .iv-cw-head .iv-cinline{font-size:.66em;margin-top:.2em}
-${s} .iv-cw-head .iv-socials{margin-top:.5em}
+${s} .iv-cw-head .iv-role{font-size:.78em}
+${s} .iv-cw-head .iv-cinline{font-size:.62em;margin-top:.15em}
+${s} .iv-cw-head .iv-socials{margin-top:.4em}
 ${s} .iv-cw-aside{flex:0 0 42%;max-width:42%;min-width:0}
 ${s} .iv-cw-h{font-family:var(--iv-font-h);font-weight:700;font-size:.62em;letter-spacing:.1em;text-transform:uppercase;color:color-mix(in srgb,var(--iv-onp) 78%,transparent);margin-bottom:.45em}
 ${s} .iv-cw-aside .iv-chip{background:color-mix(in srgb,var(--iv-onp) 20%,transparent);color:var(--iv-onp)}
+/* "+N more" — an outlined count chip, distinct from the skill chips. */
+${s} .iv-cw-morechip{font-size:.62em;font-weight:700;padding:.2em .55em;border-radius:999px;background:transparent;color:var(--iv-onp);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--iv-onp) 55%,transparent);white-space:nowrap;align-self:center}
 
 /* Body — two-column section grid, scrolling vertically. */
 ${s} .iv-cw-wrap{position:relative;flex:1 1 auto;min-height:0}

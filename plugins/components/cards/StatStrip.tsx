@@ -1,17 +1,17 @@
 "use client";
 
 /**
- * Stat Strip — React (TSX) card component.
+ * Stat Strip â React (TSX) card component.
  *
  * Signature (kept from the string card): the card OPENS on a divided, filled strip
- * of oversized figures (Years · Roles · Certs …). The identity follows underneath
- * on white — this is the one card that leads with DATA, not a name. The figures are
+ * of oversized figures (Years · Roles · Certs â¦). The identity follows underneath
+ * on white â this is the one card that leads with DATA, not a name. The figures are
  * counted, never estimated, and capped at three (a fourth cell drops each numeral
  * below the size that makes the strip work).
  *
  * Digital behaviour matches the other cards: the strip + identity are fixed chrome;
  * below them a content-first overview scrolls (bio + sections). A big section opens
- * its own screen with a Back bar; a small one shows inline. Missing field → no
+ * its own screen with a Back bar; a small one shows inline. Missing field â no
  * section. Scroll cue (⌄ scroll → ⌃ scroll up).
  */
 
@@ -19,7 +19,7 @@ import { useMemo, useState } from "react";
 import type { CardProfile, ProfileType, ThemeOptions } from "@/templates/types";
 import { resolveTheme } from "@/templates/theme";
 import { cardStyles } from "@/templates/styles";
-import { professionalSections, isBig, nonEmpty, joinParts, styleObject, SocialIcons, cardTheme } from "./card-kit";
+import { professionalSections, nonEmpty, joinParts, styleObject, SocialIcons, cardTheme } from "./card-kit";
 
 export interface StatStripProps {
   profile: CardProfile;
@@ -55,7 +55,7 @@ export function StatStrip({ profile: p, theme }: StatStripProps) {
   const scope = resolved.scopeId;
 
   const sections = useMemo(() => professionalSections(p), [p]);
-  const big = sections.filter(isBig);
+  const big = sections.slice(2);
   const stats = useMemo(() => statCells(p), [p]);
 
   const [view, setView] = useState<string>("overview");
@@ -71,7 +71,7 @@ export function StatStrip({ profile: p, theme }: StatStripProps) {
 
       {view === "overview" ? (
         <div className="iv-view">
-          {/* The opening figure strip (the signature) — leads, before the name. */}
+          {/* The opening figure strip (the signature) â leads, before the name. */}
           {stats.length > 0 && (
             <div className="iv-ss-strip">
               {stats.map((st) => (
@@ -104,17 +104,17 @@ export function StatStrip({ profile: p, theme }: StatStripProps) {
               )}
 
               <div className="iv-secs">
-                {sections.map((sec) =>
-                  isBig(sec) ? (
+                {sections.map((sec, i) =>
+                  i >= 2 ? (
                     <button key={sec.key} type="button" className="iv-ovsec" onClick={() => setView(sec.key)}>
                       <div className="iv-ovh">{sec.label}</div>
-                      <div className="iv-ovs">{sec.node}</div>
+                      <div className="iv-ovs iv-preview">{sec.node}</div>
                       <div className="iv-ovnav">{sec.count > 1 ? `View all ${sec.count}` : "Open"} ›</div>
                     </button>
                   ) : (
                     <div key={sec.key} className="iv-ovinline">
                       <div className="iv-ovh">{sec.label}</div>
-                      {sec.node}
+                      <div className="iv-preview">{sec.node}</div>{sec.count > 2 && (<button type="button" className="iv-ovmore-link" onClick={() => setView(sec.key)}>View all {sec.count} ›</button>)}
                     </div>
                   ),
                 )}
@@ -133,7 +133,7 @@ export function StatStrip({ profile: p, theme }: StatStripProps) {
             <div className="iv-view">
               <div className="iv-bar">
                 <button type="button" className="iv-back" onClick={() => setView("overview")}>
-                  ‹ Back
+                  â¹ Back
                 </button>
                 <span className="iv-ptitle">{sec.label}</span>
               </div>
@@ -152,7 +152,7 @@ function componentCss(scopeId: string): string {
 ${s}.iv-stat-strip{position:relative;height:537px;background:var(--iv-surface)}
 ${s} .iv-view{position:absolute;inset:0;display:flex;flex-direction:column}
 
-/* The opening strip — full-bleed, filled, divided into equal cells. Equal cells
+/* The opening strip â full-bleed, filled, divided into equal cells. Equal cells
    matter: a flexed-to-content strip reads as tags, not as headline figures. */
 ${s} .iv-ss-strip{flex:0 0 auto;display:flex;background:var(--iv-grad);color:var(--iv-onp)}
 ${s} .iv-ss-cell{flex:1 1 0;min-width:0;padding:.75em .4em .65em;text-align:center}
@@ -181,7 +181,7 @@ ${s} .iv-ovsec:hover .iv-ovnav{color:var(--iv-primary)}
 ${s} .iv-ovh{font-family:var(--iv-font-h);font-weight:700;font-size:.66em;letter-spacing:.08em;text-transform:uppercase;color:var(--iv-primary);margin-bottom:.5em}
 ${s} .iv-ovnav{margin-top:.5em;font-size:.72em;font-weight:700;color:var(--iv-muted)}
 
-/* Section screen — Back bar + body. */
+/* Section screen â Back bar + body. */
 ${s} .iv-bar{display:flex;align-items:center;gap:.6em;padding:.85em 1em;border-bottom:1px solid var(--iv-edge);flex:0 0 auto}
 ${s} .iv-back{display:inline-flex;align-items:center;gap:.15em;font-size:.78em;font-weight:700;color:var(--iv-primary);cursor:pointer;border:0;background:none;font-family:inherit}
 ${s} .iv-ptitle{font-family:var(--iv-font-h);font-weight:700;font-size:.9em}
