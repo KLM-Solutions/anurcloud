@@ -32,22 +32,14 @@ const FLOW = [
   {
     who: "PxlBrain",
     step: "04",
-    label: "Module 3 · Enhancement",
-    desc: "Receives the confirmed profile from AnurCloud and returns a polished bio + enhanced descriptions. Nothing is inferred — only confirmed fields are used.",
-    tone: "violet" as const,
-    status: "Live",
-  },
-  {
-    who: "PxlBrain",
-    step: "05",
-    label: "Module 4 · Template",
-    desc: `Returns the card layouts this profile can fill, themed from the user's own logo, and renders the chosen one as self-contained HTML. ${CARDS_BUILT} of ${CARDS_PLANNED} designs built.`,
+    label: "Module 3 + 4 · Enhancement + Card",
+    desc: `Enhances the confirmed profile (polished bio + descriptions), suggests the best-fitting layouts, and renders the chosen one — themed from the user's own logo. ${CARDS_BUILT} of ${CARDS_PLANNED} designs built.`,
     tone: "emerald" as const,
     status: "Live",
   },
   {
     who: "AnurCloud",
-    step: "06",
+    step: "05",
     label: "Card goes live",
     desc: "Smart card rendered, shareable & analytics-ready",
     tone: "slate" as const,
@@ -70,31 +62,17 @@ const MODULES = [
     ready: true,
   },
   {
-    href: "/enhance",
-    n: "03",
-    name: "Enhancement",
-    icon: "✨",
-    accent: "violet",
-    borderTop: "border-t-violet-500",
-    iconGrad: "from-violet-600 to-violet-400",
-    chip: "bg-violet-50 text-violet-700",
-    input: "Verified profile from Module 1",
-    output: "Polished bio · enhanced descriptions",
-    desc: "Receives the user-confirmed profile from AnurCloud and returns a polished first-person bio and enhanced descriptions. Only fields the user confirmed are used — nothing is guessed or added.",
-    ready: true,
-  },
-  {
     href: "/template",
-    n: "04",
-    name: "Template",
+    n: "3 + 4",
+    name: "Enhancement + Card",
     icon: "🎴",
     accent: "emerald",
     borderTop: "border-t-emerald-500",
     iconGrad: "from-emerald-600 to-emerald-400",
     chip: "bg-emerald-50 text-emerald-700",
-    input: "Confirmed profile + brand (logo or website) · enhanced bio optional",
-    output: "Eligible card layouts + reasons · rendered card as self-contained HTML",
-    desc: `Suggests the three layouts that suit the profile — with reasons, not a made-up percentage — and renders the chosen one, themed automatically from the user's logo. All ${CARDS_BUILT} of ${CARDS_PLANNED} designs built.`,
+    input: "Confirmed profile + brand (logo or website)",
+    output: "Polished bio + the suggested card, rendered live and themed",
+    desc: `Enhances the confirmed profile into a polished bio and descriptions, then suggests the best-fitting layouts — with reasons, not a made-up percentage — and renders the chosen one, themed automatically from the user's logo. All ${CARDS_BUILT} of ${CARDS_PLANNED} designs built.`,
     ready: true,
   },
 ];
@@ -175,16 +153,10 @@ export default function Home() {
               <span>📄</span> Module 1
             </Link>
             <Link
-              href="/enhance"
-              className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-            >
-              <span>✨</span> Module 3
-            </Link>
-            <Link
               href="/template"
               className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
             >
-              <span>🎴</span> Module 4
+              <span>🎴</span> Module 3 + 4
               <span className="rounded-full bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-800">
                 Live
               </span>
@@ -214,7 +186,7 @@ export default function Home() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-60" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
               </span>
-              3 modules live · AI plugins for Insta VIZ
+              AI plugins for Insta VIZ
             </div>
 
             <h1 className="max-w-2xl bg-gradient-to-br from-slate-900 via-blue-800 to-violet-700 bg-clip-text text-5xl font-black leading-[1.08] tracking-tight text-transparent sm:text-6xl">
@@ -249,18 +221,11 @@ export default function Home() {
               <span className="transition-transform group-hover:translate-x-0.5">→</span>
             </Link>
             <Link
-              href="/enhance"
-              className="group flex items-center gap-2 rounded-xl bg-gradient-to-br from-violet-700 to-violet-500 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-violet-500/25 transition hover:shadow-violet-500/40 hover:opacity-95"
-            >
-              Try Enhancement
-              <span className="transition-transform group-hover:translate-x-0.5">→</span>
-            </Link>
-            <Link
               href="/template"
-              className="group flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-7 py-3 text-sm font-bold text-emerald-700 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50"
+              className="group flex items-center gap-2 rounded-xl bg-gradient-to-br from-emerald-700 to-emerald-500 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition hover:shadow-emerald-500/40 hover:opacity-95"
             >
-              🎴 Card Templates
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+              🎴 Enhancement + Card
+              <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white">
                 {CARDS_BUILT}/{CARDS_PLANNED}
               </span>
             </Link>
@@ -272,7 +237,7 @@ export default function Home() {
           <SectionHead
             eyebrow="Integration"
             title="How PxlBrain fits the Insta VIZ flow"
-            sub="Six steps — PxlBrain powers three of them."
+            sub="Five steps — PxlBrain powers two of them."
           />
           <div className="mx-auto mt-10 max-w-xl">
             {FLOW.map((step, i) => {
@@ -326,8 +291,8 @@ export default function Home() {
         <section className="py-12">
           <SectionHead
             eyebrow="Modules"
-            title="Three modules, one pipeline"
-            sub="Each module is a standalone API endpoint — integrate them independently."
+            title="Two modules, one pipeline"
+            sub="Enhancement and card design are delivered together; extraction stands alone."
           />
           <div className="mt-10 flex flex-col gap-4">
             {MODULES.map((m) => {
@@ -395,9 +360,9 @@ export default function Home() {
           <SectionHead
             eyebrow="Capabilities"
             title="What PxlBrain handles"
-            sub={`3 modules live · ${CARDS_BUILT} of ${CARDS_PLANNED} card designs built`}
+            sub={`${CARDS_BUILT} of ${CARDS_PLANNED} card designs built`}
           />
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
+          <div className="mt-10 grid gap-6 lg:grid-cols-2">
             {/* M1 */}
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
@@ -429,38 +394,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* M3 */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-violet-400 text-base shadow-sm">
-                    ✨
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-violet-600">
-                      Module 03
-                    </div>
-                    <div className="text-sm font-bold text-slate-800">Enhancement</div>
-                  </div>
-                </div>
-                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200">
-                  Live
-                </span>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {CAPS_M3.map((c) => (
-                  <div
-                    key={c.label}
-                    className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2.5"
-                  >
-                    <span className="text-sm">{c.icon}</span>
-                    <span className="text-xs font-medium text-slate-700">{c.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* M4 */}
+            {/* M3 + M4 combined */}
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -469,9 +403,9 @@ export default function Home() {
                   </div>
                   <div>
                     <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">
-                      Module 04
+                      Module 3 + 4
                     </div>
-                    <div className="text-sm font-bold text-slate-800">Template</div>
+                    <div className="text-sm font-bold text-slate-800">Enhancement + Card</div>
                   </div>
                 </div>
                 <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200">
@@ -479,7 +413,7 @@ export default function Home() {
                 </span>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
-                {CAPS_M2.map((c) => (
+                {[...CAPS_M3, ...CAPS_M2].map((c) => (
                   <div
                     key={c.label}
                     className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2.5"

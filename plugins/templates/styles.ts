@@ -86,6 +86,16 @@ ${s} .iv-chips{display:flex;flex-wrap:wrap;gap:.3em;min-width:0}
    be anywhere rather than break-word.
    (No backticks in this block — it is inside a template literal.) */
 ${s} .iv-chip{font-size:.68em;padding:.25em .6em;border-radius:999px;background:color-mix(in srgb,var(--iv-primary) 12%,transparent);color:var(--iv-primary);max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere}
+/* Contact values as plain stacked lines (email/phone/address read badly in pills). */
+${s} .iv-clist{display:flex;flex-direction:column;gap:.2em;font-size:.82em;line-height:1.4}
+${s} .iv-clist>div{overflow-wrap:anywhere}
+
+/* Preview cap — an overview sample shows only the first 2 items (chips: 6); the
+   rest are reached via "View all", which opens the section's own screen. */
+${s} .iv-preview>.iv-item:nth-child(n+3){display:none}
+${s} .iv-preview .iv-chip:nth-child(n+7){display:none}
+${s} .iv-ovmore-link{margin-top:.5em;font-size:.72em;font-weight:700;color:var(--iv-muted);border:0;background:none;cursor:pointer;font-family:inherit;padding:0}
+${s} .iv-ovmore-link:hover{color:var(--iv-primary)}
 
 ${s} .iv-socials{display:flex;gap:.35em;flex-wrap:wrap;min-width:0;max-width:100%}
 /* overflow:hidden is a GUARANTEE, not a layout choice. The circle is a fixed size

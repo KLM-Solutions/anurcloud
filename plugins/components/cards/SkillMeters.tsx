@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * Skill Meters — React (TSX) card component.
+ * Skill Meters â React (TSX) card component.
  *
  * Dynamic digital card as a real React component: `<SkillMeters profile={...} />`.
  * Navigation is React state; the scroll cue is a real scroll handler. Renders to
- * plain HTML+CSS in the browser (React does that) — authored as a component so it
+ * plain HTML+CSS in the browser (React does that) â authored as a component so it
  * drops into a React/TypeScript app.
  *
- * Signature: the skill-meters chart leads the overview — bars count how often a
+ * Signature: the skill-meters chart leads the overview â bars count how often a
  * skill appears in the person's own role highlights (evidence), captioned as such,
  * never a proficiency rating and never a percentage of a declared scale.
  */
@@ -18,7 +18,7 @@ import type { CardProfile, ProfileType, ThemeOptions } from "@/templates/types";
 import { resolveTheme } from "@/templates/theme";
 import { cardStyles } from "@/templates/styles";
 import { measuredSkills } from "@/templates/guards";
-import { professionalSections, isBig, nonEmpty, joinParts, styleObject, SocialIcons, cardTheme } from "./card-kit";
+import { professionalSections, nonEmpty, joinParts, styleObject, SocialIcons, cardTheme } from "./card-kit";
 
 export interface SkillMetersProps {
   profile: CardProfile;
@@ -31,7 +31,7 @@ export function SkillMeters({ profile: p, theme }: SkillMetersProps) {
   const scope = resolved.scopeId;
 
   const sections = useMemo(() => professionalSections(p), [p]);
-  const big = sections.filter(isBig);
+  const big = sections.slice(2);
 
   const [view, setView] = useState<string>("overview");
   const [atBottom, setAtBottom] = useState(false);
@@ -73,22 +73,22 @@ export function SkillMeters({ profile: p, theme }: SkillMetersProps) {
                       <div className="iv-sm-n">{r.count}</div>
                     </div>
                   ))}
-                  <p className="iv-sm-cap">Bars count how often each skill appears in the role highlights — not a proficiency rating.</p>
+                  <p className="iv-sm-cap">Bars count how often each skill appears in the role highlights â not a proficiency rating.</p>
                 </div>
               )}
 
               <div className="iv-secs">
-                {sections.map((sec) =>
-                  isBig(sec) ? (
+                {sections.map((sec, i) =>
+                  i >= 2 ? (
                     <button key={sec.key} type="button" className="iv-ovsec" onClick={() => setView(sec.key)}>
                       <div className="iv-ovh">{sec.label}</div>
-                      <div className="iv-ovs">{sec.node}</div>
+                      <div className="iv-ovs iv-preview">{sec.node}</div>
                       <div className="iv-ovnav">{sec.count > 1 ? `View all ${sec.count}` : "Open"} ›</div>
                     </button>
                   ) : (
                     <div key={sec.key} className="iv-ovinline">
                       <div className="iv-ovh">{sec.label}</div>
-                      {sec.node}
+                      <div className="iv-preview">{sec.node}</div>{sec.count > 2 && (<button type="button" className="iv-ovmore-link" onClick={() => setView(sec.key)}>View all {sec.count} ›</button>)}
                     </div>
                   ),
                 )}
@@ -107,7 +107,7 @@ export function SkillMeters({ profile: p, theme }: SkillMetersProps) {
             <div className="iv-view">
               <div className="iv-bar">
                 <button type="button" className="iv-back" onClick={() => setView("overview")}>
-                  ‹ Back
+                  â¹ Back
                 </button>
                 <span className="iv-ptitle">{sec.label}</span>
               </div>

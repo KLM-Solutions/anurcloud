@@ -1,24 +1,23 @@
 "use client";
 
 /**
- * Overlap — React (TSX) card component.
+ * Overlap â React (TSX) card component.
  *
  * Signature (kept from the string card): a coloured ZONE at the top with a raised
- * white PLATE straddling its lower edge — the plate carries the identity and casts
+ * white PLATE straddling its lower edge â the plate carries the identity and casts
  * a shadow onto the zone, so it reads as a surface sitting ON the band, not a notch
  * cut out of it.
  *
  * Digital behaviour matches the other cards: the plate is fixed chrome; below it a
  * content-first overview scrolls (bio + small sections in full + a sample of each
- * big section). A big section opens its own screen with a Back bar. Missing field →
- * no section. Scroll cue (⌄ scroll → ⌃ scroll up).
+ * big section). A big section opens its own screen with a Back bar. Missing field → no section. Scroll cue (⌄ scroll → ⌃ scroll up).
  */
 
 import { useMemo, useState } from "react";
 import type { CardProfile, ProfileType, ThemeOptions } from "@/templates/types";
 import { resolveTheme } from "@/templates/theme";
 import { cardStyles } from "@/templates/styles";
-import { professionalSections, isBig, nonEmpty, joinParts, styleObject, SocialIcons, cardTheme } from "./card-kit";
+import { professionalSections, nonEmpty, joinParts, styleObject, SocialIcons, cardTheme } from "./card-kit";
 
 export interface OverlapProps {
   profile: CardProfile;
@@ -31,7 +30,7 @@ export function Overlap({ profile: p, theme }: OverlapProps) {
   const scope = resolved.scopeId;
 
   const sections = useMemo(() => professionalSections(p), [p]);
-  const big = sections.filter(isBig);
+  const big = sections.slice(2);
 
   const [view, setView] = useState<string>("overview");
   const [atBottom, setAtBottom] = useState(false);
@@ -39,7 +38,7 @@ export function Overlap({ profile: p, theme }: OverlapProps) {
   const css = cardStyles(scope) + `<style>${componentCss(scope)}</style>`;
   const aud = profileType === "student" ? "iv-aud-stu" : "iv-aud-pro";
 
-  // The band carries the standing facts, never the name — that is the plate's job.
+  // The band carries the standing facts, never the name â that is the plate's job.
   const banner = joinParts(
     [nonEmpty(p.totalYearsExperience) ? `${p.totalYearsExperience} experience` : null, p.location],
     " · ",
@@ -52,7 +51,7 @@ export function Overlap({ profile: p, theme }: OverlapProps) {
 
       {view === "overview" ? (
         <div className="iv-view">
-          {/* Chrome — the layered zone + raised plate. */}
+          {/* Chrome â the layered zone + raised plate. */}
           <div className="iv-ov-chrome">
             <div className="iv-ov-zone">{banner && <div className="iv-ov-banner">{banner}</div>}</div>
             <div className="iv-ov-plate">
@@ -71,17 +70,17 @@ export function Overlap({ profile: p, theme }: OverlapProps) {
               {nonEmpty(p.bio) && <p className="iv-bio iv-ov-about">{p.bio}</p>}
 
               <div className="iv-secs">
-                {sections.map((sec) =>
-                  isBig(sec) ? (
+                {sections.map((sec, i) =>
+                  i >= 2 ? (
                     <button key={sec.key} type="button" className="iv-ovsec" onClick={() => setView(sec.key)}>
                       <div className="iv-ovh">{sec.label}</div>
-                      <div className="iv-ovs">{sec.node}</div>
+                      <div className="iv-ovs iv-preview">{sec.node}</div>
                       <div className="iv-ovnav">{sec.count > 1 ? `View all ${sec.count}` : "Open"} ›</div>
                     </button>
                   ) : (
                     <div key={sec.key} className="iv-ovinline">
                       <div className="iv-ovh">{sec.label}</div>
-                      {sec.node}
+                      <div className="iv-preview">{sec.node}</div>{sec.count > 2 && (<button type="button" className="iv-ovmore-link" onClick={() => setView(sec.key)}>View all {sec.count} ›</button>)}
                     </div>
                   ),
                 )}
@@ -100,7 +99,7 @@ export function Overlap({ profile: p, theme }: OverlapProps) {
             <div className="iv-view">
               <div className="iv-bar">
                 <button type="button" className="iv-back" onClick={() => setView("overview")}>
-                  ‹ Back
+                  â¹ Back
                 </button>
                 <span className="iv-ptitle">{sec.label}</span>
               </div>
@@ -119,12 +118,12 @@ function componentCss(scopeId: string): string {
 ${s}.iv-overlap{position:relative;height:537px;background:var(--iv-surface)}
 ${s} .iv-view{position:absolute;inset:0;display:flex;flex-direction:column}
 
-/* Chrome — the layered zone + raised plate (the signature). Fixed, not scrolled. */
+/* Chrome â the layered zone + raised plate (the signature). Fixed, not scrolled. */
 ${s} .iv-ov-chrome{flex:0 0 auto;padding-bottom:.4em}
 ${s} .iv-ov-zone{background:var(--iv-grad);color:var(--iv-onp);min-height:4.6em;padding:.7em 1.05em 2.6em;display:flex;align-items:flex-start;justify-content:flex-end}
 ${s} .iv-ov-banner{font-size:.62em;font-weight:700;text-transform:uppercase;letter-spacing:.11em;color:color-mix(in srgb,var(--iv-onp) 85%,transparent);text-align:right;max-width:70%}
 /* margin-top is the lift; it stays below the zone height. The shadow sells the
-   layering — without it the plate reads as a notch, not a surface on the band. */
+   layering â without it the plate reads as a notch, not a surface on the band. */
 ${s} .iv-ov-plate{position:relative;z-index:1;margin:-2.3em .9em 0;background:var(--iv-surface);border-radius:calc(var(--iv-radius) * .5);padding:.8em .9em;box-shadow:0 2px 4px rgba(15,23,42,.06),0 12px 24px -12px rgba(15,23,42,.28);border:1px solid color-mix(in srgb,var(--iv-muted) 14%,transparent)}
 ${s} .iv-ov-plate .iv-name{font-size:1.12em}
 ${s} .iv-ov-plate .iv-role{font-size:.82em;color:var(--iv-muted);margin-top:.15em}
@@ -145,7 +144,7 @@ ${s} .iv-ovsec:hover .iv-ovnav{color:var(--iv-primary)}
 ${s} .iv-ovh{font-family:var(--iv-font-h);font-weight:700;font-size:.66em;letter-spacing:.08em;text-transform:uppercase;color:var(--iv-primary);margin-bottom:.5em}
 ${s} .iv-ovnav{margin-top:.5em;font-size:.72em;font-weight:700;color:var(--iv-muted)}
 
-/* Section screen — Back bar + body. */
+/* Section screen â Back bar + body. */
 ${s} .iv-bar{display:flex;align-items:center;gap:.6em;padding:.85em 1em;border-bottom:1px solid var(--iv-edge);flex:0 0 auto}
 ${s} .iv-back{display:inline-flex;align-items:center;gap:.15em;font-size:.78em;font-weight:700;color:var(--iv-primary);cursor:pointer;border:0;background:none;font-family:inherit}
 ${s} .iv-ptitle{font-family:var(--iv-font-h);font-weight:700;font-size:.9em}

@@ -19,7 +19,7 @@ import { useMemo, useState } from "react";
 import type { CardProfile, ProfileType, ThemeOptions } from "@/templates/types";
 import { resolveTheme } from "@/templates/theme";
 import { cardStyles } from "@/templates/styles";
-import { professionalSections, isBig, nonEmpty, joinParts, styleObject, SocialIcons, cardTheme } from "./card-kit";
+import { professionalSections, nonEmpty, joinParts, styleObject, SocialIcons, cardTheme } from "./card-kit";
 
 export interface NumberedProps {
   profile: CardProfile;
@@ -71,13 +71,13 @@ export function Numbered({ profile: p, theme }: NumberedProps) {
             >
               {nonEmpty(p.bio) && <p className="iv-bio iv-nb-about">{p.bio}</p>}
 
-              {numbered.map(({ sec, num }) =>
-                isBig(sec) ? (
+              {numbered.map(({ sec, num }, i) =>
+                i >= 2 ? (
                   <button key={sec.key} type="button" className="iv-nb-row iv-nb-sec" onClick={() => setView(sec.key)}>
                     <div className="iv-nb-n">{num}</div>
                     <div className="iv-nb-c">
                       <h3 className="iv-nb-t">{sec.label}</h3>
-                      <div className="iv-nb-s">{sec.node}</div>
+                      <div className="iv-nb-s iv-preview">{sec.node}</div>
                       <div className="iv-nb-nav">{sec.count > 1 ? `View all ${sec.count}` : "Open"} ›</div>
                     </div>
                   </button>
@@ -86,7 +86,12 @@ export function Numbered({ profile: p, theme }: NumberedProps) {
                     <div className="iv-nb-n">{num}</div>
                     <div className="iv-nb-c">
                       <h3 className="iv-nb-t">{sec.label}</h3>
-                      {sec.node}
+                      <div className="iv-preview">{sec.node}</div>
+                      {sec.count > 2 && (
+                        <button type="button" className="iv-ovmore-link" onClick={() => setView(sec.key)}>
+                          View all {sec.count} ›
+                        </button>
+                      )}
                     </div>
                   </div>
                 ),
