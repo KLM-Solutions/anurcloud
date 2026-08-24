@@ -3,12 +3,9 @@ import { fail, tokenMatches } from "@/lib/route-helpers";
 import { profileToCard } from "@/lib/profile-to-card";
 import { brandToTheme } from "@/lib/brand-to-theme";
 import {
-  cardPageCount,
   eligibleTemplates,
   offerableTemplates,
   plannedTemplates,
-  renderCard,
-  templates,
   templatesFor,
 } from "@/templates";
 import { suggestTemplatesLLM } from "@/lib/suggest-llm";
@@ -32,13 +29,12 @@ export const maxDuration = 800;
  *   Content-Type: application/json
  *   Body: { profile, profile_type, enhanced?, brand?, photo_url?, template?, theme? }
  *
- * Two modes:
- *   - no `template` → eligibility only: which cards this profile can fill, and
- *     why the others can't
- *   - `template` given → the same, plus rendered HTML
- *
- * The card is themed automatically from `brand` when it is supplied, so the
- * caller never has to work out a palette (Mithra's 3 Aug 2026 request).
+ * Returns eligibility (which cards this profile can fill, and why the others
+ * can't) plus an LLM-ranked shortlist. It does NOT render a card: the cards are
+ * React components (`components/cards/`) rendered client-side. The theme is still
+ * resolved from `brand` here so the caller gets a ready palette + logo to hand to
+ * the component (Mithra's 3 Aug 2026 request); a `template` field in the body, if
+ * present, is ignored.
  */
 export async function POST(request: NextRequest) {
   // 1. Auth
@@ -99,18 +95,6 @@ export async function POST(request: NextRequest) {
 
   // 6. No cards built yet → say so plainly rather than returning an empty success.
   if (templatesFor(profileType).length === 0) {
-    // A caller who explicitly asked for a card must not get a quiet 200 back:
-    // silently dropping the request would read as "rendered fine, no HTML".
-    if (req.template !== undefined && req.template !== null) {
-      return fail(
-        "UNKNOWN_TEMPLATE",
-        `No card templates are built for ${profileType} profiles yet, so "${String(
-          req.template,
-        )}" cannot be rendered.`,
-        404,
-      );
-    }
-
     const received: TemplateReceived = {
       status: "received",
       message:
@@ -143,55 +127,6 @@ export async function POST(request: NextRequest) {
     offered,
     theme: themeReport,
   };
-
-  // 7. Render, if one was asked for.
-  if (req.template !== undefined && req.template !== null) {
-    const selector = req.template;
-    if (typeof selector !== "number" && typeof selector !== "string") {
-      return fail("INVALID_TEMPLATE", '"template" must be a template number or key.', 400);
-    }
-
-    const info = templates.find(
-      (t) => t.id === selector || t.key === String(selector).toLowerCase(),
-    );
-    if (!info) {
-      const avail = templates.map((t) => `${t.id} (${t.key})`).join(", ") || "none yet";
-      return fail(
-        "UNKNOWN_TEMPLATE",
-        `Unknown or unbuilt template "${selector}". Available: ${avail}.`,
-        404,
-      );
-    }
-    if (info.audience !== profileType) {
-      return fail(
-        "TEMPLATE_WRONG_AUDIENCE",
-        `Template ${info.id} ("${info.key}") is for ${info.audience} profiles, not ${profileType}.`,
-        400,
-      );
-    }
-
-    // Gate on data, not just on existence — a card offered without the content
-    // to fill it renders badly, which is the whole reason minimums exist.
-    const check = eligibility.find((e) => e.key === info.key);
-    if (check && !check.eligible) {
-      return fail(
-        "TEMPLATE_NOT_ELIGIBLE",
-        `${info.name} cannot be rendered for this profile. ${check.reason}`,
-        422,
-      );
-    }
-
-    try {
-      result.html = renderCard(info.id, card, outcome.theme);
-      // How many pages the card flowed into — 1 for a normal profile, more when
-      // a heavy CV paginates rather than growing into one tall card.
-      result.pages = cardPageCount(info.id, card, outcome.theme);
-      result.rendered = { id: info.id, key: info.key, name: info.name };
-    } catch (err) {
-      console.error("[template] render error:", err);
-      return fail("RENDER_FAILED", "The template could not be rendered.", 502);
-    }
-  }
 
   return NextResponse.json(result);
 }

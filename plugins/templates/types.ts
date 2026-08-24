@@ -255,7 +255,7 @@ export type TemplateKey =
   | "spotlight";
 
 export interface TemplateInfo {
-  /** The number the caller passes: renderCard(1, ...). */
+  /** Stable catalogue id for this template (1-based). */
   id: number;
   key: TemplateKey;
   name: string;
