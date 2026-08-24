@@ -1,14 +1,17 @@
 /**
- * Insta VIZ smart-card templates — registry and public entry point.
+ * Insta VIZ smart-card templates — catalogue and the recommendation brain.
  *
- *   import { renderCard, templatesFor } from "@/templates";
- *   const html = renderCard(1, cardProfile, themeOptions);
+ *   import { templatesFor, suggestTemplates, eligibleTemplates } from "@/templates";
+ *
+ * The cards themselves render as React components in `components/cards/` — this
+ * module has NO render path. It owns the catalogue metadata (names, descriptions,
+ * audiences, minimums) and the eligibility + ranking logic that decides WHICH
+ * cards to offer a profile. `/api/template` calls into here; the React registry
+ * (`components/cards/registry.tsx`) renders the chosen card client-side.
  *
  * ── Adding a template ─────────────────────────────────────────────────────
- * Two steps, by design:
- *   1. add `cards/<audience>-NN-<key>.ts` exporting a builder
- *   2. add one line to BUILDERS below
- * The catalogue entry already exists in PLANNED.
+ *   1. add its React component in `components/cards/` + a line in `registry.tsx`
+ *   2. add a `PLANNED` entry here (metadata: name, description, audience, key)
  *
  * ⚠️ Nothing in `templates/` may import from `lib/` or `app/` (DEV-3040).
  */
@@ -19,57 +22,14 @@ import type {
   TemplateEligibility,
   TemplateInfo,
   TemplateKey,
-  ThemeOptions,
 } from "./types";
-import { resolveTheme, type ResolvedTheme } from "./theme";
-import { attr } from "./helpers";
-import { cardStyles } from "./styles";
-import { renderPages, pageCount, type PagedContent } from "./pagination";
 import { eligibilityFor, minimumLabel, dataLevel } from "./guards";
 import { rankTemplates, topSuggestions, type Suggestion } from "./rank";
-import { sideRail } from "./cards/student-01-side-rail";
-import { heroSplit } from "./cards/student-02-hero-split";
-import { centrePortrait } from "./cards/student-03-centre-portrait";
-import { timelineCard } from "./cards/student-04-timeline";
-import { tileGrid } from "./cards/student-05-tile-grid";
-import { ticketStub } from "./cards/student-06-ticket-stub";
-import { cornerWedge } from "./cards/student-07-corner-wedge";
-import { monogramBlock } from "./cards/student-08-monogram-block";
-import { indexLedger } from "./cards/student-09-index-ledger";
-import { columnFlow } from "./cards/student-10-column-flow";
-import { skillMeters } from "./cards/professional-11-skill-meters";
-import { splitHalves } from "./cards/professional-12-split-halves";
-import { overlap } from "./cards/professional-13-overlap";
-import { numbered } from "./cards/professional-14-numbered";
-import { folderTab } from "./cards/professional-15-folder-tab";
-import { statStrip } from "./cards/professional-16-stat-strip";
-import { roleLadder } from "./cards/professional-17-role-ladder";
-import { letterhead } from "./cards/professional-18-letterhead";
-import { edgeSpine } from "./cards/professional-19-edge-spine";
-import { pullQuote } from "./cards/professional-20-pull-quote";
-import { badge } from "./cards/professional-21-badge";
-import { spotlight } from "./cards/professional-22-spotlight";
 
 export * from "./types";
 export { resolveTheme } from "./theme";
 export { dataLevel, meetsMinimum, minimumLabel } from "./guards";
 export type { DataLevel } from "./guards";
-
-/**
- * A card ships its own layout CSS alongside its markup, so one card can never
- * quietly restyle another. Shared primitives live in `styles.ts`.
- */
-export interface CardModule {
-  build: (profile: CardProfile, theme: ResolvedTheme) => string;
-  /** Layout CSS for this card only, scoped to the render. */
-  styles: (scopeId: string) => string;
-  /**
-   * Optional paginated content model. When a card exports this, renderCard flows
-   * its body across fixed-height pages instead of one growing box (see
-   * pagination.ts). Cards without it render as a single page, unchanged.
-   */
-  paged?: (profile: CardProfile, theme: ResolvedTheme) => PagedContent;
-}
 
 interface PlannedTemplate {
   id: number;
@@ -311,43 +271,16 @@ const PLANNED: PlannedTemplate[] = [
   },
 ];
 
-/**
- * Cards that actually exist.
- *
- * A planned template with no module here is deliberately NOT offered — the
- * catalogue reflects what can really be rendered, so nothing can promise a
- * card that doesn't exist.
- */
-const BUILDERS: Partial<Record<TemplateKey, CardModule>> = {
-  "side-rail": sideRail,
-  "hero-split": heroSplit,
-  "centre-portrait": centrePortrait,
-  timeline: timelineCard,
-  "tile-grid": tileGrid,
-  "ticket-stub": ticketStub,
-  "corner-wedge": cornerWedge,
-  "monogram-block": monogramBlock,
-  "index-ledger": indexLedger,
-  "column-flow": columnFlow,
-  "skill-meters": skillMeters,
-  "split-halves": splitHalves,
-  overlap,
-  numbered,
-  "folder-tab": folderTab,
-  "stat-strip": statStrip,
-  "role-ladder": roleLadder,
-  letterhead,
-  "edge-spine": edgeSpine,
-  "pull-quote": pullQuote,
-  badge,
-  spotlight,
-};
-
 /* ── catalogue ────────────────────────────────────────────────────────────── */
 
-function isAvailable(t: PlannedTemplate): boolean {
-  return typeof BUILDERS[t.key]?.build === "function";
-}
+/**
+ * Every planned card is built (all 22 ship as React components in
+ * `components/cards/`). The catalogue therefore reflects the full set. If a card
+ * is ever removed, drop its `PLANNED` entry rather than gating here — this module
+ * cannot import the React registry without breaking the self-contained rule
+ * (DEV-3040), so `PLANNED` is the single source of truth for what exists.
+ */
+const isAvailable = (): boolean => true;
 
 function toInfo(t: PlannedTemplate): TemplateInfo {
   return {
@@ -419,74 +352,4 @@ export type { FitTier, ProfileFacts, Suggestion } from "./rank";
 export function suggestTemplates(profile: CardProfile): Suggestion[] {
   const pool = templates.filter((t) => t.audience === profile.profileType);
   return topSuggestions(rankTemplates(profile, pool, eligibleTemplates(profile)));
-}
-
-/* ── render ───────────────────────────────────────────────────────────────── */
-
-function resolveDef(selector: number | string): PlannedTemplate {
-  const def =
-    typeof selector === "number"
-      ? PLANNED.find((t) => t.id === selector)
-      : PLANNED.find((t) => t.key === selector.toLowerCase());
-
-  if (!def) {
-    const avail = PLANNED.filter(isAvailable)
-      .map((t) => `${t.id} (${t.key})`)
-      .join(", ");
-    throw new Error(
-      `[templates] Unknown template "${selector}". Available: ${avail || "none yet"}.`,
-    );
-  }
-  if (!isAvailable(def)) {
-    throw new Error(
-      `[templates] Template ${def.id} ("${def.key}") is planned but not built yet.`,
-    );
-  }
-  return def;
-}
-
-/**
- * Render a card to a self-contained HTML string.
- *
- * @param template Template number (1, 2, …) or key ("side-rail").
- * @param profile  Already cleaned by `lib/profile-to-card.ts`.
- * @param options  Theme overrides. All optional; every template accepts all of them.
- */
-export function renderCard(
-  template: number | string,
-  profile: CardProfile,
-  options: ThemeOptions = {},
-): string {
-  const def = resolveDef(template);
-  const mod = BUILDERS[def.key]!;
-  const theme = resolveTheme(options, profile.profileType);
-  const aud = profile.profileType === "student" ? "iv-aud-stu" : "iv-aud-pro";
-  // Paginated cards flow their body across pages; the rest render as one page.
-  const inner = mod.paged ? renderPages(mod.paged(profile, theme)) : mod.build(profile, theme);
-  // `resolveTheme` already validates every option it is given, so these two are
-  // safe by construction. Escaped anyway: they are the only caller-influenced
-  // values that land in an attribute, and one missed validator here turns every
-  // embedded card into an XSS hole.
-  return `<div class="${attr(theme.scopeId)} ${def.rootClass} ${aud}" style="${attr(
-    theme.rootStyle,
-  )}" data-iv-template="${def.key}">${cardStyles(
-    theme.scopeId,
-  )}${mod.styles(theme.scopeId)}${inner}</div>`;
-}
-
-/**
- * How many pages a card will render for this profile (1 for cards that have not
- * been migrated to pagination). `/api/template` returns this so a caller knows a
- * tall CV produced multiple pages rather than one giant card.
- */
-export function cardPageCount(
-  template: number | string,
-  profile: CardProfile,
-  options: ThemeOptions = {},
-): number {
-  const def = resolveDef(template);
-  const mod = BUILDERS[def.key]!;
-  if (!mod.paged) return 1;
-  const theme = resolveTheme(options, profile.profileType);
-  return pageCount(mod.paged(profile, theme));
 }

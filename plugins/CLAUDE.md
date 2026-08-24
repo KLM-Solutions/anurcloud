@@ -24,12 +24,19 @@ server-side engines; AnurCloud owns the UI and the human **Review** step.
 |--------|-------|--------|-------|
 | 1 · Extract | PxlBrain | **Live** | `/api/extract`, `/api/extract-url`, `lib/llama.ts`, `lib/schema.ts` |
 | 2 · Review | AnurCloud | n/a | user corrects fields in AnurCloud's UI |
-| 3 · Enhance | PxlBrain | **Live** | `/api/enhance`, `lib/enhance-engine.ts` |
-| 4 · Template | PxlBrain | **all 22 cards live** | `/api/template`, `templates/`, `lib/profile-to-card.ts`, `lib/brand-to-theme.ts` |
+| 3 · Enhance | PxlBrain | **Live** | `/api/enhance`, `lib/enhance-engine.ts`, `lib/llm-chat.ts`, `lib/enhance-validate.ts` |
+| 4 · Template | PxlBrain | **all 22 cards live** | `/api/template`, `templates/`, `components/cards/`, `lib/suggest-llm.ts`, `lib/profile-to-card.ts`, `lib/brand-to-theme.ts` |
+
+> **In the UI, Modules 3 and 4 are now one step — "Enhancement + Card"** (merged
+> 21 Aug 2026, commit `a173440`). Enhancement always runs before the card, so the
+> homepage, nav and flow present them together; the standalone `/enhance` page is
+> delinked from the UI (the file still exists). `/template` **redirects to
+> `/playground`**, which is the live card viewer. Server-side the two modules are
+> still separate endpoints.
 
 **Module 4 state:** foundation built and verified (DEV-3040), plus the **full
 20** (student DEV-3035…3039 + DEV-3041…3045, professional DEV-3046…3055): 10 student (Side Rail, Hero Split, Centre Portrait, Timeline, Tile Grid,
-Footer Anchor, Corner Wedge, Monogram Block, Index Ledger, Column Flow) and 10
+Ticket Stub, Corner Wedge, Monogram Block, Index Ledger, Column Flow) and 10
 professional (Skill Meters, Split Halves, Overlap, Numbered, Folder Tab, Stat
 Strip, Role Ladder, Letterhead, Edge Spine, Pull Quote). **Two more professional
 cards were added 18 Aug 2026 (DEV-3069/3070): Badge (21) and Spotlight (22)** —
@@ -37,6 +44,25 @@ the set is now **22**. These two are the ONLY professional cards with an identit
 circle; they exist so a professional who uploads a logo has a home for it (the
 logo fills the circle), and each is structurally distinct from the other and from
 every student avatar card.
+
+> **Card 6 (student) is now Ticket Stub, not Footer Anchor** (replaced 20 Aug
+> 2026, DEV-3072/3074). Footer Anchor — a colour band at the bottom — was cut and
+> `student-06-ticket-stub.ts` took its slot: a coloured header with a dashed
+> perforation and a notch bitten out of each edge, tearing off a stub. Don't
+> rebuild Footer Anchor.
+
+> **Cards render as React components only — there is no HTML render path.**
+> (HTML string builders + pagination were removed 24 Aug 2026 as unnecessary once
+> the React set landed.) The two halves now are:
+> - `components/cards/*.tsx` — the 22 **self-contained React components** (the
+>   "dynamic digital card"), mapped by `components/cards/registry.tsx`. This is the
+>   whole render layer and the hand-off into Anur Cloud's React/TS app.
+> - `templates/` — the **recommendation brain only**: catalogue metadata,
+>   eligibility, ranking, minimums, theme resolution, and a few pure helpers the
+>   React cards import (`styles.ts` `cardStyles`, `helpers.ts`, `icons.ts`,
+>   `sections.ts` `socialKey`). It builds **no markup**.
+> Adding or renaming a card means touching the React component + `registry.tsx`
+> and the `PLANNED` list in `templates/index.ts`.
 
 **The professional order is the owner's, set 11 Aug 2026 (DEV-3056)** — ids 11–20 run in
 exactly the sequence above, and the filenames encode it. Two earlier cards
@@ -48,12 +74,12 @@ Spine and Pull Quote replaced them. Don't rebuild either.
 professional layouts gate on fields the student schema does not have —
 `total_years_experience` (Stat Strip) and `experience[].highlights` (Role Ladder,
 Skill Meters) — so they are unreachable from a student profile even if the
-audience filter were bypassed. `verify-foundation.mts` asserts both barriers
-independently. No professional card puts the identity inside a full-width top
+audience filter were bypassed (the eligibility minimums in `templates/guards.ts`
+are the barrier). No professional card puts the identity inside a full-width top
 band, and only **Badge (21) and Spotlight (22)** use the initials/logo circle —
-the two opt-in avatar cards. A per-card assertion still blocks the circle on
-every *other* professional card, so it cannot creep back into the ten that
-deliberately avoid it (`PRO_AVATAR_CARDS` is the allow-list in verify).
+the two opt-in avatar cards. The other ten professional cards deliberately avoid
+the circle; that is now a design property of each React component rather than a
+verify assertion (the automated check was removed with the HTML path).
 
 **Skill Meters (14) must never become a proficiency chart.** Nothing in the
 extraction schema records proficiency — no levels, no years per skill, no
@@ -71,6 +97,17 @@ ranked, each with plain-language reasons. The count is one constant
 (`SUGGESTION_COUNT`, owner's call 11 Aug 2026) and deliberately **not** a request
 parameter — a caller that could ask for twelve turns it back into the catalogue.
 
+> **Ranking is now LLM-first, rules-fallback (`lib/suggest-llm.ts`).**
+> `/api/template` calls `suggestTemplatesLLM()`: the **rules still decide
+> eligibility** (the model only ever sees cards the profile can actually fill, so
+> it can't suggest one that renders badly), then the LLM ranks those and writes a
+> one-line reason each. Every honesty guard survives — no `%` ever (a reason
+> carrying one is thrown out), and the coarse tier is **borrowed from the
+> rule-based score**, not invented by the model. Any failure (no LLM configured,
+> model error, bad JSON, unknown/duplicate ids, fewer than 3 valid picks) falls
+> back to the deterministic `suggestTemplates`. `suggestTemplates` itself is
+> unchanged and still the fallback + the source of the tier.
+
 > **⚠️ Never add a fit percentage.** The page once showed invented scores
 > (`TMP-101 · 94%`) and they were removed as a lie with a decimal point in it:
 > there is no ground truth for how well a layout suits a person, so any percentage
@@ -85,28 +122,22 @@ reverse. That is the client's 3 Aug complaint in another form, so it is weighted
 first. Appetite is separate from the hard minimum in `guards.ts` — a minimum says
 "will not break", an appetite says "is at its best".
 
-**Pagination — asked for 11 Aug 2026, NOT built (DEV-3063).** A card is one growing box
-today. Measured heights at 380px wide: 74px for a name-only profile, 1310–2154px
-for a senior CV with every field filled. A4 at 96dpi is 1122px, so a full career
-wants about two pages.
+**No display caps — show every field in full (owner's call, 20 Aug 2026, DEV-3072/3074).**
+The count caps that used to live in `templates/limits.ts` (skills 18, roles 6,
+projects 5, bio at 160 chars, …) are **gone**. Every dial in `SHOW`/`NARROW` is
+now `UNLIMITED` — cards still call `SHOW.skills`, `NARROW.roles`, etc., but each
+means "render them all". Nothing the profile contains is dropped at render time.
+`SHOW`/`NARROW` are kept as named dials only so a future cap is one edit, not a
+hunt through every card.
 
-What it needs, so whoever picks it up is not starting from a blank page:
-1. **Each card must declare its content blocks** so they can be distributed across
-   pages. Today the block list is inline in each `build()`. The shape wanted is an
-   optional `blocks(profile)` export per card that `build()` also consumes, so the
-   single-page and paginated paths cannot drift apart.
-2. **A height estimate per block**, because there is no DOM server-side. Character
-   and item counts are enough for a page budget — `contentVolume()` in guards.ts is
-   the first cut of this — and the Chrome rig (`npm run check:overflow`) is what
-   calibrates and then guards the estimate.
-3. **A continuation design.** Page 1 keeps the card's full chrome; pages 2+ need a
-   slim repeated header, not a second copy of the identity block.
-4. **An output-shape decision, which is AnurCloud's integration contract.**
-   Recommended: `renderCard()` keeps returning ONE string, containing N stacked
-   `.iv-page` elements, and `/api/template` adds a `pages` count. Returning an
-   array would break every existing caller for no gain.
-Open question for the owner: the page height. A4 proportion at the card's width
-(380 × 537) gives a heavy CV four pages; a flat 1120px gives it two.
+**Length is handled by the card being dynamic, not by pagination.** The old
+server-side pagination (`templates/pagination.ts`, fixed-height A4 pages) was
+**removed 24 Aug 2026** together with the HTML render path. In the React cards a
+long profile is not a "tall page" problem: the profile fills a **hero** first,
+then each section is **navigable on demand** — a big section (>4 items) gets its
+own screen, a small one shows inline — via the `Accordion`/section model in
+`components/cards/card-kit.tsx`. So "show everything" and "don't overflow" are
+reconciled by interaction, not by breaking content across printed pages.
 
 **Logo goes in the identity circle, on the cards that have one (owner's call, 18
 Aug 2026 — DEV-3068).** The old `logoSlot()` system — a dedicated corner slot on all 20
@@ -123,13 +154,68 @@ the **8 student cards** (`student-01`…`08`) and, since 18 Aug 2026, the **2
 professional avatar cards Badge (21) and Spotlight (22)**. The other 10
 professional cards and `student-09`/`10` have no circle, so they carry no logo.
 Building Badge and Spotlight was the owner's answer to "professionals want a logo
-too" — rather than reviving the corner slot, add two opt-in avatar layouts.
-`verify-foundation.mts` asserts the logo fills the circle when supplied (student
-and pro), and that no *other* professional card grows a circle.
+too" — rather than reviving the corner slot, add two opt-in avatar layouts. The
+"logo fills the circle when supplied, and no other professional card grows a
+circle" behaviour now lives in the React components themselves (the verify
+assertion that used to guard it was removed with the HTML path).
 
 The four cards in the repo-root `insta-viz-templates/` folder are **throwaway
 prototypes** — they do not count toward the committed 22, and nothing here
 imports from them.
+
+**React (TSX) card delivery — the dynamic digital card (DEV-3072/3074, 21 Aug 2026).**
+All 22 cards are **self-contained React components** in `components/cards/*.tsx`,
+mapped by `components/cards/registry.tsx` (`REACT_CARDS`, `BUILT_CARD_KEYS`,
+`isCardBuilt`). This is the **only** render path and the hand-off into Anur
+Cloud's React/TS app.
+- **The React set renders a "dynamic digital card":** the profile fills a hero
+  first, then sections are navigable on demand (accordion / per-section screens),
+  not one long printed page. Shared pieces — `Items` / `Chips` / `Avatar` /
+  `SocialIcons` / `Accordion`, the section model, per-template palette, `cardTheme`
+  — live in `components/cards/card-kit.tsx`.
+- **There is no HTML/server render.** `registry.tsx` returns JSX rendered
+  client-side. `/api/template` does **not** return markup — it returns eligibility
+  + the LLM-ranked shortlist + the resolved theme, and the client renders the
+  chosen component with that theme. (The old `renderCard()`/`html`/`pages` path
+  and `templates/pagination.ts` were deleted 24 Aug 2026.)
+- **`templates/` is imported by the React cards, one-directional.** The components
+  pull a few pure helpers from it — `cardStyles` (`styles.ts`), `safeUrl`/
+  `initials` (`helpers.ts`), `socialKey` (`sections.ts`), `BRAND_ICONS`
+  (`icons.ts`) — so `templates/` must stay dependency-free (the self-contained
+  rule still holds and `npm run check:templates` still enforces it).
+- **Social icons are real SVGs** — `templates/icons.ts` is a self-contained brand
+  icon set with a globe fallback, used by `card-kit.tsx`.
+- **The playground (`app/playground/page.tsx`) is the live React viewer.** It
+  renders the dynamic React card (first eligible by default, or the real handoff
+  profile with brand colours + logo) and calls `/api/template` **for eligibility
+  only**. `lib/dev-dummy-profiles.ts` supplies rich dummy profiles for QA.
+
+**LLM engines — local model first, OpenAI + rules as fallback.** Both Module 3
+(enhancement) and Module 4 (card-picking) run through one shared helper,
+`lib/llm-chat.ts`, which is env-configured:
+- **`isLocalLLM()`** is true when `LOCAL_LLM_BASE_URL` is set. Local uses
+  **Ollama's native `/api/chat`** with `think:false` + `format:"json"` — NOT the
+  OpenAI-compatible `/v1` endpoint, which has a known bug where `think:false` is
+  ignored and `content` comes back empty (reasoning lands in a `reasoning` field).
+  OpenAI uses the SDK with `response_format: json_object`.
+- **`MODEL = LOCAL_LLM_MODEL ?? "gpt-4.1"`**, temperature **0.2** by default
+  (`LLM_TEMPERATURE`) — both jobs are grounded/fact-bound, and at the SDK default
+  a small model embellishes (it expanded "CKA" into "Certified Kubernetes
+  Administrator"). Low temp cuts that at no quality cost.
+- **Small models need a validation layer.** `lib/enhance-validate.ts`
+  (`validateEnhance`) coerces the model's output to the shape the renderer expects
+  and enforces grounding in code: an enhanced project/internship/experience is
+  kept ONLY if its identity key matches an entry that was in the request profile;
+  hallucinated entries are dropped, and a matched-but-empty enhancement falls back
+  to the profile's own text. A 4B model will occasionally break the "never invent"
+  rule the prompt states, so it's enforced twice.
+- **`lib/llm-chat.ts` note:** the local branch is a Mac/Ollama test workaround.
+  **Production runs vLLM**, whose `/v1` is not buggy — swap the local branch for
+  the vLLM branch (OpenAI API + `chat_template_kwargs: { enable_thinking: false }`)
+  at deploy time.
+- **`eval-results/`** holds a GPT-4.1 vs Qwen-4B quality comparison
+  (`compare-gpt-4.1-vs-qwen-4b.md`, per-model JSON). Regenerate with `npm run eval`
+  (`scripts/eval-quality.mts` + `scripts/eval/golden.ts` + `scripts/eval/score.ts`).
 
 **Structure-first is the rule for every card.** Mithra Murugesan
 (Anur Cloud), 3 Aug 2026, on our first prototypes:
@@ -145,8 +231,8 @@ Bands", "Portrait Panel") were built, caught against this list and replaced
 before review; don't rebuild them.
 
 Test every new card in grayscale — if it isn't obviously a different card with
-the colour removed, it isn't a new template. `npm run preview` renders the whole
-set with a grayscale toggle for exactly this.
+the colour removed, it isn't a new template. (The `npm run preview` grayscale
+harness was removed with the HTML path; check it by eye in the playground for now.)
 
 Two **profile types** — `student` and `professional` — drive both the extraction schema
 and the enhancement prompts throughout.
@@ -163,61 +249,47 @@ and the enhancement prompts throughout.
 External services (each wrapped server-only, key read from env, never client-side):
 - **LlamaCloud / LlamaExtract** (`@llamaindex/llama-cloud`) — schema-driven file extraction
 - **Firecrawl** (`@mendable/firecrawl-js`) — renders + crawls a URL (up to 25 pages) to markdown
-- **OpenAI** (`openai`) — enhancement, model **`gpt-4.1`**
+- **LLM (enhancement + card-picking)** via `lib/llm-chat.ts` — a **local model**
+  (Ollama/Qwen in dev, vLLM in prod) when `LOCAL_LLM_BASE_URL` is set, otherwise
+  **OpenAI** (`openai`, default model `gpt-4.1`). Rule-based fallbacks below both.
 
 ## Layout
 
 ```
 plugins/
 ├── app/
-│   ├── page.tsx            landing — AnurCloud × PxlBrain flow overview
+│   ├── page.tsx            landing — flow overview (Modules 3+4 shown as one step)
 │   ├── extraction/page.tsx interactive extraction demo (client): file + URL modes
-│   ├── enhance/page.tsx    enhancement demo (client)
-│   ├── template/page.tsx   template module — renders the REAL cards at build time
-│   ├── template/your-card.tsx  live panel (client): handoff profile → shortlist → card
+│   ├── enhance/page.tsx    enhancement demo (client) — DELINKED from UI, file kept
+│   ├── playground/page.tsx live React card viewer (client): dynamic card, dummy or real profile
+│   ├── template/page.tsx   redirects → /playground (old gallery + your-card removed)
 │   ├── layout.tsx          Geist fonts, light-only, metadata
 │   └── api/
 │       ├── extract/route.ts       file  → structured profile
 │       ├── extract-url/route.ts   URL   → Firecrawl → structured profile
-│       ├── enhance/route.ts       profile → polished bio + descriptions
-│       └── template/route.ts      profile → eligible cards (+ rendered HTML)
-├── templates/           ⚠️ SELF-CONTAINED — see the rule below
-│   ├── index.ts         registry: PLANNED metadata + BUILDERS + renderCard()
-│   ├── types.ts         CardProfile / ThemeOptions / TemplateInfo
+│       ├── logo/route.ts          logo upload proxy (SSRF-guarded)
+│       ├── enhance/route.ts       profile → polished bio + descriptions (LLM, validated)
+│       └── template/route.ts      profile → eligible + LLM-ranked cards + theme (NO html)
+├── components/cards/    22 cards as React (TSX) — the ONLY render path
+│   ├── registry.tsx     REACT_CARDS map, BUILT_CARD_KEYS, isCardBuilt
+│   ├── card-kit.tsx     shared: Items/Chips/Avatar/SocialIcons/Accordion, section model, palette, cardTheme
+│   └── <Card>.tsx       one component per card (SideRail, HeroSplit, …, Badge, Spotlight — 22 total)
+├── templates/           ⚠️ SELF-CONTAINED — the recommendation brain (no markup)
+│   ├── index.ts         catalogue (PLANNED) + templatesFor / eligibleTemplates / suggestTemplates
+│   ├── types.ts         CardProfile / ThemeOptions / TemplateInfo / TemplateKey
 │   ├── theme.ts         theme resolution + hex maths + contrast helpers
 │   ├── guards.ts        empty-content rules, per-template minimums, dataLevel(), volume
-│   ├── limits.ts        SHOW / NARROW — how much of each field a card displays
+│   ├── limits.ts        SHOW / NARROW — now ALL `UNLIMITED` (no display caps)
 │   ├── rank.ts          suggestion: top 3 ranked + reasons (NO fit percentages)
-│   ├── helpers.ts       esc / attr / safeUrl / initials / avatar
-│   ├── sections.ts      reusable blocks — each returns "" when empty
-│   ├── styles.ts        shared scoped CSS (primitives only, not layouts)
-│   └── cards/           one card per file — markup AND its own layout CSS
-│       ├── student-01-side-rail.ts        two columns, no top banner
-│       ├── student-02-hero-split.ts       hero band + two-column body
-│       ├── student-03-centre-portrait.ts  centred, no colour block
-│       ├── student-04-timeline.ts         dated spine, organised by time
-│       ├── student-05-tile-grid.ts        modular tiles, no reading order
-│       ├── student-06-footer-anchor.ts    colour band at the BOTTOM
-│       ├── student-07-corner-wedge.ts     diagonal colour, non-rectangular
-│       ├── student-08-monogram-block.ts   square part-width block, no circle
-│       ├── student-09-index-ledger.ts     label gutter, spec-sheet rows
-│       ├── student-10-column-flow.ts      masthead + 2-column text FLOW
-│       ├── professional-11-skill-meters.ts the only chart — evidence, NOT skill level
-│       ├── professional-12-split-halves.ts 50/50, colour on the RIGHT
-│       ├── professional-13-overlap.ts      plate straddling a filled zone
-│       ├── professional-14-numbered.ts     oversized numerals number each section
-│       ├── professional-15-folder-tab.ts   part-width tab + full-width rule
-│       ├── professional-16-stat-strip.ts   opens on a divided strip of figures
-│       ├── professional-17-role-ladder.ts  stepped rungs, indent per role
-│       ├── professional-18-letterhead.ts   stationery: rules, no fill at all
-│       ├── professional-19-edge-spine.ts   name set VERTICALLY on the right edge
-│       └── professional-20-pull-quote.ts   bio as display type, name demoted to caption
+│   ├── icons.ts         self-contained brand social-icon SVGs + globe fallback (used by React)
+│   ├── helpers.ts       esc / attr / safeUrl / initials / avatar (safeUrl/initials used by React)
+│   ├── sections.ts      socialKey() — platform name → icon key (used by card-kit)
+│   └── styles.ts        cardStyles() — shared scoped CSS primitives (used by React cards)
 ├── scripts/
-│   ├── check-template-isolation.mjs   enforces the self-contained rule
-│   ├── ts-resolver.mjs                dev-only loader hook for the line below
-│   ├── verify-foundation.mts          772 checks over cleaning/guards/fields/brand/safety/suggestion/every card
-│   ├── build-stress.mts               public/stress.html — hostile content × 4 widths
-│   └── check-overflow.mjs             measures it in Chrome: escapes / clips / overlaps
+│   ├── check-template-isolation.mjs   enforces the templates/ self-contained rule
+│   ├── ts-resolver.mjs                dev-only loader hook for the .mts scripts
+│   ├── eval-quality.mts               LLM output-quality eval harness (npm run eval)
+│   └── eval/                          golden.ts (fixtures) + score.ts (grounding/quality scoring)
 ├── lib/
 │   ├── schema.ts        SINGLE SOURCE OF TRUTH for extraction fields (+ JSON-schema gen)
 │   ├── types.ts         extraction contract types + API response shapes
@@ -225,13 +297,18 @@ plugins/
 │   ├── llama.ts         extraction engine wrapper (Module 1)
 │   ├── color.ts         colour maths — HSL, brand filter, ranking (pure, either side)
 │   ├── brand.ts         brand theme engine — site via Firecrawl, logo via sharp (SERVER ONLY)
-│   ├── enhance-engine.ts   OpenAI wrapper (Module 3)
+│   ├── llm-chat.ts         shared LLM chat helper — local (Ollama/vLLM) or OpenAI (SERVER ONLY)
+│   ├── enhance-engine.ts   enhancement wrapper (Module 3) — calls llm-chat, then validates
+│   ├── enhance-validate.ts grounding + shape guard for small-model enhancement output
 │   ├── enhance-types.ts    Module 3 request/response types
+│   ├── suggest-llm.ts      LLM card-picking (Module 4) — rules first, rule-based fallback
 │   ├── profile-to-card.ts  GLUE: extraction → CardProfile (cleaning + timeline dates)
 │   ├── brand-to-theme.ts   GLUE: BrandTheme → ThemeOptions (the colour join)
 │   ├── template-types.ts   Module 4 request/response types
+│   ├── dev-dummy-profiles.ts  rich sample profiles for the playground / QA
 │   ├── handoff.ts          one-shot page→page prefill via sessionStorage (browser only)
 │   └── route-helpers.ts    fail() responder + timing-safe tokenMatches()
+├── eval-results/        GPT-4.1 vs Qwen-4B quality comparison (md + per-model JSON)
 ├── public/samples/      sample resumes used by demo.sh
 └── demo.sh              live API demo against https://anurcloud.vercel.app
 ```
@@ -246,22 +323,24 @@ All routes: `runtime = "nodejs"`, `maxDuration = 800`, and require
 |----------|------|------|
 | `POST /api/extract` | multipart: `file` (PDF/DOCX/JPG/PNG) + `profile_type` + **`logo`** (optional image) | LlamaExtract against the per-type schema → `{ data, confidence_scores, flagged_fields, brand }`. `brand` is non-null only when a `logo` was supplied |
 | `POST /api/extract-url` | JSON: `{ url, profile_type }` | Firecrawl crawl (≤25 pages, markdown + links) → same LlamaExtract pipeline; forces the submitted URL into `portfolio_links` (professional) / `social_links` (student). Also returns `brand` for the site |
-| `POST /api/enhance` | JSON: `{ profile, profile_type }` | single GPT-4.1 call → `{ bio, projects, internships, experience }` |
-| `POST /api/template` | JSON: `{ profile, profile_type, enhanced?, brand?, photo_url?, template?, theme? }` | cleans the profile, derives the theme from `brand`, returns **`suggested`** (the top 3, ranked + explained) plus `eligibility` + `offered` (+ `html` when `template` is given). No AI call — pure rendering |
+| `POST /api/enhance` | JSON: `{ profile, profile_type }` | single grounded LLM call (local model or GPT-4.1 via `llm-chat`), output run through `enhance-validate` → `{ bio, projects, internships, experience }` |
+| `POST /api/template` | JSON: `{ profile, profile_type, enhanced?, brand?, theme? }` | cleans the profile, derives the theme from `brand`, returns **`suggested`** (top 3, **LLM-ranked** + explained; rule-based fallback) plus `eligibility` + `offered` + `theme`. **No markup** — the client renders the chosen React card with the returned theme. Only AI call is the suggestion ranking. (A `template`/`photo_url` field in the body is accepted but ignored.) |
 
 **`/api/template` specifics:**
-- **No engine, no key.** It never calls a third-party service, so it has no
-  stub path — it degrades only on *content*, not on configuration.
-- Returns `status: "received"` while an audience has zero cards built. But if
-  the caller explicitly asked for a `template`, it returns **404** instead — a
-  quiet 200 would read as "rendered fine, no HTML".
-- **422 `TEMPLATE_NOT_ELIGIBLE`** when a built card's data minimum isn't met.
-  Minimums live in `templates/guards.ts`; gating is what stops us offering a
-  card that would render badly.
+- **It does not render.** Cards are React components rendered client-side, so the
+  route returns eligibility + ranking + theme only — never HTML. The `eligibility`
+  array tells the client which cards it may render and why the rest can't.
+- **Minimums still gate eligibility.** `templates/guards.ts` decides whether a
+  profile can fill a card; a card that fails its minimum is marked ineligible in
+  the `eligibility` array (it just isn't a render-time 422 any more).
+- Returns `status: "received"` if an audience has zero cards built (it never does
+  now — all 22 exist).
 
 **Graceful degradation (by design):**
-- Missing engine key (`LLAMA_CLOUD_API_KEY` / `FIRECRAWL_API_KEY` / `OPENAI_API_KEY`)
-  → route returns a `status: "received"` validation-only stub instead of failing.
+- Missing engine key (`LLAMA_CLOUD_API_KEY` / `FIRECRAWL_API_KEY`, or **no LLM at
+  all** — neither `LOCAL_LLM_BASE_URL` nor `OPENAI_API_KEY`) → route returns a
+  `status: "received"` validation-only stub instead of failing. Card-picking with
+  no LLM falls back to the deterministic rule-based ranking.
 - Missing `EXTRACT_AUTH_TOKEN` → `503 AUTH_NOT_CONFIGURED`. The API **never runs open**
   (protects paid credits on a public URL).
 - Engine errors are logged server-side; the client gets a generic message (no vendor/stack leakage).
@@ -282,7 +361,10 @@ Set in `plugins/.env.local` (gitignored via `.env*`) and mirrored in Vercel. **N
 |-----|---------|----------|
 | `LLAMA_CLOUD_API_KEY` | LlamaCloud extraction (Module 1) | yes (else stub) |
 | `FIRECRAWL_API_KEY` | Firecrawl URL crawl | yes for `/extract-url` |
-| `OPENAI_API_KEY` | OpenAI GPT-4.1 enhancement (Module 3) | yes (else stub) |
+| `OPENAI_API_KEY` | OpenAI enhancement + card-picking (Modules 3/4) | yes unless a local LLM is set (else stub / rule-based) |
+| `LOCAL_LLM_BASE_URL` | local model endpoint (Ollama `/v1` in dev, vLLM in prod); when set, used instead of OpenAI | optional |
+| `LOCAL_LLM_MODEL` | model id for the LLM (defaults to `gpt-4.1`) | optional |
+| `LLM_TEMPERATURE` | sampling temperature for both LLM jobs | optional, default `0.2` |
 | `EXTRACT_AUTH_TOKEN` | server-side Bearer token check | yes (else 503) |
 | `NEXT_PUBLIC_EXTRACT_TOKEN` | same token, pre-fills the demo UI | optional |
 | `EXTRACT_FLAG_THRESHOLD` | confidence cutoff for flagging fields (0–1) | optional, default `0.7` |
@@ -295,19 +377,24 @@ npm run build    # next build — this is the type-check gate (no separate type-
 npm run start    # next start
 npm run lint     # eslint
 npm run check:templates     # enforces the templates/ self-contained rule
-npm run verify:foundation   # 772 checks: cleaning, guards, field coverage, minimums, brand, suggestion, every card
-npm run stress              # public/stress.html — every card × hostile content × 4 widths
-npm run check:overflow      # measures that page in headless Chrome (skips cleanly if absent)
-npm run verify              # all six gates in sequence
-npm run preview             # public/preview.html — every card × 3 data levels, grayscale toggle
+npm run verify              # check:templates → lint → build (the whole gate)
+npm run eval                # LLM output-quality eval (reads .env.local; writes eval-results/)
 ./demo.sh [student|professional] [sampleFile]   # live API demo (reads EXTRACT_AUTH_TOKEN from .env.local)
 ```
 
 Before committing: run `npm run verify`. It is green — keep it that way.
 
-> The `react-hooks/set-state-in-effect` errors in `app/enhance/page.tsx` and
-> `app/template/your-card.tsx` are suppressed with scoped disables and a written
-> justification: each effect reads a one-shot sessionStorage handoff, and moving
+> **Verification is thinner since the HTML path was removed (24 Aug 2026).** The
+> old `npm run verify:foundation` (807 checks over rendered card HTML), `stress`,
+> `check:overflow`, `preview`, `pdf`, and `check-field-coverage` all asserted on
+> the deleted HTML builders and were removed. The React cards have no equivalent
+> render-level gate yet — `verify` now covers only isolation + lint + type-check
+> (build). Re-establishing card-level checks against the React components (field
+> coverage, overflow, grayscale) is open work.
+
+> The `react-hooks/set-state-in-effect` error in `app/enhance/page.tsx` is
+> suppressed with a scoped disable and a written justification: the effect reads a
+> one-shot sessionStorage handoff, and moving
 > it to a lazy `useState` would read during hydration while the prerendered HTML
 > was built with the default sample — a real bug traded for a cosmetic one.
 > Don't "fix" it by removing the comment without solving the hydration side.
@@ -323,108 +410,86 @@ Before committing: run `npm run verify`. It is green — keep it that way.
   `profile-to-card.ts` or `brand-to-theme.ts`.
   *(Delivery route decided 10 Aug 2026: codebase handover, cards as files, no
   npm package. The rule stands anyway — it costs nothing and keeps the option.)*
-- **`app/template/page.tsx` is driven by the registry, not hand-maintained.** It
-  renders real cards via `renderCard()` at build time and reads names, minimums
-  and counts from `templates` / `plannedTemplates`. Add a card and the page picks
-  it up with no edit here. It previously showed invented cards with fake fit
-  scores (`TMP-101 · 94%`) for templates that did not exist — never reintroduce
-  mock output on a page the client can open.
-- **The demo pages are a chain, wired by `lib/handoff.ts`.** Extraction → Enhance
-  → Template, each step writing a one-shot sessionStorage prefill (never a query
-  string: a profile is too big for a URL and must not land in history or a log).
-  `brand` rides along the whole way — drop it at any hop and the card silently
-  falls back to the default crimson right after the user uploaded a logo, which
-  reads as the colour feature being broken.
-- **Enhancement IS a gate, enforced in `app/template/your-card.tsx`** (owner's
-  call, 11 Aug 2026, DEV-3058). The panel runs `/api/enhance` before `/api/template` unless
-  the handoff already carries a bio, and threads the result into the profile it
-  sends. It is enforced there rather than on the extraction page because the panel
-  is the single choke point — every route into the card step passes through it, so
-  the chain cannot be bypassed by arriving from somewhere else.
-  *Why it matters concretely:* Pull Quote's minimum is a bio, so a profile that
-  skipped Module 3 could never be suggested the layout built around one, and every
-  card's bio block rendered empty. On the test professional profile, running
-  enhancement first unlocks Pull Quote (its bio minimum) and puts it high on the
-  shortlist — without it, that layout can never be offered.
-  *It runs, but it does not block:* a missing `OPENAI_API_KEY` returns the
-  engine's `status: "received"` stub, and the panel then continues to the cards
-  and says enhancement did not run. Refusing to show anyone their card because
-  OpenAI is unreachable would be the worse failure.
-- **Theme options are untrusted, and escaping cannot save them.** Profile fields
-  go through `esc()`/`attr()`, but theme values land inside the `style`
-  attribute and inside a `<style>` block, where a quote breaks out and turns an
-  embedded card into an XSS vector for whoever renders it. `resolveTheme()`
-  therefore **re-emits rather than passes through**: colours are parsed and
-  rebuilt from their own channels, fonts must match a strict character class,
-  `scopeId` is pattern-checked, and every number is range-checked. Anything
-  unparseable falls back to a default. Adding a new `ThemeOption` means adding
-  its validator — the values arrive from `/api/template`'s request body and from
-  colours derived off third-party logos and websites.
-- **A card owns its layout CSS.** Each file exports `{ build, styles }`; the
-  registry injects the shared primitives from `styles.ts` plus that card's own
-  block. Shared CSS holds typography, avatar, chips, contact rows, list items —
-  never a layout. This is why one card can't quietly restyle another.
+- **The live card viewer is `app/playground/page.tsx`, registry-driven.** The old
+  `app/template/page.tsx` gallery is gone — that route now `redirect()`s to
+  `/playground`. The playground renders the **React** cards from
+  `components/cards/registry.tsx` (first eligible by default, or the real handoff
+  profile) and calls `/api/template` for eligibility only. Add a card in the
+  registry and the viewer picks it up with no edit here. It once showed invented
+  cards with fake fit scores (`TMP-101 · 94%`) for templates that did not exist —
+  never reintroduce mock output on a page the client can open.
+- **The pages are a chain, wired by `lib/handoff.ts`.** Extraction → card step
+  (`/template` → `/playground`), each hop writing a one-shot sessionStorage prefill
+  (never a query string: a profile is too big for a URL and must not land in
+  history or a log). `brand` rides along the whole way — drop it at any hop and the
+  card silently falls back to the default crimson right after the user uploaded a
+  logo, which reads as the colour feature being broken.
+- **Enhancement is expected before the card, and its bio rides the handoff.**
+  (The old hard-gate component `app/template/your-card.tsx` was **removed** with
+  the HTML path, 24 Aug 2026.) The card step reads `enhanced.bio` from the handoff
+  and falls back to the raw `profile.summary` when it is absent.
+  *Why it still matters:* Pull Quote's minimum is a bio, so a profile that skipped
+  enhancement can't be suggested the layout built around one, and any bio-driven
+  section comes out empty. Running enhancement first unlocks Pull Quote and puts it
+  high on the shortlist.
+  *It never blocks:* with **no LLM configured** (neither `LOCAL_LLM_BASE_URL` nor
+  `OPENAI_API_KEY`) the engine returns its `status: "received"` stub and the flow
+  continues to the cards, using the raw summary. Refusing to show anyone their card
+  because the model is unreachable would be the worse failure. **Re-establishing a
+  single enforced choke point for enhancement is open work** now that `your-card`
+  is gone.
+- **Theme options are untrusted.** Theme values (colours, fonts, `scopeId`) end up
+  in inline styles and in the scoped CSS `cardStyles()` emits, where a quote could
+  break out and turn an embedded card into an XSS vector. `resolveTheme()`
+  (`templates/theme.ts`) therefore **re-emits rather than passes through**: colours
+  are parsed and rebuilt from their own channels, fonts must match a strict
+  character class, `scopeId` is pattern-checked, and every number is range-checked.
+  Anything unparseable falls back to a default. Adding a new `ThemeOption` means
+  adding its validator — the values arrive from `/api/template`'s request body and
+  from colours derived off third-party logos and websites.
+- **A React card owns its own layout.** Each `components/cards/*.tsx` component
+  renders its own structure; the shared primitives (typography, avatar, chips,
+  contact rows, list items) come from `card-kit.tsx` and the scoped CSS in
+  `templates/styles.ts` (`cardStyles`). Shared CSS holds primitives only — never a
+  layout — so one card can't quietly restyle another.
 - **Every field in `lib/schema.ts` must reach a card (DEV-3061).** From the start,
   `achievements`, `publications`, `extracurriculars` and `registrations` were
   extracted, typed in `lib/types.ts`, and **never mapped into `CardProfile`** — so
   a CV listing awards or papers lost all of it silently, and the profile read as
   thinner than it was. `portfolio_links` kept only the first URL. Closed 11 Aug
-  2026. `verify-foundation.mts` now walks `schemaFieldKeys()` and fails until every
-  schema key has a recorded destination, so adding a field forces the decision.
-  Adding one means touching **three** files: `lib/schema.ts`, `templates/types.ts`
-  (`CardProfile`), `lib/profile-to-card.ts` (a mapper) — and then a section
-  renderer plus the cards, or it is carried and never shown, which looks identical
-  to the user.
-- **Display ceilings live in `templates/limits.ts`, not in the cards (DEV-3062).** Every card
-  used to carry its own: two roles, one education line, eight skills, a bio cut at
-  160 characters. On a senior CV that was destructive — an eighteen-year career
-  rendered as two jobs and a degree, and the person looked less accomplished on
-  their card than on the document (client report, 11 Aug 2026). `SHOW` is the
-  full-width dial; `NARROW` is for a column at ~half the card width (a tile, a
-  half, the aside beside a wedge), where eighteen chips is a wall rather than a
-  list. Cleaning keeps far more than either, so raising a number shows more with no
-  re-extraction. A few cards cap lower still for structural reasons — Role Ladder's
-  four rungs, Stat Strip's three cells — and say why in place.
-- **A heavy profile now produces a TALL card, not a truncated one** — measured
-  74px for a bare profile up to **2154px** for a senior CV at 380px wide (A4 at
-  96dpi is 1122px, so a full career is about two pages). That is the honest failure
-  of the two, but it is still a failure: splitting a tall card across pages is not
-  built. See "Pagination" below.
-- **Layout breakage is measured, not eyeballed (DEV-3060)** — `npm run stress` renders every
-  card against content chosen to break it (a 45-char unbreakable string, a
-  60-char institution, twenty skills, Tamil script, an email at a long domain, the
-  bare minimum) at four widths including **responsive in a 260px host**, which is
-  what fires the container queries. `npm run check:overflow` then measures that
-  page in headless Chrome for four failures: painted outside the card, content
-  wider than its own box, two pieces of text overlapping, and the card wider than
-  its host column. It skips cleanly when no Chrome is installed.
-  The first run found **120 problems**. Root causes, all fixed:
-  - `.iv-chip` had `white-space:nowrap`, so an unbreakable skill made the chip as
-    wide as the text — up to **230px outside the card**, on nine cards.
-  - nothing gave long words a break opportunity, so names and institutions escaped
-    their column. The card root now sets `overflow-wrap:anywhere` — **`anywhere`,
-    not `break-word`**: only `anywhere` reduces min-content size, and a flex or
-    grid child will not narrow past min-content whatever `max-width` says.
-  - Overlap's banner collided with its plate at 320px. A fixed-height zone plus a
-    negative margin is a collision waiting for a longer string; the zone now has a
-    bottom padding larger than the plate's lift, reserving the strip it lands on.
-- **A social label is one or two code points — never more (DEV-3059).** `www` in a
-  1.7em circle is **25.6px of text in a 16.9px circle**, so the glyphs sat on the
-  card; the generic-website entry is now `↗`. Card-level overflow checks miss this
-  entirely, because nothing escapes the *card* — it escapes the *circle*. `.iv-si`
-  carries `overflow:hidden` as a guarantee, verify asserts the 2-code-point limit
-  so a newly added platform cannot reintroduce it, and `iv-si` is on
-  `check-overflow.mjs`'s `INTENTIONAL_CLIP` list so that safety net is not itself
-  reported as a failure.
-- **Assert on markup, not on the rendered string.** Class names appear in both
-  the `<style>` block and the markup, so `html.includes("iv-hs-body-single")`
-  matches the stylesheet and reports a layout rule as working when it never
-  fired. Strip `<style>` blocks first — `verify-foundation.mts` has `markupOf()`.
+  2026. (The automated check that walked `schemaFieldKeys()` lived in
+  `verify-foundation.mts` / `check-field-coverage.mjs`, both **removed** with the
+  HTML path — so this is now a **manual** discipline until an equivalent check is
+  written against the React cards.) Adding a field means touching **three** files:
+  `lib/schema.ts`, `templates/types.ts` (`CardProfile`), `lib/profile-to-card.ts`
+  (a mapper) — and then surfacing it in the React cards / `card-kit.tsx` section
+  model, or it is carried and never shown, which looks identical to the user.
+- **`templates/limits.ts` no longer caps anything (DEV-3072/3074, superseded DEV-3062).**
+  It used to hold display ceilings (two roles, one education line, eight skills, a
+  bio cut at 160 chars) — destructive on a senior CV, which rendered an eighteen-
+  year career as two jobs and a degree (client report, 11 Aug 2026). The owner's
+  20 Aug 2026 call is **show everything**: every `SHOW`/`NARROW` dial is now
+  `UNLIMITED`, cards still call them by name, and each means "render all". Nothing
+  is dropped at render time. `SHOW`/`NARROW` are kept as named dials only so a
+  future cap is one edit, not a hunt through every card.
+- **A heavy profile is handled by the card being dynamic, not by trimming.** The
+  React card fills a hero, then makes each section navigable (accordion /
+  per-section screens) — see "Length is handled by the card being dynamic" above.
+  No truncation, no one-giant-card.
+- **Overflow safety is now the React cards' own concern.** The old measured-breakage
+  gate (`npm run stress` + `npm run check:overflow` in headless Chrome) was
+  **removed** with the HTML path. It had caught real bugs worth remembering when
+  writing the React CSS: an unbreakable skill string can blow a chip past the card
+  edge, and long names/institutions escape their column unless the container uses
+  **`overflow-wrap:anywhere`** (`anywhere`, not `break-word` — only `anywhere`
+  reduces min-content size, and a flex/grid child won't narrow past min-content
+  whatever `max-width` says). Re-establishing an automated overflow check against
+  the React cards is open work.
 - **Cards assume patchy data.** Cleaning happens once in `profile-to-card.ts`
   (blanks, `"N/A"`, placeholder text, malformed URLs, truncated fragments);
-  empty-section hiding happens once in `templates/guards.ts`. A card must never
-  re-implement either — with 20 cards, one will forget and the client finds it.
-  Every card is designed at three data levels: rich, typical, **thin**
+  empty-section hiding is decided in `templates/guards.ts`. A card must never
+  re-implement either — with 22 cards, one will forget and the client finds it.
+  Every card must work at three data levels: rich, typical, **thin**
   (name + one education line). Thin is common, not an edge case.
 - **Dates are free text, not dates.** `schema.ts` yields `"2021–2025"`,
   `"Summer 2024"`, `"3 months"`. `deriveSortYear()` in `profile-to-card.ts`
@@ -459,8 +524,13 @@ Before committing: run `npm run verify`. It is green — keep it that way.
     non-deterministic — zoho.com returned a different primary across runs.
   - `sharp` handles PNG/JPG/WebP/**SVG** (via librsvg, needs `density: 200`) but
     **not `.ico`** — those fall through to the next candidate.
-- **Enhancement is strictly grounded:** the prompt forbids inventing anything not present
-  in the profile; the model returns unchanged title/role/company keys for matching.
+- **Enhancement is strictly grounded, and now enforced in code too.** The prompt
+  forbids inventing anything not in the profile and the model returns unchanged
+  title/role/company keys for matching — but a small local model (Qwen 4B) breaks
+  that more often than GPT-4.1, so `lib/enhance-validate.ts` re-checks it: an
+  enhanced project/internship/experience is kept ONLY if its identity key matches
+  a request entry; hallucinated entries are dropped, and a matched-but-empty
+  enhancement falls back to the profile's own text so nothing is lost.
 - The `enhance/page.tsx` demo calls the deployed endpoint (`https://anurcloud.vercel.app/api/enhance`) directly.
 
 ## Links

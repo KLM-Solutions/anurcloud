@@ -115,8 +115,8 @@ export type BrandConfidence = "high" | "medium" | "low";
 /**
  * Colours and logo derived from the user's website or uploaded logo.
  *
- * Feeds the template package directly:
- *   renderCard(id, profile, { colors: { primary, accent }, logo: { url: logo_url } })
+ * Feeds the React card components directly as a theme:
+ *   { colors: { primary, accent }, logo: { url: logo_url } }
  *
  * `primary` is null only in the transitional case where a logo was found but no
  * colour could be derived; `withProfileDefaults()` in lib/brand.ts fills it in
