@@ -79,7 +79,12 @@ function getClient(baseURL: string): OpenAI {
  * Run a single JSON-returning chat against the self-hosted model and return the
  * raw text. `tag` only labels the diagnostic log line.
  */
-export async function runChatJSON(system: string, user: string, tag = "llm"): Promise<string> {
+export async function runChatJSON(
+  system: string,
+  user: string,
+  tag = "llm",
+  maxTokens = 2048,
+): Promise<string> {
   const baseURL = process.env.LOCAL_LLM_BASE_URL;
   if (!baseURL) throw new Error("LOCAL_LLM_BASE_URL is not set (self-hosted model endpoint).");
 
@@ -90,7 +95,7 @@ export async function runChatJSON(system: string, user: string, tag = "llm"): Pr
   // don't know, so the request body is attached via a cast.
   const params: Record<string, unknown> = {
     model: MODEL,
-    max_tokens: 2048,
+    max_tokens: maxTokens,
     temperature: TEMPERATURE,
     response_format: { type: "json_object" },
     chat_template_kwargs: { enable_thinking: false },
