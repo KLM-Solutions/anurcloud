@@ -31,6 +31,14 @@ RUN hf download ${MODEL_ID} --local-dir ${MODEL_DIR} \
 #   memory and lets vLLM batch more (we do NOT need the model's 256K context).
 # - enable-prefix-caching: reuse the fixed system-prompt prefix (our efficiency lever).
 # - port 8080: Cloud Run sends traffic to $PORT (default 8080).
+# - enforce-eager: turn OFF vLLM's default torch.compile + CUDA-graph capture.
+#   Measured from real cold-start logs (7 Sep 2026): engine init took 146.56 s
+#   (compilation 33.89 s) + CUDA-graph capture — i.e. compilation/capture is the
+#   dominant chunk of a ~160 s cold start. This service is scale-to-zero, so that
+#   cost is paid on EVERY wake. Our workload is tiny prompts + short outputs at low
+#   concurrency, where compiled speed barely helps; eager mode keeps answers
+#   correct and only ~1–2 s slower while cutting cold start to ~35–40 s. Net win for
+#   a bursty, cold-start-sensitive pilot. (Remove this flag to restore compiled mode.)
 # Qwen "thinking" is disabled per-request by the app via
 #   chat_template_kwargs: { enable_thinking: false }  — no server flag needed.
 CMD ["--model", "/models/qwen3.5-4b", \
@@ -39,4 +47,5 @@ CMD ["--model", "/models/qwen3.5-4b", \
      "--port", "8080", \
      "--max-model-len", "8192", \
      "--enable-prefix-caching", \
+     "--enforce-eager", \
      "--gpu-memory-utilization", "0.90"]
