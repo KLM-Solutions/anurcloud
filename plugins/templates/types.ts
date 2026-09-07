@@ -260,6 +260,8 @@ export interface TemplateInfo {
   key: TemplateKey;
   name: string;
   description: string;
+  /** One-line "who/what this layout suits" hint — used by the LLM ranker to match tone. */
+  bestFor?: string;
   /** A template belongs to one audience pool only. */
   audience: ProfileType;
   /** Human-readable minimum, surfaced to the caller alongside eligibility. */

@@ -282,12 +282,45 @@ const PLANNED: PlannedTemplate[] = [
  */
 const isAvailable = (): boolean => true;
 
+/**
+ * One-line "who/what this layout suits" per card — the *semantic* hint (tone,
+ * seniority, field), as opposed to the visual `description` above. Fed to the LLM
+ * ranker so it can match a card to the kind of person, not just the layout shape.
+ */
+const BEST_FOR: Record<TemplateKey, string> = {
+  // student
+  "side-rail": "A clean all-rounder; good when there are solid contact details and a few sections.",
+  "hero-split": "Fuller student profiles with enough sections to fill two columns.",
+  "centre-portrait": "Thin profiles (name, a course, a short bio); calm and understated.",
+  timeline: "Journeys with several dated milestones — education, internships, projects.",
+  "tile-grid": "Broad, varied profiles with many equal-weight pieces (skills, languages, projects).",
+  "ticket-stub": "Lighter, friendly student profiles; a playful event-ticket feel.",
+  "corner-wedge": "Short-to-medium profiles that want a modern, designed look.",
+  "monogram-block": "Very short profiles; bold, typographic, minimal.",
+  "index-ledger": "Detail-heavy, precise profiles; a factual spec-sheet tone.",
+  "column-flow": "Content-rich profiles; an editorial, magazine feel.",
+  // professional
+  "skill-meters": "People whose skills are backed by concrete achievements in their role notes.",
+  "split-halves": "Full professional profiles with plenty across several sections.",
+  overlap: "Modern professionals with a few standout facts; layered and contemporary.",
+  numbered: "Long, structured CVs; an editorial contents-page feel.",
+  "folder-tab": "Concise professionals; tidy, organised, understated.",
+  "stat-strip": "Experienced people with real headline numbers (years, roles, certifications).",
+  "role-ladder": "Clear career progression across multiple roles.",
+  letterhead: "Senior or formal profiles; understated business-stationery tone.",
+  "edge-spine": "Design-minded professionals wanting something distinctive.",
+  "pull-quote": "People with a strong positioning line or bio; bold and statement-led.",
+  badge: "Professionals with a logo and a solid body; a corporate ID feel.",
+  spotlight: "Personal-brand professionals with a portrait or logo; portrait-led.",
+};
+
 function toInfo(t: PlannedTemplate): TemplateInfo {
   return {
     id: t.id,
     key: t.key,
     name: t.name,
     description: t.description,
+    bestFor: BEST_FOR[t.key],
     audience: t.audience,
     minimum: minimumLabel(t.key),
   };
