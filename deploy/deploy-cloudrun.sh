@@ -13,7 +13,7 @@ set -euo pipefail
 PROJECT="${PROJECT:-digital-cards-ai}"
 REGION="${REGION:-asia-southeast1}"   # Singapore — GCP Cloud Run L4 is NOT available in any India region
 REPO="${REPO:-instaviz-llm}"
-TAG="${TAG:-qwen3.5-4b-v1}"
+TAG="${TAG:-qwen3.5-4b-v2}"   # v2 = enforce-eager baked in (7 Sep 2026), see Dockerfile
 SERVICE="${SERVICE:-instaviz-llm}"
 
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/instaviz-llm:${TAG}"
@@ -35,6 +35,7 @@ gcloud run deploy "${SERVICE}" \
   --concurrency 8 \
   --timeout 600 \
   --startup-probe "tcpSocket.port=8080,periodSeconds=30,timeoutSeconds=30,failureThreshold=20" \
+  --cpu-boost \
   --no-cpu-throttling \
   --no-allow-unauthenticated \
   --set-env-vars "HF_HUB_OFFLINE=1"

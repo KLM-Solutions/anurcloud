@@ -4,6 +4,7 @@ import { isProfileType } from "@/lib/validation";
 import { schemaFieldKeys } from "@/lib/schema";
 import { extractProfile } from "@/lib/llama";
 import { brandFromSite, withProfileDefaults } from "@/lib/brand";
+import { warmUpModel } from "@/lib/llm-chat";
 import { fail, tokenMatches } from "@/lib/route-helpers";
 import type { BrandTheme, ExtractSuccess } from "@/lib/types";
 
@@ -34,6 +35,10 @@ export async function POST(request: NextRequest) {
   if (!tokenMatches(token)) {
     return fail("UNAUTHORIZED", "Invalid authorization token.", 401);
   }
+
+  // Wake the self-hosted model NOW (fire-and-forget) — see the note in
+  // /api/extract. Extraction doesn't use it; enhancement + card-picking do.
+  warmUpModel();
 
   // 2. Parse JSON body
   let body: { url?: unknown; profile_type?: unknown };

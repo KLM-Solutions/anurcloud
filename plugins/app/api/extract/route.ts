@@ -3,6 +3,7 @@ import { isProfileType, validateSourceFile } from "@/lib/validation";
 import { schemaFieldKeys } from "@/lib/schema";
 import { extractProfile } from "@/lib/llama";
 import { brandFromImage, isSupportedLogo, withProfileDefaults } from "@/lib/brand";
+import { warmUpModel } from "@/lib/llm-chat";
 import { fail, tokenMatches } from "@/lib/route-helpers";
 import type { BrandTheme, ExtractSuccess } from "@/lib/types";
 
@@ -40,6 +41,12 @@ export async function POST(request: NextRequest) {
     return fail("UNAUTHORIZED", "Invalid authorization token.", 401);
   }
   // TODO: swap the shared secret for AnurCloud JWT/introspection when its scheme is confirmed.
+
+  // Wake the self-hosted model NOW (fire-and-forget). Extraction doesn't use it,
+  // but enhancement + card-picking (the next steps) do — starting the ~150s cold
+  // boot here means the instance is warm by the time the flow reaches them, so the
+  // user never stares at a blank screen waiting on a cold GPU. Never awaited.
+  warmUpModel();
 
   // 2. Parse the multipart body
   let formData: FormData;
