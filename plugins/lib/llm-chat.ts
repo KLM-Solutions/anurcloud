@@ -4,97 +4,108 @@
  * One place that knows how to talk to the model, used by both enhancement
  * (Module 3) and card-picking (Module 4). Returns the raw text response.
  *
- * Local (Ollama/Qwen 3.5) and OpenAI take different paths on purpose:
- *  - OpenAI: the SDK with `response_format: json_object`.
- *  - Local: Ollama's OpenAI-compatible `/v1` endpoint does NOT honour `think:false`
- *    (known bug — thinking output lands in a `reasoning` field and `content` is
- *    empty). Its NATIVE `/api/chat` endpoint DOES honour it, so for local we call
- *    that directly with `think:false` + native `format:"json"`.
+ * The model is the SELF-HOSTED Qwen 3.5 4B served with vLLM from the private
+ * Cloud Run service in Anur Cloud's own GCP. There is no third-party provider in
+ * this path — every call goes to `LOCAL_LLM_BASE_URL`.
  *
- * NOTE: this local branch is a Mac/Ollama test workaround. Production runs vLLM,
- * whose `/v1` endpoint is not buggy — swap this for the vLLM branch (OpenAI API +
- * `chat_template_kwargs: { enable_thinking: false }`) at deploy time.
+ * The service is private (Anur Cloud's org policy forbids public access), so each
+ * request carries a Google identity token whose audience is the service's root
+ * URL. The token is minted from a service-account key and auto-refreshed by
+ * google-auth-library.
+ *
+ * Config (env, server-only):
+ *  - LOCAL_LLM_BASE_URL   vLLM OpenAI-compatible endpoint, e.g. https://…run.app/v1
+ *  - LOCAL_LLM_MODEL      served model id (e.g. Qwen/Qwen3.5-4B)
+ *  - GCP_SA_KEY_B64       base64 of the service-account JSON key (the invoker identity).
+ *                         If unset, falls back to Application Default Credentials
+ *                         (e.g. GOOGLE_APPLICATION_CREDENTIALS = path to the key file)
+ *                         for local testing.
+ *  - LLM_TEMPERATURE      sampling temperature (default 0.2)
  */
 
 import OpenAI from "openai";
+import { GoogleAuth, type IdTokenClient } from "google-auth-library";
 
-/** Model id — env-overridable so we can point at a local LLM (Ollama/Qwen). */
-export const MODEL = process.env.LOCAL_LLM_MODEL ?? "gpt-4.1";
+/** Model id — the served self-hosted model. */
+export const MODEL = process.env.LOCAL_LLM_MODEL ?? "Qwen/Qwen3.5-4B";
 
 /**
  * Both jobs (enhancement, card-picking) are GROUNDED, not creative — the model
  * rewrites or ranks facts already in the profile, it must not invent. Left at the
- * SDK defaults (Ollama 0.8, OpenAI 1.0) a small model embellishes: on a bio it
- * expanded "CKA" into "Certified Kubernetes Administrator", words that were not
- * in the profile. A low temperature cuts that and makes output more consistent,
- * with no quality cost for a fact-bound task. Env-overridable for experiments.
+ * SDK default a small model embellishes: on a bio it expanded "CKA" into
+ * "Certified Kubernetes Administrator", words that were not in the profile. A low
+ * temperature cuts that and makes output more consistent, with no quality cost for
+ * a fact-bound task. Env-overridable for experiments.
  */
 const TEMPERATURE = Number(process.env.LLM_TEMPERATURE ?? "0.2");
 
-/** True when a local LLM endpoint is configured. */
+/** True when the self-hosted model endpoint is configured. */
 export const isLocalLLM = (): boolean => !!process.env.LOCAL_LLM_BASE_URL;
 
-let cached: OpenAI | null = null;
-function getClient(): OpenAI {
-  const baseURL = process.env.LOCAL_LLM_BASE_URL;
-  if (baseURL) {
-    // key is ignored by Ollama, but the SDK requires a non-empty value
-    cached ??= new OpenAI({ baseURL, apiKey: "ollama" });
-    return cached;
+/** The Cloud Run service root — the identity-token audience — i.e. base URL minus `/v1`. */
+function serviceAudience(baseURL: string): string {
+  return baseURL.replace(/\/v1\/?$/, "");
+}
+
+/**
+ * Mint a Google identity token for the private Cloud Run service. The service
+ * account comes from GCP_SA_KEY_B64 (base64 of the JSON key) in production, or
+ * Application Default Credentials locally. The client is kept per-process; the
+ * token itself is fetched (and cached/refreshed) by google-auth-library.
+ */
+let idClientPromise: Promise<IdTokenClient> | null = null;
+async function identityToken(baseURL: string): Promise<string> {
+  const audience = serviceAudience(baseURL);
+  if (!idClientPromise) {
+    const b64 = process.env.GCP_SA_KEY_B64;
+    const auth = b64
+      ? new GoogleAuth({ credentials: JSON.parse(Buffer.from(b64, "base64").toString("utf8")) })
+      : new GoogleAuth(); // ADC fallback (GOOGLE_APPLICATION_CREDENTIALS) for local testing
+    idClientPromise = auth.getIdTokenClient(audience);
   }
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error("OPENAI_API_KEY is not set.");
-  cached ??= new OpenAI({ apiKey });
+  const client = await idClientPromise;
+  return client.idTokenProvider.fetchIdToken(audience);
+}
+
+let cached: OpenAI | null = null;
+function getClient(baseURL: string): OpenAI {
+  // The SDK requires a non-empty apiKey, but the real credential is a fresh
+  // identity token passed per request (see runChatJSON) — this is only a placeholder.
+  cached ??= new OpenAI({ baseURL, apiKey: "identity" });
   return cached;
 }
 
 /**
- * Run a single JSON-returning chat and return the raw text.
- * `tag` only labels the diagnostic log line.
+ * Run a single JSON-returning chat against the self-hosted model and return the
+ * raw text. `tag` only labels the diagnostic log line.
  */
 export async function runChatJSON(system: string, user: string, tag = "llm"): Promise<string> {
   const baseURL = process.env.LOCAL_LLM_BASE_URL;
+  if (!baseURL) throw new Error("LOCAL_LLM_BASE_URL is not set (self-hosted model endpoint).");
 
-  if (baseURL) {
-    const nativeURL = baseURL.replace(/\/v1\/?$/, "") + "/api/chat";
-    const res = await fetch(nativeURL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: MODEL,
-        think: false,
-        stream: false,
-        format: "json",
-        options: { num_predict: 2048, temperature: TEMPERATURE },
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
-        ],
-      }),
-    });
-    if (!res.ok) throw new Error(`Local model HTTP ${res.status}`);
-    const data = (await res.json()) as {
-      message?: { content?: string; thinking?: string };
-      done_reason?: string;
-    };
-    const text = data.message?.content ?? "";
-    console.log(`[${tag}] LOCAL model:`, MODEL, "| done:", data.done_reason,
-      "| contentLen:", text.length, "| thinkingLen:", (data.message?.thinking ?? "").length);
-    if (!text) throw new Error(`Local model returned empty content (done_reason=${data.done_reason}).`);
-    return text;
-  }
+  const token = await identityToken(baseURL);
 
-  const completion = await getClient().chat.completions.create({
+  // vLLM (Qwen): `chat_template_kwargs.enable_thinking=false` turns off "thinking"
+  // so `content` is the answer, not reasoning. It's a vendor field the SDK types
+  // don't know, so the request body is attached via a cast.
+  const params: Record<string, unknown> = {
     model: MODEL,
     max_tokens: 2048,
     temperature: TEMPERATURE,
     response_format: { type: "json_object" },
+    chat_template_kwargs: { enable_thinking: false },
     messages: [
       { role: "system", content: system },
       { role: "user", content: user },
     ],
-  });
-  const text = completion.choices[0]?.message?.content ?? "";
+  };
+
+  const completion = await getClient(baseURL).chat.completions.create(
+    params as unknown as Parameters<OpenAI["chat"]["completions"]["create"]>[0],
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  const text = ("choices" in completion ? completion.choices[0]?.message?.content : "") ?? "";
+  console.log(`[${tag}] self-hosted model:`, MODEL, "| contentLen:", text.length);
   if (!text) throw new Error(`[${tag}] model returned an empty response.`);
   return text;
 }
