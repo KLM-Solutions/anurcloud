@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * Side Rail â React (TSX) card component. Student pool.
+ * Side Rail — React (TSX) card component. Student pool.
  *
  * Signature (kept from the string card): two columns read left-to-right, no top
  * banner. A full-height coloured RAIL on the left carries the avatar, contact,
  * languages and social icons; the white main column on the right carries the name,
- * the about text and the sections. Contact lives in the rail, not the body â the
+ * the about text and the sections. Contact lives in the rail, not the body — the
  * point of the student batch is that the skeletons differ, not the paint.
  *
  * Digital behaviour: the rail is persistent chrome (identity + icons, always
@@ -50,7 +50,7 @@ export function SideRail({ profile: p, theme }: SideRailProps) {
       <div dangerouslySetInnerHTML={{ __html: css }} />
 
       <div className="iv-sr-wrap">
-        {/* LEFT â the coloured rail (persistent). */}
+        {/* LEFT — the coloured rail (persistent). */}
         <aside className="iv-sr-rail">
           <Avatar profile={p} cls="iv-sr-av" logoUrl={resolved.logo?.url} />
           {contactLines.length > 0 && (
@@ -70,7 +70,7 @@ export function SideRail({ profile: p, theme }: SideRailProps) {
           </div>
         </aside>
 
-        {/* RIGHT â the main column. */}
+        {/* RIGHT — the main column. */}
         <main className="iv-sr-main">
           <header className="iv-sr-head">
             {nonEmpty(p.fullName) && <div className="iv-name">{p.fullName}</div>}
@@ -114,7 +114,7 @@ export function SideRail({ profile: p, theme }: SideRailProps) {
                   <>
                     <div className="iv-bar">
                       <button type="button" className="iv-back" onClick={() => setView("overview")}>
-                        â¹ Back
+                        ‹ Back
                       </button>
                       <span className="iv-ptitle">{sec.label}</span>
                     </div>
@@ -136,7 +136,7 @@ function componentCss(scopeId: string): string {
 ${s}.iv-side-rail{position:relative;height:537px;background:var(--iv-surface)}
 ${s} .iv-sr-wrap{position:absolute;inset:0;display:flex;align-items:stretch}
 
-/* LEFT â coloured rail. 38%, wide enough that an email does not break mid-word. */
+/* LEFT — coloured rail. 38%, wide enough that an email does not break mid-word. */
 ${s} .iv-sr-rail{flex:0 0 38%;max-width:38%;background:var(--iv-grad);color:var(--iv-onp);padding:1.1em .6em;display:flex;flex-direction:column;align-items:center;gap:.8em;text-align:center;overflow-y:auto;scrollbar-width:thin}
 ${s} .iv-sr-av{width:3.6em;height:3.6em;flex:0 0 auto;box-shadow:0 0 0 2px color-mix(in srgb,var(--iv-onp) 45%,transparent)}
 ${s} .iv-sr-rail .iv-av-fallback{background:color-mix(in srgb,var(--iv-onp) 18%,transparent);color:var(--iv-onp)}
@@ -147,7 +147,7 @@ ${s} .iv-sr-rail .iv-chip{background:color-mix(in srgb,var(--iv-onp) 20%,transpa
 ${s} .iv-sr-social{display:flex;justify-content:center}
 ${s} .iv-sr-rail .iv-socials{justify-content:center}
 
-/* RIGHT â main column. */
+/* RIGHT — main column. */
 ${s} .iv-sr-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;background:var(--iv-surface)}
 ${s} .iv-sr-head{flex:0 0 auto;padding:1.1em 1em .75em;border-bottom:1px solid var(--iv-edge)}
 ${s} .iv-sr-head .iv-name{font-size:1.2em}

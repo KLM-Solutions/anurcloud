@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * Pull Quote â React (TSX) card component.
+ * Pull Quote — React (TSX) card component.
  *
  * Signature (kept from the string card): the bio is set as a big DISPLAY QUOTE and
- * that quote IS the card â the largest type on it. The name is demoted to a small
+ * that quote IS the card — the largest type on it. The name is demoted to a small
  * attribution caption below the quote (name as byline, not headline). No fill; the
  * only colour is in the oversized quote mark and the attribution rule. Hierarchy is
  * done entirely with type size.
@@ -12,7 +12,7 @@
  * Digital behaviour matches the other cards: the quote hero + attribution (with the
  * social icons) is fixed chrome; below it a content-first overview scrolls. A big
  * section opens its own screen with a Back bar; a small one shows inline. Missing
- * field â no section. Scroll cue (⌄ scroll → ⌃ scroll up).
+ * field → no section. Scroll cue (⌄ scroll → ⌃ scroll up).
  */
 
 import { useMemo, useState } from "react";
@@ -48,7 +48,7 @@ export function PullQuote({ profile: p, theme }: PullQuoteProps) {
 
       {view === "overview" ? (
         <div className="iv-view">
-          {/* The display quote hero (the signature) â fixed chrome. */}
+          {/* The display quote hero (the signature) — fixed chrome. */}
           <figure className="iv-pq-hero">
             <span className="iv-pq-mark" aria-hidden>“</span>
             <blockquote className="iv-pq-q">{quote}</blockquote>
@@ -96,7 +96,7 @@ export function PullQuote({ profile: p, theme }: PullQuoteProps) {
             <div className="iv-view">
               <div className="iv-bar">
                 <button type="button" className="iv-back" onClick={() => setView("overview")}>
-                  â¹ Back
+                  ‹ Back
                 </button>
                 <span className="iv-ptitle">{sec.label}</span>
               </div>
@@ -115,14 +115,14 @@ function componentCss(scopeId: string): string {
 ${s}.iv-pull-quote{position:relative;height:537px;background:var(--iv-surface)}
 ${s} .iv-view{position:absolute;inset:0;display:flex;flex-direction:column}
 
-/* The display quote hero â no fill; colour only in the mark and the rule. Fixed
+/* The display quote hero — no fill; colour only in the mark and the rule. Fixed
    chrome: it sizes to the quote and does NOT scroll (only the body below does). */
 ${s} .iv-pq-hero{flex:0 0 auto;padding:1em 1.2em .8em}
 ${s} .iv-pq-mark{display:block;font-family:var(--iv-font-h);font-weight:800;font-size:2.3em;line-height:.72;color:color-mix(in srgb,var(--iv-primary) 34%,var(--iv-surface))}
 /* The largest type on the card, and the reason the layout exists. */
 ${s} .iv-pq-q{font-family:var(--iv-font-h);font-weight:600;font-size:1.1em;line-height:1.3;letter-spacing:-.01em;color:var(--iv-text);margin:.05em 0 0}
 ${s} .iv-pq-rule{display:block;width:2.4em;height:2.5px;background:var(--iv-primary);margin:.7em 0 .5em}
-/* Deliberately small â the name is the attribution here, not the headline. */
+/* Deliberately small — the name is the attribution here, not the headline. */
 ${s} .iv-pq-name{font-family:var(--iv-font-h);font-weight:700;font-size:.82em;letter-spacing:.13em;text-transform:uppercase;line-height:1.3}
 ${s} .iv-pq-by .iv-role{font-size:.72em;margin-top:.1em;color:var(--iv-muted)}
 ${s} .iv-pq-contact{font-size:.72em;color:var(--iv-muted);margin-top:.3em}
@@ -142,7 +142,7 @@ ${s} .iv-ovsec:hover .iv-ovnav{color:var(--iv-primary)}
 ${s} .iv-ovh{font-family:var(--iv-font-h);font-weight:700;font-size:.66em;letter-spacing:.08em;text-transform:uppercase;color:var(--iv-primary);margin-bottom:.5em}
 ${s} .iv-ovnav{margin-top:.5em;font-size:.72em;font-weight:700;color:var(--iv-muted)}
 
-/* Section screen â Back bar + body. */
+/* Section screen — Back bar + body. */
 ${s} .iv-bar{display:flex;align-items:center;gap:.6em;padding:.85em 1em;border-bottom:1px solid var(--iv-edge);flex:0 0 auto}
 ${s} .iv-back{display:inline-flex;align-items:center;gap:.15em;font-size:.78em;font-weight:700;color:var(--iv-primary);cursor:pointer;border:0;background:none;font-family:inherit}
 ${s} .iv-ptitle{font-family:var(--iv-font-h);font-weight:700;font-size:.9em}
