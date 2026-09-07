@@ -93,7 +93,7 @@ export function Overlap({ profile: p, theme }: OverlapProps) {
         </div>
       ) : (
         (() => {
-          const sec = big.find((b) => b.key === view);
+          const sec = sections.find((b) => b.key === view);
           if (!sec) return null;
           return (
             <div className="iv-view">
