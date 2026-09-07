@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * Skill Meters â React (TSX) card component.
+ * Skill Meters — React (TSX) card component.
  *
  * Dynamic digital card as a real React component: `<SkillMeters profile={...} />`.
  * Navigation is React state; the scroll cue is a real scroll handler. Renders to
- * plain HTML+CSS in the browser (React does that) â authored as a component so it
+ * plain HTML+CSS in the browser (React does that) — authored as a component so it
  * drops into a React/TypeScript app.
  *
- * Signature: the skill-meters chart leads the overview â bars count how often a
+ * Signature: the skill-meters chart leads the overview — bars count how often a
  * skill appears in the person's own role highlights (evidence), captioned as such,
  * never a proficiency rating and never a percentage of a declared scale.
  */
@@ -73,7 +73,7 @@ export function SkillMeters({ profile: p, theme }: SkillMetersProps) {
                       <div className="iv-sm-n">{r.count}</div>
                     </div>
                   ))}
-                  <p className="iv-sm-cap">Bars count how often each skill appears in the role highlights â not a proficiency rating.</p>
+                  <p className="iv-sm-cap">Bars count how often each skill appears in the role highlights — not a proficiency rating.</p>
                 </div>
               )}
 
@@ -107,7 +107,7 @@ export function SkillMeters({ profile: p, theme }: SkillMetersProps) {
             <div className="iv-view">
               <div className="iv-bar">
                 <button type="button" className="iv-back" onClick={() => setView("overview")}>
-                  â¹ Back
+                  ‹ Back
                 </button>
                 <span className="iv-ptitle">{sec.label}</span>
               </div>

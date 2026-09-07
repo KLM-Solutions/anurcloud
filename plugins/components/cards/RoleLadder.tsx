@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * Role Ladder â React (TSX) card component.
+ * Role Ladder — React (TSX) card component.
  *
  * Signature (kept from the string card): a descending STAIRCASE. Each role is its
  * own rung with a short bar, and every rung further down is indented one step more
  * (depth d0..d3, the bar fading with depth), so career progression is read from the
- * shape before a word. Roles only â no spine, no dots (that would be the Timeline
+ * shape before a word. Roles only — no spine, no dots (that would be the Timeline
  * card). The staircase LEADS and renders inline; it is the card, not a section to
  * open.
  *
@@ -61,7 +61,7 @@ export function RoleLadder({ profile: p, theme }: RoleLadderProps) {
             >
               {nonEmpty(p.bio) && <p className="iv-bio iv-rl-about">{p.bio}</p>}
 
-              {/* The staircase â leads, inline. The signature. */}
+              {/* The staircase — leads, inline. The signature. */}
               {p.experience.length > 0 && (
                 <div className="iv-rl-ladder">
                   <div className="iv-ovh">Experience</div>
@@ -122,7 +122,7 @@ export function RoleLadder({ profile: p, theme }: RoleLadderProps) {
             <div className="iv-view">
               <div className="iv-bar">
                 <button type="button" className="iv-back" onClick={() => setView("overview")}>
-                  â¹ Back
+                  ‹ Back
                 </button>
                 <span className="iv-ptitle">{sec.label}</span>
               </div>
@@ -141,7 +141,7 @@ function componentCss(scopeId: string): string {
 ${s}.iv-role-ladder{position:relative;height:537px;background:var(--iv-surface)}
 ${s} .iv-view{position:absolute;inset:0;display:flex;flex-direction:column}
 
-/* Identity hero â no colour block; the brand colour lives in the rung bars. */
+/* Identity hero — no colour block; the brand colour lives in the rung bars. */
 ${s} .iv-rl-id{flex:0 0 auto;padding:1.1em 1.15em .85em;border-bottom:1px solid var(--iv-edge)}
 ${s} .iv-rl-id .iv-name{font-size:1.2em}
 ${s} .iv-rl-id .iv-role{font-size:.8em;color:var(--iv-muted);margin-top:.15em}
@@ -174,7 +174,7 @@ ${s} .iv-rl-contact{font-size:.82em;color:var(--iv-muted)}
 ${s} .iv-ovfade{position:absolute;left:0;right:0;bottom:0;height:2.8em;background:linear-gradient(to top,var(--iv-surface),transparent);pointer-events:none}
 ${s} .iv-ovmore,${s} .iv-ovup{position:absolute;left:50%;bottom:.5em;transform:translateX(-50%);font-size:.62em;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--iv-primary);pointer-events:none;white-space:nowrap}
 
-/* Section screen â Back bar + body. */
+/* Section screen — Back bar + body. */
 ${s} .iv-bar{display:flex;align-items:center;gap:.6em;padding:.85em 1em;border-bottom:1px solid var(--iv-edge);flex:0 0 auto}
 ${s} .iv-back{display:inline-flex;align-items:center;gap:.15em;font-size:.78em;font-weight:700;color:var(--iv-primary);cursor:pointer;border:0;background:none;font-family:inherit}
 ${s} .iv-ptitle{font-family:var(--iv-font-h);font-weight:700;font-size:.9em}

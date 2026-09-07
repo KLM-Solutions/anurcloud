@@ -1,16 +1,16 @@
 "use client";
 
 /**
- * Spotlight â React (TSX) card component. The second professional AVATAR card.
+ * Spotlight — React (TSX) card component. The second professional AVATAR card.
  *
  * Signature (kept from the string card): the identity is a large ringed portrait
- * anchored into the top-left corner â big enough to be a graphic element, pulled up
+ * anchored into the top-left corner — big enough to be a graphic element, pulled up
  * and left so the card's own overflow clips its ring against the corner. The name
  * sits to its right, baseline-aligned to the foot of the circle. No panel (that is
- * Badge) â the portrait runs off the edge. The circle takes an uploaded logo in
+ * Badge) — the portrait runs off the edge. The circle takes an uploaded logo in
  * place of the initials.
  *
- * Body: a content-first OVERVIEW â the bio and a sample of each section show up
+ * Body: a content-first OVERVIEW — the bio and a sample of each section show up
  * front; a big section opens its own screen with a Back bar, a small one shows
  * inline. Distinct from Letterhead (accordion). Scroll cue (⌄ scroll → ⌃ scroll up).
  */
@@ -101,7 +101,7 @@ export function Spotlight({ profile: p, theme }: SpotlightProps) {
             <div className="iv-view">
               <div className="iv-bar">
                 <button type="button" className="iv-back" onClick={() => setView("overview")}>
-                  â¹ Back
+                  ‹ Back
                 </button>
                 <span className="iv-ptitle">{sec.label}</span>
               </div>
@@ -120,7 +120,7 @@ function componentCss(scopeId: string): string {
 ${s}.iv-spotlight{position:relative;height:537px;background:var(--iv-surface);overflow:hidden}
 ${s} .iv-view{position:absolute;inset:0;display:flex;flex-direction:column}
 
-/* The head â align-items:flex-end so the name sits at the FOOT of the portrait. */
+/* The head — align-items:flex-end so the name sits at the FOOT of the portrait. */
 ${s} .iv-sp-head{flex:0 0 auto;display:flex;align-items:flex-end;gap:.9em;padding:1.2em 1.1em .9em;overflow:hidden;border-bottom:1px solid var(--iv-edge)}
 ${s} .iv-sp-av{width:5.4em;height:5.4em;flex:0 0 auto;margin:-.45em 0 -.15em -.25em;box-shadow:0 0 0 4px var(--iv-surface),0 0 0 6px color-mix(in srgb,var(--iv-primary) 28%,var(--iv-surface))}
 ${s} .iv-sp-who{min-width:0;padding-bottom:.15em}
@@ -145,7 +145,7 @@ ${s} .iv-ovsec:hover .iv-ovnav{color:var(--iv-primary)}
 ${s} .iv-ovh{font-family:var(--iv-font-h);font-weight:700;font-size:.66em;letter-spacing:.08em;text-transform:uppercase;color:var(--iv-primary);margin-bottom:.5em}
 ${s} .iv-ovnav{margin-top:.5em;font-size:.72em;font-weight:700;color:var(--iv-muted)}
 
-/* Section screen â Back bar + body. */
+/* Section screen — Back bar + body. */
 ${s} .iv-bar{display:flex;align-items:center;gap:.6em;padding:.85em 1em;border-bottom:1px solid var(--iv-edge);flex:0 0 auto}
 ${s} .iv-back{display:inline-flex;align-items:center;gap:.15em;font-size:.78em;font-weight:700;color:var(--iv-primary);cursor:pointer;border:0;background:none;font-family:inherit}
 ${s} .iv-ptitle{font-family:var(--iv-font-h);font-weight:700;font-size:.9em}
