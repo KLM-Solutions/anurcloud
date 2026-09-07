@@ -104,7 +104,7 @@ export function FolderTab({ profile: p, theme }: FolderTabProps) {
             </>
           ) : (
             (() => {
-              const sec = big.find((b) => b.key === view);
+              const sec = sections.find((b) => b.key === view);
               if (!sec) return null;
               return (
                 <div className="iv-ft-sec">

@@ -116,7 +116,7 @@ export function RoleLadder({ profile: p, theme }: RoleLadderProps) {
         </div>
       ) : (
         (() => {
-          const sec = tailBig.find((b) => b.key === view);
+          const sec = tail.find((b) => b.key === view);
           if (!sec) return null;
           return (
             <div className="iv-view">

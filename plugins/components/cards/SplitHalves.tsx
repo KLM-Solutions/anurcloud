@@ -65,7 +65,7 @@ export function SplitHalves({ profile: p, theme }: SplitHalvesProps) {
               </>
             ) : (
               (() => {
-                const sec = big.find((b) => b.key === view);
+                const sec = sections.find((b) => b.key === view);
                 if (!sec) return null;
                 return (
                   <>
