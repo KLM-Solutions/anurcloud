@@ -122,53 +122,60 @@ export async function runChatJSON(
  * to become ready (GPU provisioning + engine init: profiling, CUDA-graph capture,
  * warmup — see the deployment log). If the first request to hit it is a real
  * user's card-picking call, that user waits through the whole cold start (a blank
- * screen). The pipeline's FIRST step is extraction, which does NOT use this model,
- * so we kick a warm-up off there: by the time the flow reaches enhancement/
- * card-picking (extraction + the human review step later), the instance is warm.
+ * screen). So the front-end kicks a warm-up off the moment the user OPENS Module 1
+ * (the extraction page → POST /api/warmup), well before the flow reaches
+ * enhancement/card-picking — by then the instance is warm.
  *
  * It also generates a couple of JSON tokens on purpose: the JSON-decoding kernel
  * (`apply_token_bitmask_inplace_kernel`) JIT-compiles on the first *generation*,
  * a one-off latency spike — doing it here means the first REAL answer is fast too.
  *
- * Fire-and-forget by contract: it NEVER throws and NEVER blocks the caller. Any
- * failure (model unreachable, still booting, auth) is swallowed — its only job is
- * to start the boot, not to get an answer. Callers must not await it in the
- * request's critical path.
+ * Never throws — every failure (model unreachable, still booting, auth) is
+ * swallowed; its only job is to START the boot, not to get an answer.
+ *
+ * ⚠️ Must be AWAITED via the platform, not fire-and-forget. On serverless
+ * (Vercel), a route that returns its response is frozen/killed immediately, so a
+ * bare `void warmUpModelAsync()` gets suspended BEFORE the HTTP request actually
+ * leaves the function — the model never sees it and never wakes. The caller must
+ * keep the function alive until the ping is sent, e.g. Next.js `after()`:
+ *   after(warmUpModelAsync());   // in the route handler, before returning
+ * `after()` runs the promise after the response is sent and keeps the instance
+ * alive to do it, so the request reaches Cloud Run and the boot begins. The ping
+ * itself may then be cut short by maxDuration — that's fine, the boot is already
+ * triggered the moment the request arrives.
  */
 let lastWarmAt = 0;
 const WARM_MIN_GAP_MS = 5 * 60_000; // don't re-ping a just-warmed instance from the same process
-export function warmUpModel(): void {
+export async function warmUpModelAsync(): Promise<void> {
   const baseURL = process.env.LOCAL_LLM_BASE_URL;
   if (!baseURL) return; // no self-hosted model configured → nothing to warm
   const now = Date.now();
   if (now - lastWarmAt < WARM_MIN_GAP_MS) return; // best-effort throttle (per serverless instance)
   lastWarmAt = now;
 
-  void (async () => {
-    try {
-      const token = await identityToken(baseURL);
-      const params: Record<string, unknown> = {
-        model: MODEL,
-        max_tokens: 8, // enough to trigger the JSON generation kernel, still trivial
-        temperature: 0,
-        response_format: { type: "json_object" },
-        chat_template_kwargs: { enable_thinking: false },
-        messages: [
-          { role: "system", content: 'Reply with {"ok":true}.' },
-          { role: "user", content: "warmup" },
-        ],
-      };
-      await getClient(baseURL).chat.completions.create(
-        params as unknown as Parameters<OpenAI["chat"]["completions"]["create"]>[0],
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      console.log("[warmup] self-hosted model pinged:", MODEL);
-    } catch (err) {
-      // Expected while the instance is still cold-booting — never surface it.
-      console.log("[warmup] ping did not complete (model likely still starting):", (err as Error).message);
-      lastWarmAt = 0; // let the next request retry the wake rather than wait out the gap
-    }
-  })();
+  try {
+    const token = await identityToken(baseURL);
+    const params: Record<string, unknown> = {
+      model: MODEL,
+      max_tokens: 8, // enough to trigger the JSON generation kernel, still trivial
+      temperature: 0,
+      response_format: { type: "json_object" },
+      chat_template_kwargs: { enable_thinking: false },
+      messages: [
+        { role: "system", content: 'Reply with {"ok":true}.' },
+        { role: "user", content: "warmup" },
+      ],
+    };
+    await getClient(baseURL).chat.completions.create(
+      params as unknown as Parameters<OpenAI["chat"]["completions"]["create"]>[0],
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    console.log("[warmup] self-hosted model pinged:", MODEL);
+  } catch (err) {
+    // Expected while the instance is still cold-booting — never surface it.
+    console.log("[warmup] ping did not complete (model likely still starting):", (err as Error).message);
+    lastWarmAt = 0; // let the next request retry the wake rather than wait out the gap
+  }
 }
 
 /**
