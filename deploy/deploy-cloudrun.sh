@@ -13,7 +13,7 @@ set -euo pipefail
 PROJECT="${PROJECT:-digital-cards-ai}"
 REGION="${REGION:-asia-southeast1}"   # Singapore — GCP Cloud Run L4 is NOT available in any India region
 REPO="${REPO:-instaviz-llm}"
-TAG="${TAG:-qwen3.5-4b-v2}"   # v2 = enforce-eager baked in (7 Sep 2026), see Dockerfile
+TAG="${TAG:-qwen3.5-4b-v3}"   # v3 = enforce-eager + language-model-only + kv-cache-memory-bytes (8 Sep 2026), see Dockerfile
 SERVICE="${SERVICE:-instaviz-llm}"
 
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/instaviz-llm:${TAG}"

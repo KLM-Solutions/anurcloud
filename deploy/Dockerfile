@@ -32,13 +32,21 @@ RUN hf download ${MODEL_ID} --local-dir ${MODEL_DIR} \
 # - enable-prefix-caching: reuse the fixed system-prompt prefix (our efficiency lever).
 # - port 8080: Cloud Run sends traffic to $PORT (default 8080).
 # - enforce-eager: turn OFF vLLM's default torch.compile + CUDA-graph capture.
-#   Measured from real cold-start logs (7 Sep 2026): engine init took 146.56 s
-#   (compilation 33.89 s) + CUDA-graph capture — i.e. compilation/capture is the
-#   dominant chunk of a ~160 s cold start. This service is scale-to-zero, so that
-#   cost is paid on EVERY wake. Our workload is tiny prompts + short outputs at low
-#   concurrency, where compiled speed barely helps; eager mode keeps answers
-#   correct and only ~1–2 s slower while cutting cold start to ~35–40 s. Net win for
-#   a bursty, cold-start-sensitive pilot. (Remove this flag to restore compiled mode.)
+#   Measured from real cold-start logs: this alone is only part of the boot — the
+#   dominant costs are Python/CUDA imports (~79 s), the engine profile+KV+warmup
+#   (~113 s) and, for this checkpoint, a WASTED vision warmup (~30 s). enforce-eager
+#   still helps a scale-to-zero service (cost paid on EVERY wake) and our tiny
+#   prompts barely benefit from compiled mode. (Remove this flag to restore it.)
+# - language-model-only: Qwen3.5-4B is natively a vision-language checkpoint
+#   (loads as Qwen3_5ForConditionalGeneration). Our pipeline is TEXT-ONLY, so this
+#   flag disables all multimodal inputs and skips loading the vision encoder — it
+#   removes the ~30 s multi-modal warmup and the image-profiling done at startup.
+#   Qwen3.5-native flag (confirmed in vLLM v0.28.0); preferred over
+#   --limit-mm-per-prompt, which is reported ineffective for Qwen3-VL-class models.
+# - kv-cache-memory-bytes 9725302272 (~9.06 GiB): preset the KV-cache size so vLLM
+#   skips the startup memory-profiling sweep it otherwise runs to infer it. The
+#   value is exactly what the deployment log recommended for this GPU/model. (The
+#   CLI flag is --kv-cache-memory-bytes; the log's "--kv-cache-memory" is shorthand.)
 # Qwen "thinking" is disabled per-request by the app via
 #   chat_template_kwargs: { enable_thinking: false }  — no server flag needed.
 CMD ["--model", "/models/qwen3.5-4b", \
@@ -48,4 +56,6 @@ CMD ["--model", "/models/qwen3.5-4b", \
      "--max-model-len", "8192", \
      "--enable-prefix-caching", \
      "--enforce-eager", \
+     "--language-model-only", \
+     "--kv-cache-memory-bytes", "9725302272", \
      "--gpu-memory-utilization", "0.90"]
