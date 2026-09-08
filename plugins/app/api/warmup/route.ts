@@ -1,5 +1,5 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { warmUpModel } from "@/lib/llm-chat";
+import { NextResponse, after, type NextRequest } from "next/server";
+import { warmUpModelAsync } from "@/lib/llm-chat";
 import { fail, tokenMatches } from "@/lib/route-helpers";
 
 export const runtime = "nodejs";
@@ -37,7 +37,12 @@ function handle(request: NextRequest) {
   }
 
   // Kick the wake off and return at once — we do not wait for the model to be ready.
-  warmUpModel();
+  // `after()` runs the ping AFTER the 202 is sent and, crucially, keeps the
+  // serverless function alive to do it. A bare fire-and-forget call would be
+  // frozen/killed the instant we return, so the HTTP request never reaches Cloud
+  // Run and the model never boots. The ping may be cut short by maxDuration —
+  // that's fine, the boot is triggered the moment the request arrives.
+  after(warmUpModelAsync());
   return NextResponse.json({ status: "received", message: "Warm-up requested." }, { status: 202 });
 }
 
