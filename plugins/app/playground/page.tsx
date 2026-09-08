@@ -136,25 +136,33 @@ export default function PlaygroundPage() {
   const [suggested, setSuggested] = useState<{ key: string; name: string; reasons?: string[] }[]>([]);
   const [pickedKey, setPickedKey] = useState<string | null>(null);
 
+  /* Until the one-shot handoff has been read (client-only, post-mount), we don't yet
+     know whether this is a flow arrival (Enhance → card) or a direct dev visit. Gate
+     the first paint on this so the DEV/QA layout never flashes before the suggested
+     card — the prerendered HTML would otherwise show the dev playground for a beat. */
+  const [ready, setReady] = useState(false);
+
   const took = useRef(false);
   useEffect(() => {
     if (took.current) return;
     took.current = true;
     const h = takeHandoff<TemplateHandoff>(TEMPLATE_PREFILL);
-    if (!h || !h.profile) return;
-    const t = h.profile_type === "student" ? "student" : "professional";
-    const d = defaultsFor(t, h.profile);
     // One-shot sessionStorage handoff — only available after mount. Same justified
     // pattern as app/template/your-card.tsx; the useRef latch keeps the destructive
     // read idempotent under StrictMode's double mount.
     /* eslint-disable react-hooks/set-state-in-effect */
-    setType(t);
-    setSource(h.profile);
-    setInclude(d.include);
-    setCounts(d.counts);
-    setEnhancedBio(h.enhanced?.bio ?? null);
-    setBrand(h.brand ?? null);
-    setTemplateId(null);
+    if (h && h.profile) {
+      const t = h.profile_type === "student" ? "student" : "professional";
+      const d = defaultsFor(t, h.profile);
+      setType(t);
+      setSource(h.profile);
+      setInclude(d.include);
+      setCounts(d.counts);
+      setEnhancedBio(h.enhanced?.bio ?? null);
+      setBrand(h.brand ?? null);
+      setTemplateId(null);
+    }
+    setReady(true);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
@@ -256,6 +264,17 @@ export default function PlaygroundPage() {
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
   }, []);
+
+  /* First paint, before the handoff has been read: show a neutral placeholder, never
+     the DEV/QA layout. This is what removes the ~1–3s flash of the test playground
+     on a flow arrival. Must sit AFTER all hooks so hook order stays stable. */
+  if (!ready) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-100">
+        <div className="text-xs font-semibold text-slate-400">Preparing your card…</div>
+      </main>
+    );
+  }
 
   /* ── Flow mode: arrived from the pipeline → show the suggested shortlist; the
      user can pick any of the suggested cards (default: the top one). ── */
