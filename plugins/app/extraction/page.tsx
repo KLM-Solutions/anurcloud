@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, type DragEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { ACCEPT_ATTR, PROFILE_TYPES, formatBytes, validateSourceFile } from "@/lib/validation";
 import { EXTRACTION_SCHEMA, SCHEMA_GROUPS, type SchemaField } from "@/lib/schema";
 import { TEMPLATE_PREFILL, putHandoff } from "@/lib/handoff";
@@ -160,6 +160,44 @@ export default function ExtractionPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  /**
+   * Wake the self-hosted model the MOMENT this page (Module 1) opens.
+   *
+   * The model is scale-to-zero and takes ~150s to become ready from cold. The
+   * user then spends time here choosing a file / pasting a URL before they ever
+   * reach enhancement + card-picking (the steps that actually need the model), so
+   * starting the boot now overlaps that whole cold start with the user's own
+   * reading/typing — the instance is far more likely to be warm by the time it's
+   * needed. `/api/extract` also fires this on submit; this is the earlier kick.
+   *
+   * "Don't warm an already-warm model": two guards. (1) A per-browser 4-min gate
+   * below skips the call entirely on remounts / quick re-visits. (2) The wake
+   * itself is idempotent — hitting a model that's already up is a trivial 8-token
+   * ping, not a second boot, and the server side throttles per instance too.
+   * Fire-and-forget: never awaited, failures swallowed (the model may still be
+   * booting, which is fine — that's exactly what we wanted to start).
+   */
+  useEffect(() => {
+    const KEY = "iv-model-warmed-at";
+    const GAP_MS = 4 * 60_000; // don't re-ping from this browser within 4 min
+    const tok = process.env.NEXT_PUBLIC_EXTRACT_TOKEN ?? "";
+    if (!tok) return; // no token → /api/warmup would 401; skip quietly
+    try {
+      const last = Number(sessionStorage.getItem(KEY) ?? "0");
+      if (Date.now() - last < GAP_MS) return; // already warmed recently → skip
+      sessionStorage.setItem(KEY, String(Date.now()));
+    } catch {
+      // sessionStorage blocked (private mode etc.) — fall through and fire once.
+    }
+    void fetch("/api/warmup", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${tok}` },
+      keepalive: true,
+    }).catch(() => {
+      // Fire-and-forget: a failed wake must never affect the extraction UI.
+    });
+  }, []);
 
   /**
    * To the card step — which runs enhancement itself before suggesting layouts.
