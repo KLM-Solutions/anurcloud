@@ -265,6 +265,7 @@ export default function PlaygroundPage() {
     return () => window.removeEventListener("resize", measure);
   }, []);
 
+
   /* First paint, before the handoff has been read: show a neutral placeholder, never
      the DEV/QA layout. This is what removes the ~1–3s flash of the test playground
      on a flow arrival. Must sit AFTER all hooks so hook order stays stable. */
@@ -342,8 +343,8 @@ export default function PlaygroundPage() {
           </details>
         )}
 
-        <div className="w-fit rounded-2xl bg-slate-200/70 p-4 sm:p-5">
-          {render ? (
+        {render ? (
+          <div className="w-fit rounded-2xl bg-slate-200/70 p-4 sm:p-5">
             <div style={{ width: 380 * flowScale, height: 537 * flowScale }}>
               <div
                 style={{ width: 380, height: 537, transform: `scale(${flowScale})`, transformOrigin: "top left" }}
@@ -351,10 +352,51 @@ export default function PlaygroundPage() {
                 {render(cardProfile, theme)}
               </div>
             </div>
-          ) : (
-            <div className="w-[380px] py-20 text-center text-xs font-semibold text-slate-400">Preparing your card…</div>
-          )}
-        </div>
+          </div>
+        ) : (
+          (() => {
+            // Loading: a horizontal sliding strip (marquee) of small card previews that
+            // scrolls continuously while the model enhances + picks. Settles on the real
+            // card above once suggestions/eligibility arrive. CSS transform only (smooth).
+            const S = 0.42; // small-card scale
+            const CW = Math.round(380 * S);
+            const CH = Math.round(537 * S);
+            const keys = Object.keys(REACT_CARDS).slice(0, 10);
+            const strip = [...keys, ...keys]; // duplicated so the loop is seamless
+            return (
+              <div className="flex w-full max-w-2xl flex-col items-center gap-3">
+                <style>{`@keyframes ivSlide{from{transform:translateX(0)}to{transform:translateX(-50%)}}`}</style>
+                <div
+                  className="w-full overflow-hidden rounded-2xl bg-slate-200/60 py-4"
+                  style={{
+                    WebkitMaskImage: "linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)",
+                    maskImage: "linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)",
+                  }}
+                >
+                  <div className="flex w-max gap-4 px-4" style={{ animation: "ivSlide 22s linear infinite" }}>
+                    {strip.map((k, i) => (
+                      <div
+                        key={i}
+                        className="shrink-0 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/5"
+                        style={{ width: CW, height: CH }}
+                      >
+                        <div
+                          style={{ width: 380, height: 537, transform: `scale(${S})`, transformOrigin: "top left", pointerEvents: "none" }}
+                        >
+                          {REACT_CARDS[k](cardProfile, theme)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <span className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                  Finding your best layouts…
+                </span>
+              </div>
+            );
+          })()
+        )}
 
         {active?.reasons && active.reasons.length > 0 && (
           <ul className="max-w-md list-disc space-y-1 pl-5 text-xs leading-relaxed text-slate-500">
@@ -370,6 +412,13 @@ export default function PlaygroundPage() {
   return (
     <main className="min-h-screen bg-slate-100 p-6">
       <div className="mx-auto max-w-6xl">
+        {/* Back to the app entry — the dev playground had no way out. */}
+        <a
+          href="/"
+          className="mb-3 inline-flex items-center gap-1 text-xs font-semibold text-slate-500 transition hover:text-slate-800"
+        >
+          ‹ Back
+        </a>
         {/* DEV banner */}
         <div className="mb-4 flex items-center justify-between rounded-lg border border-amber-300 bg-amber-50 px-4 py-2">
           <div className="text-sm font-bold text-amber-900">
