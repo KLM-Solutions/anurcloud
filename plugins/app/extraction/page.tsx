@@ -34,7 +34,7 @@ const TYPE_LABEL: Record<SchemaField["type"], string> = {
   "object[]": "Records",
 };
 const TYPE_BADGE: Record<SchemaField["type"], string> = {
-  string: "bg-blue-50 text-blue-600 ring-1 ring-blue-100",
+  string: "bg-[#635BFF]/10 text-[#635BFF] ring-1 ring-blue-100",
   "string[]": "bg-violet-50 text-violet-600 ring-1 ring-violet-100",
   "object[]": "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100",
 };
@@ -92,10 +92,6 @@ const ENDPOINT = "https://anurcloud.vercel.app/api/extract";
 const URL_ENDPOINT = "https://anurcloud.vercel.app/api/extract-url";
 
 /* Sample resumes (served from /public/samples) — one-click load into the uploader. */
-const SAMPLES = [
-  { file: "karthick-r.pdf", label: "Karthick R" },
-  { file: "subramani-resume.pdf", label: "Subramani" },
-];
 
 const asStr = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v : null);
 const asArr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
@@ -155,10 +151,10 @@ export default function ExtractionPage() {
   const [response, setResponse] = useState<ExtractResponse | null>(null);
   const [tab, setTab] = useState<Tab>("preview");
   const [copied, setCopied] = useState<"input" | "output" | null>(null);
-  const [loadingSample, setLoadingSample] = useState<string | null>(null);
   const [logo, setLogo] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
+  const reviewRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   /**
@@ -242,6 +238,13 @@ export default function ExtractionPage() {
   const brand: BrandTheme | null =
     response?.status === "success" ? response.brand ?? null : null;
 
+  // After a successful extraction, flip to Review mode and bring it into view so the
+  // result is never hidden below the fold.
+  const hasLive = !!live;
+  useEffect(() => {
+    if (hasLive) reviewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [hasLive]);
+
   function chooseFile(next: File | null) {
     setResponse(null);
     setStatus("idle");
@@ -259,21 +262,6 @@ export default function ExtractionPage() {
     e.preventDefault();
     setDragOver(false);
     chooseFile(e.dataTransfer.files?.[0] ?? null);
-  }
-
-  async function loadSample(s: { file: string; label: string }) {
-    setLoadingSample(s.file);
-    setError(null);
-    try {
-      const res = await fetch(`/samples/${s.file}`);
-      const blob = await res.blob();
-      const f = new File([blob], `${s.label} — sample.pdf`, { type: "application/pdf" });
-      chooseFile(f);
-    } catch {
-      setError(`Couldn't load the "${s.label}" sample. Try uploading a file instead.`);
-    } finally {
-      setLoadingSample(null);
-    }
   }
 
   async function onSubmit() {
@@ -338,31 +326,31 @@ export default function ExtractionPage() {
       : `curl -X POST ${ENDPOINT} \\\n  -H "Authorization: Bearer <auth_token>" \\\n  -F "file=@resume.pdf" \\\n  -F "profile_type=${profileType}"${logo ? ` \\\n  -F "logo=@${logo.name}"` : ""}`;
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-white text-slate-900">
       {/* ── Top Nav ── */}
-      <nav className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/75 backdrop-blur-md">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-5">
+      <nav className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-black text-white shadow-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 text-xs font-black text-white shadow-sm">
               P
             </div>
-            <span className="text-sm font-bold text-slate-800">PxlBrain</span>
-            <span className="text-sm font-light text-slate-300">×</span>
+            <span className="text-sm font-bold tracking-tight text-slate-900">PxlBrain</span>
+            <span className="text-slate-300">×</span>
             <span className="text-sm font-medium text-slate-500">AnurCloud</span>
           </Link>
           <div className="flex items-center gap-2">
             <Link
               href="/extraction"
-              className="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm"
+              className="flex items-center gap-1.5 rounded-full border border-[#635BFF]/20 bg-[#635BFF]/10 px-3.5 py-1.5 text-xs font-semibold text-[#635BFF] shadow-sm"
             >
               <span>📄</span> Module 1
             </Link>
             <Link
               href="/template"
-              className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
+              className="flex items-center gap-1.5 rounded-full border border-[#e6e8eb] bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#635BFF]/50 hover:text-[#635BFF]"
             >
               <span>🎴</span> Module 3 + 4
-              <span className="rounded-full bg-emerald-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-800">
+              <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700">
                 Live
               </span>
             </Link>
@@ -370,81 +358,137 @@ export default function ExtractionPage() {
         </div>
       </nav>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-7 px-5 py-8">
-        {/* ── Header ── */}
-        <header className="flex flex-col gap-4">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-blue-400 text-2xl shadow-md shadow-blue-500/20">
-              📄
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
-                  Module 01
-                </span>
-                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200">
-                  ● Live
-                </span>
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-5 py-8 sm:px-6 sm:py-10">
+        {/* ── Header / hero (Input mode only) ── */}
+        {!live && (
+        <header className="rounded-xl border border-[#e6e8eb] bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#635BFF] text-xl text-white shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
+                📄
               </div>
-              <h1 className="mt-0.5 bg-gradient-to-r from-slate-900 via-blue-800 to-blue-600 bg-clip-text text-3xl font-black tracking-tight text-transparent">
-                Extraction
-              </h1>
-              <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-500">
-                Upload on the left; see exactly what AnurCloud receives on the right — rendered as
-                the auto-filled profile screen and as raw JSON.
-              </p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#635BFF]">
+                    Module 01
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Live
+                  </span>
+                </div>
+                <h1 className="mt-1.5 text-3xl font-semibold tracking-tight text-slate-900">
+                  Extraction
+                </h1>
+                <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">
+                  Upload on the left; see exactly what AnurCloud receives on the right — rendered as
+                  the auto-filled profile screen and as raw JSON.
+                </p>
+              </div>
+            </div>
+
+            {/* Pipeline stepper */}
+            <div className="flex items-center gap-2 rounded-xl border border-[#e6e8eb] bg-[#f6f8fa] p-3 sm:gap-3 sm:p-4">
+              <PipeStep icon="📤" title="Input" sub="file + type" tone="blue" />
+              <ChevronArrow />
+              <PipeStep icon="⚙️" title="PxlBrain AI" sub="OCR + mapping" tone="violet" />
+              <ChevronArrow />
+              <PipeStep icon="📦" title="Output" sub="profile + score" tone="emerald" />
             </div>
           </div>
         </header>
+        )}
 
-        {/* ── Pipeline strip ── */}
-        <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white/90 px-6 py-4 shadow-sm">
-          <PipeStep icon="📤" title="Input" sub="file + profile_type" tone="blue" />
-          <ChevronArrow />
-          <PipeStep icon="⚙️" title="PxlBrain AI" sub="OCR + field mapping" tone="violet" />
-          <ChevronArrow />
-          <PipeStep icon="📦" title="Output" sub="profile + confidence" tone="emerald" />
-        </div>
+        {/* ── Review mode: source summary bar (keeps the result front-and-centre) ── */}
+        {live && (
+          <div
+            ref={reviewRef}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e6e8eb] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-5"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#635BFF]/10 text-lg">
+                {sourceMode === "url" ? "🔗" : "📄"}
+              </div>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="truncate text-sm font-semibold text-slate-900">
+                    {sourceMode === "url" ? (url || "Extracted from URL") : (file?.name ?? "Extracted résumé")}
+                  </span>
+                  <span className="rounded-full bg-[#635BFF]/10 px-2 py-0.5 text-[10px] font-semibold capitalize text-[#635BFF]">
+                    {live.profile_type}
+                  </span>
+                </div>
+                <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-emerald-600">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Extraction complete · review the fields below
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setResponse(null); setStatus("idle"); }}
+              className="shrink-0 rounded-lg border border-[#e6e8eb] bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-[#635BFF]/50 hover:text-[#635BFF]"
+            >
+              ↺ Re-extract / change
+            </button>
+          </div>
+        )}
 
-        {/* ── Two equal cards ── */}
-        <div className="grid gap-5 lg:grid-cols-2 lg:items-stretch">
-          {/* LEFT */}
-          <section className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:h-[740px]">
-            <CardHead accent="bg-gradient-to-r from-blue-600 to-blue-400" title="Try it live">
-              <span className="rounded-lg bg-slate-100 px-2.5 py-1 font-mono text-[10px] font-semibold text-slate-500">
-                POST {sourceMode === "url" ? "/api/extract-url" : "/api/extract"}
-              </span>
-            </CardHead>
+        {/* ── Main grid: Input(form|result) left · Integration preview right ── */}
+        <div className={`grid gap-6 ${live ? "lg:grid-cols-[1.35fr_1fr] lg:items-start" : "lg:grid-cols-2 lg:items-stretch"}`}>
+          {/* LEFT — Input form OR extracted-fields review hero */}
+          <section className={`flex flex-col overflow-hidden rounded-xl border border-[#e6e8eb] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-12px_rgba(0,0,0,0.10)] ${live ? "" : "lg:h-[760px]"}`}>
+            {live ? (
+              <CardHead icon="🧾" title="Extracted profile" subtitle="Review each field &amp; its confidence">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Live data
+                </span>
+              </CardHead>
+            ) : (
+              <CardHead icon="🎯" title="Try it live" subtitle="Upload a résumé or paste a URL">
+                <span className="rounded-lg bg-slate-100 px-2.5 py-1 font-mono text-[10px] font-semibold text-slate-500">
+                  POST {sourceMode === "url" ? "/api/extract-url" : "/api/extract"}
+                </span>
+              </CardHead>
+            )}
 
-            <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-5">
+            {live ? (
+              /* Review: the extracted profile is the hero. */
+              <div className="flex flex-col gap-5 p-5 sm:p-6">
+                <ExtractedFieldRows live={live} />
+                {brand && <BrandPanel brand={brand} />}
+              </div>
+            ) : (
+            <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-5 sm:p-6">
               {/* Profile type */}
-              <div className="flex gap-2 rounded-xl bg-slate-100 p-1">
-                {PROFILE_TYPES.map((pt) => (
-                  <button
-                    key={pt}
-                    type="button"
-                    onClick={() => setProfileType(pt)}
-                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold capitalize transition-all ${
-                      profileType === pt
-                        ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-900/5"
-                        : "text-slate-500 hover:text-slate-700"
-                    }`}
-                  >
-                    {pt === "student" ? "🎓" : "💼"} {pt}
-                  </button>
-                ))}
+              <div>
+                <Eyebrow>Profile type</Eyebrow>
+                <div className="mt-2 flex gap-1.5 rounded-2xl bg-slate-100 p-1.5">
+                  {PROFILE_TYPES.map((pt) => (
+                    <button
+                      key={pt}
+                      type="button"
+                      onClick={() => setProfileType(pt)}
+                      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold capitalize transition-all ${
+                        profileType === pt
+                          ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-900/5"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      {pt === "student" ? "🎓" : "💼"} {pt}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Source */}
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-3">
                 <Eyebrow>Source</Eyebrow>
 
                 {/* Mode toggle */}
-                <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+                <div className="flex gap-1.5 rounded-xl bg-slate-100 p-1.5">
                   <button
                     type="button"
                     onClick={() => switchSourceMode("file")}
-                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-all ${
                       sourceMode === "file"
                         ? "bg-white text-slate-800 shadow-sm ring-1 ring-slate-900/5"
                         : "text-slate-500 hover:text-slate-700"
@@ -455,7 +499,7 @@ export default function ExtractionPage() {
                   <button
                     type="button"
                     onClick={() => switchSourceMode("url")}
-                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-all ${
                       sourceMode === "url"
                         ? "bg-white text-slate-800 shadow-sm ring-1 ring-slate-900/5"
                         : "text-slate-500 hover:text-slate-700"
@@ -472,13 +516,13 @@ export default function ExtractionPage() {
                       onDragLeave={() => setDragOver(false)}
                       onDrop={onDrop}
                       onClick={() => inputRef.current?.click()}
-                      className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-all ${
+                      className={`group flex cursor-pointer flex-col items-center justify-center gap-2.5 rounded-xl border-2 border-dashed px-6 py-9 text-center transition-all ${
                         dragOver
-                          ? "border-blue-400 bg-blue-50 shadow-inner"
-                          : "border-slate-200 bg-slate-50/60 hover:border-blue-300 hover:bg-blue-50/30"
+                          ? "border-[#635BFF] bg-[#635BFF]/5"
+                          : "border-slate-300 bg-[#f6f8fa] hover:border-[#635BFF]/50 hover:bg-[#635BFF]/[0.03]"
                       }`}
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200 text-xl">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-xl shadow-sm ring-1 ring-slate-200 transition-transform group-hover:scale-105">
                         📄
                       </div>
                       {file ? (
@@ -492,7 +536,7 @@ export default function ExtractionPage() {
                               chooseFile(null);
                               if (inputRef.current) inputRef.current.value = "";
                             }}
-                            className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-500 hover:bg-red-100 hover:text-red-600 transition-colors"
+                            className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-500 transition-colors hover:bg-red-100 hover:text-red-600"
                           >
                             ✕
                           </button>
@@ -500,7 +544,7 @@ export default function ExtractionPage() {
                       ) : (
                         <>
                           <p className="text-sm font-semibold text-slate-700">
-                            Drop a file or click to browse
+                            Drop a file or <span className="text-[#635BFF]">click to browse</span>
                           </p>
                           <p className="text-xs text-slate-400">PDF · DOCX · JPG · PNG · up to 10 MB</p>
                         </>
@@ -514,23 +558,8 @@ export default function ExtractionPage() {
                       />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[11px] font-medium text-slate-400">Try a sample:</span>
-                      {SAMPLES.map((s) => (
-                        <button
-                          key={s.file}
-                          type="button"
-                          onClick={() => loadSample(s)}
-                          disabled={loadingSample !== null}
-                          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:border-blue-300 hover:text-blue-700 disabled:opacity-50"
-                        >
-                          📄 {loadingSample === s.file ? "Loading…" : s.label}
-                        </button>
-                      ))}
-                    </div>
-
                     {/* Optional logo — drives the card's brand colours. */}
-                    <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                    <div className="flex flex-col gap-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-slate-600">
                           Logo <span className="font-normal text-slate-400">— optional</span>
@@ -565,7 +594,7 @@ export default function ExtractionPage() {
                         <button
                           type="button"
                           onClick={() => logoRef.current?.click()}
-                          className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-500 transition hover:border-blue-300 hover:text-blue-700"
+                          className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2.5 text-xs font-medium text-slate-500 transition hover:border-[#635BFF]/50 hover:text-[#635BFF]"
                         >
                           🎨 Add a logo — PNG · JPG · SVG · WebP
                         </button>
@@ -590,9 +619,9 @@ export default function ExtractionPage() {
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
                       placeholder="https://yourportfolio.com"
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-[#635BFF] focus:ring-2 focus:ring-[#635BFF]/20"
                     />
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs leading-relaxed text-slate-400">
                       Crawls up to 25 pages automatically — achievements, projects, and sub-pages included.
                       The site&rsquo;s brand colours and logo come back too.
                     </p>
@@ -606,7 +635,7 @@ export default function ExtractionPage() {
                   value={token}
                   onChange={(e) => setToken(e.target.value)}
                   placeholder="Paste your access token"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-mono text-sm shadow-sm outline-none placeholder:font-sans placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-mono text-sm shadow-sm outline-none transition-all placeholder:font-sans placeholder:text-slate-400 focus:border-[#635BFF] focus:ring-2 focus:ring-[#635BFF]/20"
                 />
               </Labeled>
 
@@ -623,7 +652,7 @@ export default function ExtractionPage() {
                 type="button"
                 onClick={onSubmit}
                 disabled={status === "uploading"}
-                className="group flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-blue-700 to-blue-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/25 transition hover:shadow-blue-500/40 hover:opacity-95 disabled:opacity-60"
+                className="group flex items-center justify-center gap-2 rounded-lg bg-[#635BFF] px-5 py-3 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition hover:bg-[#5449e0] disabled:opacity-60"
               >
                 {status === "uploading" ? (
                   <>
@@ -644,144 +673,31 @@ export default function ExtractionPage() {
                 </div>
               )}
 
-              {/* Brand theme — colours + logo for the card templates */}
-              {brand && <BrandPanel brand={brand} />}
-
-              {/* Extracted fields */}
-              <div className="flex flex-1 flex-col border-t border-slate-100 pt-4">
-                <Eyebrow>Extracted fields</Eyebrow>
-                {live ? (
-                  <div className="mt-2 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 shadow-sm">
-                    {EXTRACTION_SCHEMA[live.profile_type].map((f) => {
-                      const value = live.data[f.key];
-                      const score = live.confidence_scores[f.key];
-                      const flagged = live.flagged_fields.includes(f.key);
-                      const empty =
-                        value == null ||
-                        value === "" ||
-                        (Array.isArray(value) && value.length === 0);
-                      const strChips: string[] =
-                        f.type === "string[]" ? (asArr(value) as string[]) : [];
-                      const objChips: { label: string; href: string | null }[] =
-                        f.type === "object[]"
-                          ? (asArr(value) as Record<string, unknown>[])
-                              .map((item) => ({
-                                label:
-                                  OBJECT_PRIMARY_KEYS.map((k) => asStr(item[k])).find(Boolean) ?? "",
-                                href: safeHref(asStr(item.url) ?? asStr(item.link)),
-                              }))
-                              .filter((c) => c.label)
-                          : [];
-                      const hasChips = strChips.length > 0 || objChips.length > 0;
-                      return (
-                        <div
-                          key={f.key}
-                          className={`flex gap-3 px-3 py-2.5 text-sm ${!empty && hasChips ? "items-start" : "items-center"}`}
-                        >
-                          <span className="w-32 shrink-0 truncate text-xs font-medium text-slate-400">
-                            {f.label}
-                          </span>
-                          <div className="flex min-w-0 flex-1 flex-wrap gap-1">
-                            {empty ? (
-                              <span className="text-slate-300">—</span>
-                            ) : strChips.length ? (
-                              strChips.map((chip, i) => (
-                                <span
-                                  key={i}
-                                  className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
-                                >
-                                  {chip}
-                                </span>
-                              ))
-                            ) : objChips.length ? (
-                              objChips.map((chip, i) =>
-                                chip.href ? (
-                                  <a
-                                    key={i}
-                                    href={chip.href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
-                                  >
-                                    {chip.label}
-                                    <span className="text-[9px] opacity-50">↗</span>
-                                  </a>
-                                ) : (
-                                  <span
-                                    key={i}
-                                    className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
-                                  >
-                                    {chip.label}
-                                  </span>
-                                )
-                              )
-                            ) : (
-                              <span className="text-slate-800">{asStr(value)}</span>
-                            )}
-                          </div>
-                          {typeof score === "number" && (
-                            <span
-                              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                flagged
-                                  ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
-                                  : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                              }`}
-                            >
-                              {flagged ? "⚠" : "✓"} {score.toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="mt-2 flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/40 px-4 py-10 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200 text-2xl">
-                      📦
-                    </div>
-                    <p className="text-xs text-slate-400">
-                      Run an extraction to see each field and its confidence score here.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* One next step: enhancement + card suggestion, combined. */}
-              {live && (
-                <>
-                  <button
-                    type="button"
-                    onClick={goToTemplate}
-                    className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-emerald-700 to-emerald-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-emerald-500/25 transition hover:shadow-emerald-500/40 hover:opacity-95"
-                  >
-                    🎴 Enhance &amp; suggest cards
-                    <span className="transition-transform group-hover:translate-x-0.5">→</span>
-                  </button>
-                  <p className="text-[11px] leading-relaxed text-slate-400">
-                    Runs enhancement and suggests the best-fitting layouts — the pipeline is
-                    Extract → Enhance → Card.
-                  </p>
-                </>
-              )}
             </div>
+            )}
           </section>
 
           {/* RIGHT */}
-          <section className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:h-[740px]">
-            <CardHead accent="bg-gradient-to-r from-emerald-600 to-emerald-400" title="Integration">
+          <section className="flex flex-col overflow-hidden rounded-xl border border-[#e6e8eb] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-12px_rgba(0,0,0,0.10)] lg:h-[760px]">
+            <CardHead
+              icon="📱"
+              title="Integration"
+              subtitle="What AnurCloud receives"
+            >
               <span
-                className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ring-1 ${
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ring-1 ${
                   live
                     ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
                     : "bg-amber-50 text-amber-700 ring-amber-200"
                 }`}
               >
-                {live ? "● Live data" : "Sample data"}
+                <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-emerald-500" : "bg-amber-500"}`} />
+                {live ? "Live data" : "Sample data"}
               </span>
             </CardHead>
 
             {/* Tabs */}
-            <div className="flex items-center gap-0.5 border-b border-slate-100 px-4 pt-3">
+            <div className="flex items-center gap-1 border-b border-slate-100 px-4 pt-2">
               <TabBtn active={tab === "preview"} onClick={() => setTab("preview")}>
                 📱 Preview
               </TabBtn>
@@ -812,9 +728,9 @@ export default function ExtractionPage() {
               )}
             </div>
 
-            <div className="flex-1 overflow-hidden bg-slate-50/50">
+            <div className="flex-1 overflow-hidden bg-[#f6f8fa]">
               {tab === "preview" && (
-                <div className="flex h-full items-start justify-center overflow-hidden p-5">
+                <div className="flex h-full items-center justify-center overflow-y-auto p-4 sm:p-6">
                   <PhonePreview
                     data={active.data}
                     scores={active.confidence_scores}
@@ -824,10 +740,10 @@ export default function ExtractionPage() {
               )}
               {tab === "fields" && <FieldsPanel profileType={profileType} />}
               {tab === "input" && (
-                <div className="h-full overflow-y-auto p-5">
+                <div className="h-full overflow-y-auto p-5 sm:p-6">
                   <div className="space-y-3 font-mono text-xs">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-md bg-blue-600 px-2 py-0.5 font-bold text-white shadow-sm">
+                      <span className="rounded-md bg-[#635BFF] px-2 py-0.5 font-bold text-white shadow-sm">
                         POST
                       </span>
                       <span className="break-all text-slate-700">
@@ -860,7 +776,7 @@ export default function ExtractionPage() {
                       <div className="mb-1.5 font-sans text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                         Example request
                       </div>
-                      <pre className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-900 p-3.5 text-[11px] leading-relaxed text-slate-100 shadow-sm">
+                      <pre className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900 p-3.5 text-[11px] leading-relaxed text-slate-100 shadow-sm">
                         {curlExample}
                       </pre>
                     </div>
@@ -868,8 +784,8 @@ export default function ExtractionPage() {
                 </div>
               )}
               {tab === "output" && (
-                <div className="flex h-full flex-col gap-3 overflow-auto p-5">
-                  <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-2.5 text-xs text-blue-700">
+                <div className="flex h-full flex-col gap-3 overflow-auto p-5 sm:p-6">
+                  <div className="flex items-center gap-2 rounded-xl border border-[#635BFF]/15 bg-[#635BFF]/10 px-3.5 py-2.5 text-xs text-[#635BFF]">
                     <span>ℹ️</span>
                     <span>
                       All <code className="font-mono">data</code> fields are{" "}
@@ -886,7 +802,114 @@ export default function ExtractionPage() {
             </div>
           </section>
         </div>
+
+        {/* Review mode: prominent next-step CTA */}
+        {live && (
+          <div className="rounded-xl border border-[#e6e8eb] bg-white p-5 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-12px_rgba(0,0,0,0.10)] sm:p-6">
+            <button
+              type="button"
+              onClick={goToTemplate}
+              className="group inline-flex items-center justify-center gap-2 rounded-lg bg-[#635BFF] px-6 py-3 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition hover:bg-[#5449e0]"
+            >
+              🎴 Enhance &amp; suggest cards
+              <span className="transition-transform group-hover:translate-x-0.5">→</span>
+            </button>
+            <p className="mx-auto mt-2 max-w-md text-[11px] leading-relaxed text-slate-400">
+              Runs enhancement and suggests the best-fitting layouts — the pipeline is Extract → Enhance → Card.
+            </p>
+          </div>
+        )}
       </main>
+    </div>
+  );
+}
+
+/* ── Extracted fields (Review mode hero) ── */
+
+function ExtractedFieldRows({ live }: { live: ActiveResult }) {
+  return (
+    <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+      {EXTRACTION_SCHEMA[live.profile_type].map((f) => {
+        const value = live.data[f.key];
+        const score = live.confidence_scores[f.key];
+        const flagged = live.flagged_fields.includes(f.key);
+        const empty =
+          value == null ||
+          value === "" ||
+          (Array.isArray(value) && value.length === 0);
+        const strChips: string[] =
+          f.type === "string[]" ? (asArr(value) as string[]) : [];
+        const objChips: { label: string; href: string | null }[] =
+          f.type === "object[]"
+            ? (asArr(value) as Record<string, unknown>[])
+                .map((item) => ({
+                  label:
+                    OBJECT_PRIMARY_KEYS.map((k) => asStr(item[k])).find(Boolean) ?? "",
+                  href: safeHref(asStr(item.url) ?? asStr(item.link)),
+                }))
+                .filter((c) => c.label)
+            : [];
+        const hasChips = strChips.length > 0 || objChips.length > 0;
+        return (
+          <div
+            key={f.key}
+            className={`flex gap-3 px-3.5 py-2.5 text-sm transition-colors hover:bg-slate-50/60 ${!empty && hasChips ? "items-start" : "items-center"}`}
+          >
+            <span className="w-32 shrink-0 truncate text-xs font-medium text-slate-400">
+              {f.label}
+            </span>
+            <div className="flex min-w-0 flex-1 flex-wrap gap-1">
+              {empty ? (
+                <span className="text-slate-300">—</span>
+              ) : strChips.length ? (
+                strChips.map((chip, i) => (
+                  <span
+                    key={i}
+                    className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
+                  >
+                    {chip}
+                  </span>
+                ))
+              ) : objChips.length ? (
+                objChips.map((chip, i) =>
+                  chip.href ? (
+                    <a
+                      key={i}
+                      href={chip.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 transition hover:bg-[#635BFF]/10 hover:text-[#635BFF]"
+                    >
+                      {chip.label}
+                      <span className="text-[9px] opacity-50">↗</span>
+                    </a>
+                  ) : (
+                    <span
+                      key={i}
+                      className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
+                    >
+                      {chip.label}
+                    </span>
+                  )
+                )
+              ) : (
+                <span className="text-slate-800">{asStr(value)}</span>
+              )}
+            </div>
+            {typeof score === "number" && (
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                  flagged
+                    ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+                    : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                }`}
+              >
+                {flagged ? "⚠" : "✓"} {score.toFixed(2)}
+              </span>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -923,10 +946,12 @@ function PhonePreview({
   const publications = asArr(data.publications) as Record<string, unknown>[];
 
   return (
-    <div className="mx-auto flex h-[620px] w-full max-w-[300px] flex-col overflow-hidden rounded-[2.25rem] border-[8px] border-slate-800 bg-white shadow-2xl">
+    <div className="relative mx-auto flex h-[540px] max-h-full w-full max-w-[290px] shrink-0 flex-col overflow-hidden rounded-[2.25rem] border-[8px] border-slate-900 bg-white shadow-[0_12px_40px_-12px_rgba(0,0,0,0.25)] ring-1 ring-black/5">
+      {/* Notch */}
+      <div className="pointer-events-none absolute left-1/2 top-0 z-10 h-5 w-28 -translate-x-1/2 rounded-b-2xl bg-slate-900" aria-hidden />
       {/* App bar */}
-      <div className="shrink-0 bg-gradient-to-r from-blue-700 to-blue-500 px-5 py-4 text-white">
-        <div className="text-[10px] font-bold uppercase tracking-widest opacity-70">Insta VIZ</div>
+      <div className="shrink-0 bg-[#635BFF] px-5 pb-4 pt-6 text-white">
+        <div className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-70">Insta VIZ</div>
         <div className="text-base font-bold">Review your profile</div>
       </div>
 
@@ -934,7 +959,7 @@ function PhonePreview({
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
         {/* Identity */}
         <div className="flex items-center gap-3">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-violet-100 text-2xl shadow-sm">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#f6f8fa] text-2xl shadow-sm ring-1 ring-slate-200">
             👤
           </div>
           <div className="min-w-0">
@@ -957,7 +982,7 @@ function PhonePreview({
               {skills.map((s, i) => (
                 <span
                   key={i}
-                  className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700"
+                  className="rounded-full bg-[#635BFF]/10 px-2 py-0.5 text-[11px] font-medium text-[#635BFF]"
                 >
                   {s}
                 </span>
@@ -1135,7 +1160,7 @@ function PhonePreview({
                       href={safeHref(asStr(l.url))!}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="truncate text-blue-600 hover:underline"
+                      className="truncate text-[#635BFF] hover:underline"
                     >
                       {asStr(l.url)}
                     </a>
@@ -1161,7 +1186,7 @@ function PhonePreview({
         <button
           type="button"
           disabled
-          className="cursor-default rounded-xl bg-gradient-to-r from-blue-700 to-blue-500 py-2.5 text-sm font-bold text-white shadow-md opacity-95"
+          className="cursor-default rounded-xl bg-[#635BFF] py-2.5 text-sm font-bold text-white shadow-md opacity-95"
         >
           Looks good →
         </button>
@@ -1236,7 +1261,7 @@ function BrandPanel({ brand }: { brand: BrandTheme }) {
     : null;
 
   return (
-    <div className="flex flex-col gap-3 border-t border-slate-100 pt-4">
+    <div className="flex flex-col gap-3 border-t border-slate-100 pt-5">
       <div className="flex items-center justify-between gap-2">
         <Eyebrow>Brand theme</Eyebrow>
         <span
@@ -1248,7 +1273,7 @@ function BrandPanel({ brand }: { brand: BrandTheme }) {
         </span>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
         <div className="flex items-center gap-3">
           {logoSrc &&
             (logoBroken ? (
@@ -1358,8 +1383,8 @@ function FieldsPanel({ profileType }: { profileType: ProfileType }) {
   const { common, specific } = SCHEMA_GROUPS[profileType];
   const total = common.length + specific.length;
   return (
-    <div className="flex h-full flex-col gap-4 overflow-y-auto p-5">
-      <div className="flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-2.5 text-xs leading-relaxed text-blue-700">
+    <div className="flex h-full flex-col gap-4 overflow-y-auto p-5 sm:p-6">
+      <div className="flex items-start gap-2.5 rounded-xl border border-[#635BFF]/15 bg-[#635BFF]/10 px-3.5 py-2.5 text-xs leading-relaxed text-[#635BFF]">
         <span>ℹ️</span>
         <span>
           We automatically extract the <strong>{total} fields</strong> below from the uploaded
@@ -1392,7 +1417,7 @@ function FieldGroup({
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">{title}</h3>
         <span className="text-[11px] text-slate-400">· {note}</span>
       </div>
-      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {fields.map((f) => (
           <div key={f.key} className="px-3.5 py-3">
             <div className="flex items-center gap-2">
@@ -1425,7 +1450,7 @@ function FieldGroup({
 
 function ChevronArrow() {
   return (
-    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-400">
+    <span className="flex h-6 w-6 items-center justify-center text-sm font-bold text-slate-300">
       →
     </span>
   );
@@ -1435,28 +1460,19 @@ function PipeStep({
   icon,
   title,
   sub,
-  tone,
 }: {
   icon: string;
   title: string;
   sub: string;
-  tone: string;
+  tone?: string;
 }) {
-  const tones: Record<string, string> = {
-    blue: "from-blue-600 to-blue-400",
-    violet: "from-violet-600 to-violet-400",
-    emerald: "from-emerald-600 to-emerald-400",
-    slate: "from-slate-500 to-slate-400",
-  };
   return (
-    <div className="flex items-center gap-3">
-      <div
-        className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${tones[tone]} text-lg shadow-sm`}
-      >
+    <div className="flex items-center gap-2.5">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#e6e8eb] bg-white text-base">
         {icon}
       </div>
-      <div>
-        <div className="text-xs font-bold text-slate-800">{title}</div>
+      <div className="hidden sm:block">
+        <div className="text-xs font-semibold text-slate-800">{title}</div>
         <div className="text-[10px] text-slate-400">{sub}</div>
       </div>
     </div>
@@ -1464,21 +1480,28 @@ function PipeStep({
 }
 
 function CardHead({
-  accent,
+  icon,
   title,
+  subtitle,
   children,
 }: {
-  accent: string;
+  icon: string;
   title: string;
+  subtitle?: string;
   children?: ReactNode;
 }) {
   return (
-    <div>
-      <div className={`h-1 w-full ${accent}`} />
-      <div className="flex items-center justify-between px-5 py-3.5">
-        <div className="text-xs font-bold uppercase tracking-wider text-slate-600">{title}</div>
-        {children}
+    <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-base">
+          {icon}
+        </div>
+        <div>
+          <div className="text-sm font-bold text-slate-900">{title}</div>
+          {subtitle && <div className="text-[11px] text-slate-400">{subtitle}</div>}
+        </div>
       </div>
+      {children}
     </div>
   );
 }
@@ -1513,9 +1536,9 @@ function TabBtn({
     <button
       type="button"
       onClick={onClick}
-      className={`-mb-px border-b-2 px-3 py-2 text-xs font-semibold transition-colors ${
+      className={`-mb-px border-b-2 px-3.5 py-2.5 text-xs font-semibold transition-colors ${
         active
-          ? "border-blue-600 text-blue-700"
+          ? "border-[#635BFF] text-[#635BFF]"
           : "border-transparent text-slate-400 hover:text-slate-600"
       }`}
     >

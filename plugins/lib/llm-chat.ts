@@ -76,6 +76,58 @@ function getClient(baseURL: string): OpenAI {
 }
 
 /**
+ * Ollama backend (local / testing). Calls Ollama's native /api/chat — NOT the
+ * OpenAI `/v1` — because only the native path honours `think:false`, which is the
+ * one reliable way to stop Qwen3 emitting "thinking" instead of the answer.
+ * `format:"json"` makes it return strict JSON, matching the vLLM path's contract.
+ * Auth: a private Cloud Run Ollama service still needs a Google identity token; a
+ * localhost Ollama needs none (and can't mint one), so it's skipped there.
+ */
+async function runChatJSONOllama(
+  system: string,
+  user: string,
+  tag: string,
+  maxTokens: number,
+  baseURL: string,
+): Promise<string> {
+  const root = baseURL.replace(/\/v1\/?$/, ""); // native API lives at the root, not /v1
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(root);
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (!isLocal) {
+    // Best-effort auth: a PRIVATE Cloud Run service needs a Google identity token;
+    // a PUBLIC (test) endpoint, or a machine without credentials, works without it.
+    // If the token can't be minted, proceed unauthenticated rather than failing.
+    try {
+      headers.Authorization = `Bearer ${await identityToken(baseURL)}`;
+    } catch {
+      /* no usable credentials → assume the endpoint is reachable without a token */
+    }
+  }
+
+  const res = await fetch(`${root}/api/chat`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      model: MODEL,
+      think: false, // disable Qwen3 "thinking" — the whole reason for the native path
+      format: "json",
+      stream: false,
+      options: { temperature: TEMPERATURE, num_predict: maxTokens },
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`[${tag}] ollama HTTP ${res.status}`);
+  const data = (await res.json()) as { message?: { content?: string } };
+  const text = data.message?.content ?? "";
+  console.log(`[${tag}] ollama model:`, MODEL, "| contentLen:", text.length);
+  if (!text) throw new Error(`[${tag}] ollama returned an empty response.`);
+  return text;
+}
+
+/**
  * Run a single JSON-returning chat against the self-hosted model and return the
  * raw text. `tag` only labels the diagnostic log line.
  */
@@ -87,6 +139,14 @@ export async function runChatJSON(
 ): Promise<string> {
   const baseURL = process.env.LOCAL_LLM_BASE_URL;
   if (!baseURL) throw new Error("LOCAL_LLM_BASE_URL is not set (self-hosted model endpoint).");
+
+  // Optional Ollama backend (local / testing only). Ollama's OpenAI `/v1` cannot
+  // reliably turn off Qwen3's "thinking" (known Ollama limitation), so we use its
+  // NATIVE /api/chat with `think:false` + `format:"json"`. Guarded by
+  // LLM_BACKEND=ollama — the default vLLM path below is untouched in production.
+  if ((process.env.LLM_BACKEND ?? "vllm") === "ollama") {
+    return runChatJSONOllama(system, user, tag, maxTokens, baseURL);
+  }
 
   const token = await identityToken(baseURL);
 
@@ -152,6 +212,22 @@ export async function warmUpModelAsync(): Promise<void> {
   const now = Date.now();
   if (now - lastWarmAt < WARM_MIN_GAP_MS) return; // best-effort throttle (per serverless instance)
   lastWarmAt = now;
+
+  // Ollama backend: warm via the SAME native /api/chat path the real calls use, so
+  // the warm-up actually LOADS the model + compiles kernels (a real tiny
+  // generation). The OpenAI /v1 path below 404s against Ollama when the base URL
+  // has no /v1 — it would wake the instance but never load the model, leaving the
+  // first real request to pay the whole cold cost. This does the real warming.
+  if ((process.env.LLM_BACKEND ?? "vllm") === "ollama") {
+    try {
+      await runChatJSONOllama('Reply with {"ok":true}.', "warmup", "warmup", 8, baseURL);
+      console.log("[warmup] ollama model warmed:", MODEL);
+    } catch (err) {
+      console.log("[warmup] ollama warm ping did not complete (model likely still starting):", (err as Error).message);
+      lastWarmAt = 0; // let the next request retry the wake rather than wait out the gap
+    }
+    return;
+  }
 
   try {
     const token = await identityToken(baseURL);
