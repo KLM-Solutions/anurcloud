@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type DragEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type DragEvent,
+  type ReactNode,
+} from "react";
 import { ACCEPT_ATTR, PROFILE_TYPES, formatBytes, validateSourceFile } from "@/lib/validation";
 import { EXTRACTION_SCHEMA, SCHEMA_GROUPS, type SchemaField } from "@/lib/schema";
 import { TEMPLATE_PREFILL, putHandoff } from "@/lib/handoff";
@@ -87,9 +94,16 @@ const SAMPLE: ActiveResult = {
   flagged_fields: ["projects"],
 };
 
-/* Live deployment endpoints AnurCloud calls. */
-const ENDPOINT = "https://anurcloud.vercel.app/api/extract";
-const URL_ENDPOINT = "https://anurcloud.vercel.app/api/extract-url";
+/* API paths, shown with the origin the page is served from (any host). */
+const ENDPOINT_PATH = "/api/extract";
+const URL_ENDPOINT_PATH = "/api/extract-url";
+
+/* The page's own origin, read without a hydration mismatch: "" while prerendering,
+   the real origin once on the client. */
+const noopSubscribe = () => () => {};
+function usePageOrigin(): string {
+  return useSyncExternalStore(noopSubscribe, () => window.location.origin, () => "");
+}
 
 /* Sample resumes (served from /public/samples) — one-click load into the uploader. */
 
@@ -145,6 +159,7 @@ export default function ExtractionPage() {
   const [url, setUrl] = useState("");
   const [profileType, setProfileType] = useState<ProfileType>("student");
   const [token, setToken] = useState(process.env.NEXT_PUBLIC_EXTRACT_TOKEN ?? "");
+  const pageOrigin = usePageOrigin();
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>("idle");
@@ -320,6 +335,8 @@ export default function ExtractionPage() {
     setTimeout(() => setCopied(null), 1500);
   }
 
+  const ENDPOINT = `${pageOrigin}${ENDPOINT_PATH}`;
+  const URL_ENDPOINT = `${pageOrigin}${URL_ENDPOINT_PATH}`;
   const curlExample =
     sourceMode === "url"
       ? `curl -X POST ${URL_ENDPOINT} \\\n  -H "Authorization: Bearer <auth_token>" \\\n  -H "Content-Type: application/json" \\\n  -d '{"url":"${url || "https://example.com/profile"}","profile_type":"${profileType}"}'`

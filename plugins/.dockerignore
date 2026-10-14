@@ -1,0 +1,14 @@
+# Keys never go into the image — they come from Secret Manager at runtime.
+.env*
+
+# Rebuilt inside the image.
+node_modules
+.next
+
+# Local / editor files.
+.git
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+Dockerfile
+.dockerignore
