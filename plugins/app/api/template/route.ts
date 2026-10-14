@@ -8,7 +8,7 @@ import {
   plannedTemplates,
   templatesFor,
 } from "@/templates";
-import { suggestTemplatesLLM } from "@/lib/suggest-llm";
+import { suggestTemplatesLLM, suggestTemplatesRules } from "@/lib/suggest-llm";
 import { dataLevel } from "@/templates/guards";
 import { resolveTheme } from "@/templates/theme";
 import type {
@@ -122,7 +122,8 @@ export async function POST(request: NextRequest) {
     // recommendation back into the catalogue it replaces.
     // LLM-ranked shortlist (rules filter eligibility first, then the model ranks
     // and explains the top 3). Falls back to rule-based ranking automatically.
-    suggested: await suggestTemplatesLLM(card),
+    // `suggest: "rules"` skips the model entirely.
+    suggested: req.suggest === "rules" ? suggestTemplatesRules(card) : await suggestTemplatesLLM(card),
     eligibility,
     offered,
     theme: themeReport,
