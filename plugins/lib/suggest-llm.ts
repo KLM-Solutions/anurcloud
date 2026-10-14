@@ -60,6 +60,12 @@ STRICT RULES:
 Respond with ONLY a JSON object:
 { "picks": [ { "id": number, "reason": string }, { "id": number, "reason": string }, { "id": number, "reason": string } ] }`;
 
+/** Rule-based top 3 only — no model call. */
+export function suggestTemplatesRules(profile: CardProfile): Suggestion[] {
+  const pool = templatesFor(profile.profileType);
+  return topSuggestions(rankTemplates(profile, pool, eligibleTemplates(profile)));
+}
+
 /**
  * LLM-ranked suggestions, with a rule-based fallback. Async (calls the model).
  * Signature mirrors the shape the route already uses so it is a drop-in.
