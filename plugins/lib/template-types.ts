@@ -27,6 +27,11 @@ export interface TemplateRequest {
   template?: number | string;
   /** Explicit overrides. Anything set here beats the derived palette. */
   theme?: ThemeOptions;
+  /**
+   * How `suggested` is ranked. "llm" (default) asks the model; "rules" skips it
+   * and returns the rule-based top 3 at once (e.g. the playground's sample data).
+   */
+  suggest?: "llm" | "rules";
 }
 
 /** How the card was themed — lets the caller see whether brand colours landed. */

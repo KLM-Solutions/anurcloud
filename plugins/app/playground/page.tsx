@@ -236,7 +236,13 @@ export default function PlaygroundPage() {
         const res = await fetch("/api/template", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ profile, profile_type: type, enhanced: { bio: profile.summary ?? null } }),
+          body: JSON.stringify({
+            profile,
+            profile_type: type,
+            enhanced: { bio: profile.summary ?? null },
+            // Sample data → rule-based pick, so the card shows without waiting on the model.
+            ...(source ? {} : { suggest: "rules" }),
+          }),
         });
         const data = await res.json();
         if (Array.isArray(data.eligibility)) {
@@ -250,7 +256,7 @@ export default function PlaygroundPage() {
       }
     }, 150);
     return () => clearTimeout(t);
-  }, [profile, type, token]);
+  }, [profile, type, token, source]);
 
   /* Flow-mode card is scaled up to fill the space (the card is authored at 380×537;
      here we enlarge it responsively to the viewport). Dev mode keeps 380px. */
