@@ -1,7 +1,7 @@
 /**
  * AI enhancement client wrapper — Module 3 (server-only).
  *
- * Singleton OpenAI client. Single GPT-4.1 call produces:
+ * One call to the self-hosted model (via `lib/llm-chat.ts`) produces:
  *   - polished first-person bio
  *   - enhanced project descriptions (both types)
  *   - enhanced internship descriptions (students)

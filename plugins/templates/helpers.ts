@@ -80,8 +80,8 @@ export function initials(name?: string | null): string {
  * The identity circle: a supplied logo, a photo, or an initials fallback.
  *
  * When the user has uploaded a logo it takes the circle — filled and cropped to
- * the round, the same as a photo (owner's call: a logo replaces the initials
- * rather than sitting in its own corner). A logo is only ever placed here, on
+ * the round, the same as a photo (a logo replaces the initials rather than
+ * sitting in its own corner). A logo is only ever placed here, on
  * cards that actually have this circle; cards without one carry no logo.
  */
 export function avatar(profile: CardProfile, cls = "", logoUrl?: string | null): string {

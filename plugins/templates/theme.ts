@@ -3,7 +3,7 @@
  * CSS custom properties every card renders against.
  *
  * Colour maths is duplicated here rather than imported from `lib/color.ts` on
- * purpose: `templates/` must not depend on anything outside itself (DEV-3040).
+ * purpose: `templates/` must not depend on anything outside itself.
  * This copy is deliberately small — hex only, no HSL ranking.
  */
 
@@ -33,7 +33,7 @@ const DEFAULT_COLORS = {
   muted: "#64748b",
 };
 
-/** Fallback brand colour when nothing was derived. Crimson, set 22 Jul 2026. */
+/** Fallback brand colour when nothing was derived (crimson). */
 const AUDIENCE_DEFAULTS: Record<ProfileType, { primary: string; accent: string }> = {
   professional: { primary: "#be123c", accent: "#e11d48" },
   student: { primary: "#be123c", accent: "#e11d48" },

@@ -6,7 +6,7 @@
  * `lib/profile-to-card.ts` and `lib/brand-to-theme.ts`.
  *
  * This keeps the template set liftable — deliverable on its own, or publishable
- * as a package later — without touching a line. See DEV-3040.
+ * as a package later — without touching a line.
  */
 
 export type ProfileType = "student" | "professional";
@@ -55,10 +55,9 @@ export interface ExperienceItem {
 }
 
 /**
- * The four families below were extracted by Module 1 from the start and never
- * reached a card — the template set was built against a subset of the schema, so
- * a CV listing awards, papers, clubs or a Bar Council number lost all of it
- * silently. Found and closed 11 Aug 2026.
+ * The four families below (awards, papers, clubs, registrations such as a Bar
+ * Council number) are extracted by Module 1 and must reach the card — leaving
+ * them out would silently drop part of the CV.
  *
  * `lib/schema.ts` is the source of truth for what can arrive. When a field is
  * added there it has to appear here too, or it is extracted and thrown away.
@@ -91,7 +90,7 @@ export interface RegistrationItem {
 }
 
 /**
- * One entry on the Timeline card's spine (DEV-3038).
+ * One entry on the Timeline card's spine.
  *
  * Built and sorted in `lib/profile-to-card.ts` — the card never parses a date.
  * `dateText` is always what gets displayed; `sortYear` exists only to order the
@@ -194,8 +193,7 @@ export interface ThemeFont {
 export type SizePreset = "sm" | "md" | "lg";
 
 /**
- * The full option set. Every template accepts all of it, identically —
- * a standing commitment to the client (answered 22 Jul, accepted 3 Aug 2026).
+ * The full option set. Every template accepts all of it, identically.
  * No template may be more limited than another.
  */
 export interface ThemeOptions {
@@ -222,10 +220,9 @@ export interface ThemeOptions {
  * Stable keys for the v1 set. Cards register against these.
  *
  * Two pools, and a template belongs to exactly one (`TemplateInfo.audience`).
- * The professional keys are not variants of the student ones — the client's
- * 3 Aug 2026 note was that our first prototypes shared a skeleton, so the
+ * The professional keys are not variants of the student ones — the
  * professional set is designed against the student set as much as against
- * itself.
+ * itself, so no two cards share a skeleton.
  */
 export type TemplateKey =
   /* student */

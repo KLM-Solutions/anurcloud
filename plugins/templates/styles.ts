@@ -16,7 +16,7 @@ export function cardStyles(scopeId: string): string {
    than the viewport — the card may be dropped into any column. */
 /* The card must read as a card on ANY surface it is dropped onto.
    A white card body on a white host page has no visible edge at all — the
-   right-hand side simply stops (client feedback, 11 Aug 2026). The border is a
+   right-hand side simply stops. The border is a
    real 1px line rather than only a shadow, because shadows are dropped by most
    print paths and the card has to survive being turned into a PDF. */
 /* overflow-wrap:anywhere is inherited by everything on the card, and it is load
@@ -44,8 +44,8 @@ ${s} .iv-av{width:4.5em;height:4.5em;border-radius:50%;overflow:hidden;flex:0 0 
 ${s} .iv-av img{width:100%;height:100%;object-fit:cover}
 ${s} .iv-av-fallback{display:flex;align-items:center;justify-content:center;background:var(--iv-grad);color:var(--iv-onp);font-family:var(--iv-font-h);font-weight:700;font-size:1em}
 ${s} .iv-av-fallback span{font-size:1.35em;letter-spacing:.02em}
-/* A logo dropped into the circle fills it like a photo (owner's call: cover, not
-   contain) — the shared iv-av img cover rule above already does the cropping.
+/* A logo dropped into the circle fills it like a photo (cover, not contain) —
+   the shared iv-av img cover rule above already does the cropping.
    (No backticks in this block — it is inside a template literal.) */
 
 ${s} .iv-crow{display:flex;gap:.5em;align-items:baseline;font-size:.75em;padding:.2em 0}
@@ -78,8 +78,8 @@ ${s} .iv-ovmore-link:hover{color:var(--iv-primary)}
 ${s} .iv-socials{display:flex;gap:.35em;flex-wrap:wrap;min-width:0;max-width:100%}
 /* overflow:hidden is a GUARANTEE, not a layout choice. The circle is a fixed size
    and the label is centred in it, so a label one character too long paints itself
-   outside the disc — "www" did exactly that (reported 11 Aug 2026, measured at
-   25.6px of text inside a 16.9px circle). The label list in sections.ts is capped
+   outside the disc — "www" did exactly that (25.6px of text inside a 16.9px
+   circle). The label list in sections.ts is capped
    at two characters, and this makes a future mistake clip instead of escape.
    The font family is a caller-supplied theme option too, so the width of two
    characters is not fully ours to predict.

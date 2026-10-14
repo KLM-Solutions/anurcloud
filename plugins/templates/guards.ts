@@ -16,7 +16,7 @@
  *      A timeline needs a sequence; a grid needs enough blocks. Each template
  *      declares its own minimum below, and the recommender gates on it.
  *
- * See DEV-3040. Cleaning of junk values happens earlier, in the glue
+ * Cleaning of junk values happens earlier, in the glue
  * (`lib/profile-to-card.ts`) — by the time a card runs, present means usable.
  */
 

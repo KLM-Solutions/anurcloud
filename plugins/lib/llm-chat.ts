@@ -8,7 +8,7 @@
  * Cloud Run service in Anur Cloud's own GCP. There is no third-party provider in
  * this path — every call goes to `LOCAL_LLM_BASE_URL`.
  *
- * The service is private (Anur Cloud's org policy forbids public access), so each
+ * The service is private, so each
  * request carries a Google identity token whose audience is the service's root
  * URL. The token is minted from a service-account key and auto-refreshed by
  * google-auth-library.

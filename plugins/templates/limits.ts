@@ -1,17 +1,16 @@
 /**
  * How much of each section a card shows.
  *
- * ── Owner decision, 20 Aug 2026: NO display caps ───────────────────────────
+ * ── NO display caps ────────────────────────────────────────────────────────
  * Every extracted field must appear on the card **in full** — all items, no
  * truncation. Nothing the resume contains may be silently dropped at render
  * time. So every dial below is `UNLIMITED`: cards keep calling `SHOW.skills`,
  * `NARROW.roles`, etc., but each now means "show them all".
  *
- * The count caps that used to live here (skills 18, roles 6, projects 5, …) are
- * gone on purpose. The consequence is that a rich profile produces a **tall**
- * card; splitting that across pages is the pagination work (see plugins/CLAUDE.md
- * "Pagination" and docs/anur-cloud/todos.md #3). Dropping content to keep a card
- * short is no longer acceptable — a tall card is the honest outcome.
+ * A rich profile is handled by the card being dynamic: the profile fills a hero
+ * first, then large sections open on their own screen (see the section model in
+ * `components/cards/card-kit.tsx`). Dropping content to keep a card short is not
+ * acceptable.
  *
  * ── Structural limits are a different thing ────────────────────────────────
  * A few cards had layout-driven caps in their own file (Role Ladder's rungs,

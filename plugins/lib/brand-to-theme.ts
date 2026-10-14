@@ -1,17 +1,11 @@
 /**
  * Glue — derived brand palette → card theme options.
  *
- * ── What this closes ──────────────────────────────────────────────────────
- * Mithra Murugesan (Anur Cloud), 3 Aug 2026:
+ * When a user supplies a logo or a website, the card's palette is generated
+ * automatically from it — the caller does not have to work out or pass colours.
  *
- *   "When a user gives us a logo or a website, we'd want that custom palette
- *    to come from your recommendation itself, generated automatically based on
- *    the logo or website, rather than something we have to work out and pass
- *    to you."
- *
- * Both halves already existed and neither was wired to the other: `lib/brand.ts`
- * derives a palette from a logo or a site, and the templates accept a palette.
- * This file is the join. Anur Cloud passes nothing — the colour just arrives.
+ * `lib/brand.ts` derives a palette from a logo or a site, and the templates
+ * accept a palette. This file is the join between the two.
  *
  * Direction matters: `lib/` may import from `templates/`, never the reverse.
  */

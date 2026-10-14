@@ -1,7 +1,7 @@
 /**
  * Validate & correct the enhancement model's output — Module 3 (server-only).
  *
- * A small local model (Qwen 3.5 4B) is looser than GPT-4.1: it can rename the
+ * A small model (Qwen 3.5 4B) does not always follow instructions: it can rename the
  * identity keys we match on, invent entries that were never in the profile, or
  * return the wrong types. This layer makes the raw output safe to trust:
  *

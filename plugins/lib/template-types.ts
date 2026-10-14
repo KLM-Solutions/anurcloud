@@ -74,7 +74,7 @@ export interface TemplateError {
 }
 
 /**
- * Returned while the card set is still being built (DEV-3035 … DEV-3039).
+ * Returned if no card is built yet for the requested profile type.
  *
  * The profile is validated and the theme resolved, but no card can be rendered
  * yet. Deliberately explicit rather than an empty success — the caller should

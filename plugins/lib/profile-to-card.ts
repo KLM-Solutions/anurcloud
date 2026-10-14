@@ -3,7 +3,7 @@
  *
  * This file is one of only two places allowed to know about both sides
  * (the other is `brand-to-theme.ts`). `templates/` must never import from
- * `lib/`, which is what keeps the template set liftable. See DEV-3040.
+ * `lib/`, which is what keeps the template set liftable.
  *
  * Two jobs:
  *
@@ -157,7 +157,7 @@ export function cleanPhone(value: unknown): string | null {
   return digits.length >= 7 && digits.length <= 15 ? v : null;
 }
 
-/* ── dates (Timeline, DEV-3038) ───────────────────────────────────────────── */
+/* ── dates (Timeline) ────────────────────────────────────────────────────── */
 
 /** Ongoing entries sort above every real year. Never displayed. */
 const PRESENT = 9999;
@@ -167,7 +167,7 @@ const ONGOING = /\b(present|current|ongoing|now|till date|to date)\b/i;
 /**
  * Derive a sort year from free-text date data.
  *
- * Rules (see DEV-3038):
+ * Rules:
  *   - "present" / "current" / "ongoing" sort newest
  *   - otherwise take the LATEST 4-digit year in the text, so a range like
  *     "2021–2025" sorts by when it ended
