@@ -71,7 +71,7 @@ if (violations.length > 0) {
   }
   console.error(
     "\nMove the shared logic into lib/ and pass the result in, or duplicate the\n" +
-      "small piece you need. templates/ has to stand alone. See DEV-3040.\n",
+      "small piece you need. templates/ has to stand alone.\n",
   );
   process.exit(1);
 }

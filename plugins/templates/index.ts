@@ -13,7 +13,7 @@
  *   1. add its React component in `components/cards/` + a line in `registry.tsx`
  *   2. add a `PLANNED` entry here (metadata: name, description, audience, key)
  *
- * ⚠️ Nothing in `templates/` may import from `lib/` or `app/` (DEV-3040).
+ * ⚠️ Nothing in `templates/` may import from `lib/` or `app/`.
  */
 
 import type {
@@ -42,12 +42,11 @@ interface PlannedTemplate {
 }
 
 /**
- * The v1 set: 10 student, 10 professional. Structure-first by design — the
- * client's 3 Aug 2026 feedback was that our prototypes shared one skeleton, so
- * each of these differs in *where things sit*, not in colour.
+ * The v1 set: 10 student, 12 professional. Structure-first by design — each of
+ * these differs in *where things sit*, not in colour.
  *
- * The test is grayscale. `npm run preview` renders the whole set with the colour
- * removed; if two cards are hard to tell apart there, they are one card.
+ * The test is grayscale: with the colour removed, if two cards are hard to tell
+ * apart, they are one card.
  */
 const PLANNED: PlannedTemplate[] = [
   {
@@ -245,7 +244,7 @@ const PLANNED: PlannedTemplate[] = [
     rootClass: "iv-pull-quote",
   },
 
-  /* ── professional avatar cards (DEV-3069/3070) ─────────────────────────────
+  /* ── professional avatar cards ─────────────────────────────────────────────
    * The two deliberate exceptions to the pool's no-circle rule. They exist so a
    * professional who uploads a logo has somewhere to put it — the logo fills the
    * identity circle in place of the initials. Opt-in, not the default, and each
@@ -277,8 +276,8 @@ const PLANNED: PlannedTemplate[] = [
  * Every planned card is built (all 22 ship as React components in
  * `components/cards/`). The catalogue therefore reflects the full set. If a card
  * is ever removed, drop its `PLANNED` entry rather than gating here — this module
- * cannot import the React registry without breaking the self-contained rule
- * (DEV-3040), so `PLANNED` is the single source of truth for what exists.
+ * cannot import the React registry without breaking the self-contained rule,
+ * so `PLANNED` is the single source of truth for what exists.
  */
 const isAvailable = (): boolean => true;
 

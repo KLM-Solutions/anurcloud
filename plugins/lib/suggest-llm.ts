@@ -72,7 +72,7 @@ export async function suggestTemplatesLLM(profile: CardProfile): Promise<Suggest
   const ruleTop = topSuggestions(ruleRanked);
 
   // No LLM configured → keep the deterministic behaviour.
-  if (!isLocalLLM() && !process.env.OPENAI_API_KEY) return ruleTop;
+  if (!isLocalLLM()) return ruleTop;
   // 3 or fewer eligible → nothing to choose; the rules already are the answer.
   if (ruleRanked.length <= 3) return ruleTop;
 

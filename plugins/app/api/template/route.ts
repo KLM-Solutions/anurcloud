@@ -33,7 +33,7 @@ export const maxDuration = 800;
  * can't) plus an LLM-ranked shortlist. It does NOT render a card: the cards are
  * React components (`components/cards/`) rendered client-side. The theme is still
  * resolved from `brand` here so the caller gets a ready palette + logo to hand to
- * the component (Mithra's 3 Aug 2026 request); a `template` field in the body, if
+ * the component; a `template` field in the body, if
  * present, is ignored.
  */
 export async function POST(request: NextRequest) {

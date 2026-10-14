@@ -1,5 +1,5 @@
 /**
- * Brand icon set — self-contained SVG path data (DEV, 21 Aug 2026).
+ * Brand icon set — self-contained SVG path data.
  *
  * ⚠️ SELF-CONTAINED, like the rest of `templates/`. This file imports nothing and
  * is imported by `sections.ts` (string cards) and `components/cards/card-kit.tsx`
@@ -27,7 +27,7 @@ export interface BrandIcon {
 }
 
 export const BRAND_ICONS: Record<string, BrandIcon> = {
-  // ── the five asked for (21 Aug 2026) ──────────────────────────────────────
+  // ── core platforms ─────────────────────────────────────────────────────────
   github: {
     bg: "#181717",
     label: "gh",

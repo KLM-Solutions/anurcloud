@@ -8,9 +8,7 @@
  * more useful question: "which two or three should we put in front of them?"
  *
  * ── ⚠️ No fit percentages. Ever. ───────────────────────────────────────────
- * An earlier version of the demo page showed invented scores like "TMP-101 · 94%".
- * It was removed because it was a lie with a decimal point in it: there is no
- * ground truth for how well a layout suits a person, so any percentage is made-up
+ * There is no ground truth for how well a layout suits a person, so any percentage is made-up
  * precision dressed as measurement — the same trap as putting proficiency bars on
  * Skill Meters.
  *
@@ -413,8 +411,7 @@ export function rankTemplates(
 }
 
 /**
- * How many layouts to put in front of a user. **Three**, set by the owner on
- * 11 Aug 2026 — not a tunable.
+ * How many layouts to put in front of a user. **Three** — not a tunable.
  *
  * It is a product decision, not a technical one, so it lives here as one constant
  * rather than as a request parameter: a caller that could ask for twelve would
